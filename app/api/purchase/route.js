@@ -16,7 +16,8 @@ export async function  POST(request){
         "Quantity", 
         "Total"
     ]
-    const body = await request.json(); 
+     
+    const body =  await request.json(); 
     console.log(JSON.stringify(body)); 
     if(!body.purchaseItem){ 
         return NextResponse.json( 
@@ -87,8 +88,9 @@ if (!existingItem) {
             PurchaseID: codeID,
              UserID: body?.purchaseItem[0]?.UserID,
              RequestorDepartment: userDprt?.department || "", 
-            timeStamp: new Date(),
-            Total: body.TotalItem 
+             timeStamp: new Date(),
+             EmployeeSign:  body.EmployeeSign, 
+             Total: body.TotalItem 
         }); 
         const purchaseItemsData = body.purchaseItem.map(item => ({ 
             PurchaseID: purchase.PurchaseID, 

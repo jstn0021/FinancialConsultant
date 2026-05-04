@@ -49,16 +49,15 @@ console.log(props.items)
       {header === "ENDING INVENTORY" && (
         <div className="w-auto pr-10">
           <input
-            className="bg-gray-300 text-red-500 w-full"
+            className="bg-white text-red-500 w-full"
             type="date"
             value={
               props.items[0]?.EndingInventoryDate
                 ? props.items[0].EndingInventoryDate.slice(0, 10)
                 : ""
             }
-            onChange={(e) =>
-              props.setEndingInventoryDate(e.target.value)
-            }
+            disabled ={true}
+
           />
         </div>
       )}

@@ -1,7 +1,6 @@
 'use client' 
 import axios from 'axios';
-import React, { use, useCallback, useEffect, useState } from 'react'
-import {calculateQuantity, getItemInfo , } from "@/functions/purchase"
+import React, { useCallback, useEffect, useState } from 'react'
 import PurchaseSubmitTable from '@/app/components/Tables/purchase-submit-table';
 import { formatDates } from '@/functions/formattDate';
 import { FiMinus , FiPlus } from 'react-icons/fi';
@@ -57,6 +56,10 @@ const CreateRequisition = () => {
   if( user.role === "Admin" &&  !endindInventoryDate){
       showError("Ending Inventory Date is Required")
       return
+  } 
+   if(!user.e_sign) { 
+      showError("You must have a e_signature"); 
+      return
   }
   
       const itemInfoWithDate = filtered.map((item) => ({
@@ -75,10 +78,11 @@ const CreateRequisition = () => {
      
       const forms = { 
         TotalItem : total, 
+        EmployeeSign: user.e_sign, 
         purchaseItem: itemInfoWithDate
       }
       
-
+     
      try {
         const response = await axios.post("/api/purchase", forms ,{
     

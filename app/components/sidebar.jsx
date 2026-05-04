@@ -80,7 +80,8 @@ export default function Sidebar(){
           
          ))}
          {/* others */}
-         <h3 className="text-red-100 text-sm ml-2 mt-5 opacity-70">{!others? "": others.length>1? "Others":"Other"}</h3>
+        
+         <h3 className="text-red-100 text-sm ml-2 mt-5 opacity-70">{others.length === 0 ? "": others.length>1? "Others":"Other"}</h3>
          <div className=" flex flex-col gap-2">
           {others?.map((item, index) =>(
             <Link key={index} href={`${item.path}`} className={`hover:bg-red-300 p-2 rounded ${pathname === item.path ? "bg-white text-black font-semibold hover:bg-white" : ""} `}>

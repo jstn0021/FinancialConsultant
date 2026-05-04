@@ -8,6 +8,8 @@ import Table from "@/app/components/table";
 import {formatDates} from "@/functions/formattDate";
 import {formatMoney} from "@/functions/formatCurrency";
 import useUserContext from "@/hooks/Context/UserContext";
+import { useRouter } from "next/navigation";
+import { useBanner } from "@/hooks/Context/banner";
 export default function PurchaseDetails() {
      const pathname = usePathname(); 
      const params = useParams();   
@@ -19,10 +21,12 @@ export default function PurchaseDetails() {
     const [formatted, setFormatted] = useState("");
     const [approving  , setApproving] = useState(false); 
     const [items, setItems] = useState([]); 
+    const router = useRouter(); 
     const [Chiefsignature , setChiefSignature] = useState(); 
     const [PDirectorsignature , setPDirectorSignature] = useState(); 
     const [EndingInventoryDate , setEndingInventoryDate] = useState(); 
     const [formattedEnding , setFormattedEnding]  = useState(); 
+    const {showError, showSuccess} = useBanner()
      const fetchPurchaseDetails = useCallback( async () => {
          try{ 
              const response = await axios.get(`/api/purchase/${params.purchaseID}`);
@@ -34,7 +38,6 @@ export default function PurchaseDetails() {
              setFormattedEnding(formatDates(response.data.purchase.purchaseItems[0].EndingInventoryDate));
              setTotal(response.data.purchase.purchaseItems.reduce((total, item) => total + item.Total, 0).toFixed(2));
             //   console.log(response.data?.purchase?.purchaseItems[0].EndingInventoryDate);
-
         }catch(error){
             if(error.response && error.response.status === 404){ 
                 setIs404(true);
@@ -44,9 +47,16 @@ export default function PurchaseDetails() {
             }
         }, [params.purchaseID])
 
-        useEffect(()=> { 
-            fetchPurchaseDetails();
-     }, [fetchPurchaseDetails]) 
+   useEffect(() => {
+  fetchPurchaseDetails();
+}, [fetchPurchaseDetails]);
+
+useEffect(() => {
+  if (purchaseDetails?.purchase) {
+    setChiefSignature(purchaseDetails.purchase.ChiefAdminManageSign || null);
+    setPDirectorSignature(purchaseDetails.purchase.ProjectDirectorSign || null);
+  }
+}, [purchaseDetails]);
         useEffect(() => {
       if (!items || items.length === 0) return;
 
@@ -68,6 +78,7 @@ export default function PurchaseDetails() {
      if(formattedEnding){ 
         console.log(formattedEnding);
      }
+    
      //update functions by id role based access control 
      // add attachement  
      // handle Approve 
@@ -81,20 +92,43 @@ export default function PurchaseDetails() {
         Signaturefunction(user.role ,user.e_sign,"remove")
       }
 
-      const handleConfirm = async() => { 
+      const handleConfirm = async() => {
+         let response;  
         // role 
         switch(user.role){ 
-          case "Chief Administrator Manager ": 
-                  // axios 
-                    // const response = await axios.post() ;
-                    return  
+          case "Chief Administrator Manager": 
+                  // axios                       
+                      response = await axios.post(`/api/purchase/Approvals/ChiefApproval?PRID=${params.purchaseID}`, {
+                      e_sign: user?.e_sign
+                     }); 
+                     if(response.status === 200 || response.status === 201 ){ 
+                       showSuccess(response.data?.message)
+                     }else { 
+                      showError(`Approval for Purchase Requisition ${params.purchaseID} Failed`); 
+                      return; 
+                     }
+                    break; 
           case "Project Director": 
-                  // const response = await axios.post(); 
-                    return
+                    // const response = await axios.post(); 
+                     response = await axios.post(`/api/purchase/Approvals/ProjectDirectorApproval?PRID=${params.purchaseID}`, {
+                      e_sign: user?.e_sign
+                     }); 
+                     if(response.status === 200 || response.status === 201 ){ 
+                       showSuccess(response.data?.message)
+                     }else { 
+                      showError(`Approval for Purchase Requisition ${params.purchaseID} Failed`); 
+                      return; 
+                     }
+                    break; 
           default: 
-               return   
-        }
-      }
+              break;   
+        
+        } 
+        setTimeout(()=> {
+          router.push("/Main/Purchase/PurchaseRecommendingApproval"); 
+        }, 1800); 
+      } 
+  
      
       const Signaturefunction= (role, e_sign, action) => { 
           switch(role) { 
@@ -102,7 +136,7 @@ export default function PurchaseDetails() {
                    if(action === "add"){ 
                      setChiefSignature(e_sign)
                     // axios  post 
-
+                      
                      return
                    } else if(action === "remove"){
                       setChiefSignature(null); 
@@ -124,6 +158,8 @@ export default function PurchaseDetails() {
             default : 
                      break
           }
+
+         
       }
 
 return ( 
@@ -168,7 +204,7 @@ return (
       <td className="p-2 relative w-1/3">
       
         <img
-          src={purchaseDetails?.purchase?.user?.signature ? " " : "/uploads/SampleSign.png"}
+          src={purchaseDetails?.purchase?.EmployeeSign || null}
           alt="Signature"
           className="absolute left-1/2 -translate-x-1/2 -top-15 h-25 object-contain pointer-events-none"
         />
@@ -193,10 +229,10 @@ return (
       <td className="p-2 relative w-1/3">
        {(purchaseDetails?.purchase?.ProjectDirectorSign !== null || user.role === "Project Director" ) && ( 
           <img
-            src={`${Chiefsignature}`}
+            src={`${PDirectorsignature}`}
             alt="Signature"
             className={`absolute left-1/2 -translate-x-1/2 ${
-              Chiefsignature ? "-top-15 h-25" : "-top-8 h-12"
+              PDirectorsignature ? "-top-15 h-25" : "-top-8 h-12"
             } object-contain pointer-events-none`}
           />
         )}
@@ -298,6 +334,7 @@ return (
   </button>
 
   <button
+    onClick={(e) => {handleConfirm()}}
     className="px-6 py-2 bg-lightRed border border-darkRed text-white font-bold rounded hover:bg-red-200 hover:text-black transition"
   >
     Confirm

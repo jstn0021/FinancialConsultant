@@ -34,7 +34,25 @@ export default function RecommendingApproval() {
        
      const fetchPurchaseDetails = async () => {
         try{ 
-            const response = await axios.get(`/api/purchase?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`);
+            let response; 
+              
+            // swith role to fetch data 
+            switch(user?.role){
+              case "Chief Administrator Manager":
+                     response = await axios.get(`/api/purchase/Approvals/ChiefApproval?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`);
+                     break; 
+              case "Project Director":
+                     response = await axios.get(`/api/purchase/Approvals/ProjectDirectorApproval?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`);
+                     break;
+              default:
+                      return (
+                        <>
+                        <h1 className="text-2xl font-bold text-center mt-10">Unauthorized Access</h1>
+                        <p className="text-center mt-4">You do not have permission to view this page.</p>
+                        </>
+                      )
+            }
+          // response = await axios.get(`/api/purchase?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`);
             setPurchaseDetails(response.data.data);
             setTotalPages(response.data.totalPages); 
             setDateStartDefault(response.data.rangeStart.split("T")[0]) 
@@ -85,7 +103,8 @@ export default function RecommendingApproval() {
           break;
       } 
      }
-    
+     
+  
 return ( 
        <>
     

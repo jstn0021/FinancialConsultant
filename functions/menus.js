@@ -25,37 +25,14 @@ export default function Menus(role){
                     icon: "□", 
                     path: "/Main/Purchase/PurchaseRecommendingApproval"                   
                  }, 
-                 {
-                    label : "Requisition History", 
-                    icon: "□", 
-                    path: "/Main/Purchase/RequisitionHistory"
-                 }
+               //   {
+               //      label : "Requisition History", 
+               //      icon: "□", 
+               //      path: "/Main/Purchase/RequisitionHistory"
+               //   }
             ]
          }, 
-         { 
-            label: "My Requisition", 
-            icon: "□", 
-            section :"menu", 
-            path: "/Main/Purchase"
-         },
-         {
-            label: "Item Management", 
-            icon: "□",
-            section: "others", 
-            path:"/Main/Inventory"
-         }, 
-         {
-            label: "User Management", 
-            icon: "□", 
-            section: "others", 
-            path: "/Main/UserManagement"
-         },
-         {
-            label: "Profile", 
-            icon: "□", 
-            section: "others", 
-            path: "/Main/Profile"
-         }, 
+       
          {
             label: "Logout", 
             icon: "□", 
@@ -68,36 +45,36 @@ export default function Menus(role){
          const roleMenuMap = { 
            "Regular Employee":[
             "Purchase Requisition Form", 
-            "My Requisition",
-            "Profile"
+            // "My Requisition",
+            // "Profile"
             ], 
             "Admin":[ 
                 "Dashboard", 
                 "Purchase Requisition Form", 
                 "Requisition List", 
-                "My Requisition", 
-                "Profile", 
+               //  "My Requisition", 
+               //  "Profile", 
             ], 
             "Chief Administrator Manager":[ 
                 "Dashboard", 
                 "Purchase Requisition Form", 
                 "Requisition List", 
-                "My Requisition", 
-                "Profile", 
+               //  "My Requisition", 
+               //  "Profile", 
             ], 
             "Project Director":[ 
                 "Dashboard", 
                 "Purchase Requisition Form", 
                 "Requisition List", 
-                "My Requisition", 
-                "Profile", 
+               //  "My Requisition", 
+               //  "Profile", 
             ], 
             "SuperAdmin":[  
                 "Dashboard", 
                 "Purchase Requisition Form", 
-                "My Requisition", 
-                "User Management", 
-                "Profile"
+               //  "My Requisition", 
+               //  "User Management", 
+               //  "Profile"
             ]
          }
          //find specific Role
