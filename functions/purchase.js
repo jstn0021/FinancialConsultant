@@ -101,7 +101,9 @@ const whereClause = {
     [Sequelize.Op.between]: [rangeStart, rangeEnd],
   },
 };
-
+whereClause.EmployeeSign = { 
+    [Sequelize.Op.not] : null
+}
 if (!isProjectDirector) {
   whereClause.ChiefAdminManageSign = null;
 }else { 
