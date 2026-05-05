@@ -10,6 +10,7 @@ import {formatMoney} from "@/functions/formatCurrency";
 import useUserContext from "@/hooks/Context/UserContext";
 import { useRouter } from "next/navigation";
 import { useBanner } from "@/hooks/Context/banner";
+import ConfirmBox from "@/app/components/modals/confirmbox";
 export default function PurchaseDetails() {
      const pathname = usePathname(); 
      const params = useParams();   
@@ -23,6 +24,7 @@ export default function PurchaseDetails() {
     const [items, setItems] = useState([]); 
     const router = useRouter(); 
     const [Chiefsignature , setChiefSignature] = useState(); 
+    const [AdminSignature  , setAdminSignature] = useState(); 
     const [PDirectorsignature , setPDirectorSignature] = useState(); 
     const [EndingInventoryDate , setEndingInventoryDate] = useState(); 
     const [formattedEnding , setFormattedEnding]  = useState(); 
@@ -55,6 +57,7 @@ useEffect(() => {
   if (purchaseDetails?.purchase) {
     setChiefSignature(purchaseDetails.purchase.ChiefAdminManageSign || null);
     setPDirectorSignature(purchaseDetails.purchase.ProjectDirectorSign || null);
+    setAdminSignature(purchaseDetails.purchase.AdminSign || null);
   }
 }, [purchaseDetails]);
         useEffect(() => {
@@ -120,6 +123,18 @@ useEffect(() => {
                       return; 
                      }
                     break; 
+          case "Admin": 
+                    // const response = await axios.post(); 
+                     response = await axios.post(`/api/purchase/Approvals/AdminApproval?PRID=${params.purchaseID}`, {
+                      e_sign: user?.e_sign
+                     }); 
+                     if(response.status === 200 || response.status === 201 ){ 
+                       showSuccess(response.data?.message)
+                     }else { 
+                      showError(`Approval for Purchase Requisition ${params.purchaseID} Failed`); 
+                      return; 
+                     }
+                    break; 
           default: 
               break;   
         
@@ -145,13 +160,23 @@ useEffect(() => {
                     break; 
 
             case "Project Director": 
-
                     if(action === "add"){  
                       setPDirectorSignature(e_sign)
                       //axios post 
                       return 
                     }else if (action === "remove"){ 
                       setPDirectorSignature(null)
+                      return
+                    }
+                    break
+            case "Admin": 
+
+                    if(action === "add"){  
+                      setAdminSignature(e_sign)
+                      //axios post 
+                      return 
+                    }else if (action === "remove"){ 
+                      setAdminSignature(null)
                       return
                     }
                     break
@@ -181,7 +206,8 @@ return (
       <h5 className ='display-inline text-red-700 font-bold p-5'> {purchaseDetails?.purchase?.PurchaseID}</h5>
       </div> 
       <hr className = 'border-t border-gray-300'/>
-      </div>     
+      </div> 
+      
        <div className="scrollbar-custom overflow-y-auto">       
        <Table tableHeader={purchaseDetails?.purchase?.user?.role !== "Admin" ? ['NO.','ITEM DESCRIPTION', 'QUANTITY', 'UNIT', 'UNIT PRICE', 'TOTAL'] : ['NO.','ITEM DESCRIPTION', 'REQUIRED BALANCE', 'ENDING INVENTORY', 'QUANTITY', 'UNIT', 'UNIT PRICE', 'TOTAL']} data = {purchaseDetails || isfetching === false? purchaseDetails : []} Ending = {formattedEnding} 
        purchaseID = {params.purchaseID} items = {items} setItems = {setItems}   EndingInventoryDate={EndingInventoryDate}
@@ -196,8 +222,11 @@ return (
   <tbody>
     <tr className="text-left">
       <td className="p-2 w-1/3">Requisitionist:</td>
-      <td className="p-2 w-1/3">Noted By:</td>
-      <td className="p-2 w-1/3">Approved By:</td>
+       
+        {/* Sir JC */}
+       <td className="p-2 w-1/3">Initial Approved:</td> 
+       <td className="p-2 w-1/3">Noted By:</td>
+       <td className="p-2 w-1/3">Approved By:</td>
     </tr>
 
     <tr className="text-center">
@@ -213,6 +242,18 @@ return (
         </span>
       </td>
 
+      <td className="p-2 relative w-1/3">
+        {(purchaseDetails?.purchase?.AdminSign !== null || user.role === "Admin" ) && ( 
+          <img
+            src={`${AdminSignature}`}
+            alt="Signature"
+            className={`absolute left-1/2 -translate-x-1/2 ${
+              AdminSignature ? "-top-15 h-25" : "-top-8 h-12"
+            } object-contain pointer-events-none`}
+          />
+        )}
+        <span>Admin</span>
+      </td>
       <td className="p-2 relative w-1/3">
         {(purchaseDetails?.purchase?.ChiefAdminManageSign !== null || user.role === "Chief Administrator Manager" ) && ( 
           <img
@@ -242,6 +283,7 @@ return (
 
     <tr className="text-center">
       <td className="text-white bg-black py-2 w-1/3">Employee Name</td>
+      <td className="text-white bg-black py-2 w-1/3">Admin</td>
       <td className="text-white bg-black py-2 w-1/3">Chief Administrator Manager</td>
       <td className="text-white bg-black py-2 w-1/3">Project Director</td>
     </tr>
@@ -322,7 +364,7 @@ return (
                    </div>
             </div>         
          </div> */}
-         {approving? (
+         {approving ? (
           <>
           <div className="flex justify-end gap-4 mt-10 mb-10">
       
@@ -362,8 +404,7 @@ return (
 </div>
          </>
 
-         )}
-    
+         )} 
     </>
 )
 }

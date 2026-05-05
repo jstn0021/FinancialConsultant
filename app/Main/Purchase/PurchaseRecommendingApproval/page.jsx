@@ -44,6 +44,9 @@ export default function RecommendingApproval() {
               case "Project Director":
                      response = await axios.get(`/api/purchase/Approvals/ProjectDirectorApproval?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`);
                      break;
+              case "Admin": 
+                     response = await axios.get(`/api/purchase/Approvals/AdminApproval?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`);
+                     break;
               default:
                       return (
                         <>

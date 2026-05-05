@@ -20,10 +20,15 @@ export async function GET(request, {params}) {
 
 export async function PATCH(request ,{params}) {
     try {
-       const {userid} = await params; 
-       const formData = await request.formData(); 
-       const body = Object.fromEntries(formData.entries()); 
-
+        const {userid} = await params; 
+        const formData = await request.formData(); 
+        const body = Object.fromEntries(formData.entries()); 
+        
+        const userProfile = await User.findByPk(userid); 
+        if(!userProfile){ 
+            return  NextResponse.json({error_message: "User Account Not found"}, {status: 404}); 
+        }
+          
        const file  = formData.get("profile_pic"); 
        let imagePath = null 
 
@@ -32,14 +37,13 @@ export async function PATCH(request ,{params}) {
         const buffer = Buffer.from(bytes); 
         
         const fileName = `${Date.now()}-${file.name}`; 
-        const path = `./public/uploads/${fileName}`;
+        const path = `./public/uploads/profile/${fileName}`;
 
         const fs = require("fs");
         fs.writeFileSync(path, buffer);
 
         imagePath = `/uploads/${fileName}`;
-
-         
+       //update 
         return NextResponse.json({message: fileName} , {status: 200})
     
        }

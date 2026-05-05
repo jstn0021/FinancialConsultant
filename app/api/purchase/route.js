@@ -89,7 +89,7 @@ if (!existingItem) {
              UserID: body?.purchaseItem[0]?.UserID,
              RequestorDepartment: userDprt?.department || "", 
              timeStamp: new Date(),
-             EmployeeSign:  body.EmployeeSign, 
+             EmployeeSign:  body?.EmployeeSign, 
              Total: body.TotalItem 
         }); 
         const purchaseItemsData = body.purchaseItem.map(item => ({ 

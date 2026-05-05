@@ -15,6 +15,10 @@ const Purchase = sequelize.define('purchase', {
         type: DataTypes.STRING, 
          allowNull: true , 
     }, 
+    AdminSign: {
+     type: DataTypes.STRING, 
+     allowNull: true, 
+    },
     ChiefAdminManageSign: { 
         type: DataTypes.STRING , 
         allowNull: true , 
@@ -37,9 +41,14 @@ const Purchase = sequelize.define('purchase', {
          allowNull: true,
          defaultValue: 0
      },
-      timeStamp: { 
+     Status:{
+      type: DataTypes.ENUM, 
+      values: ['Pending','Approved', 'Resubmit', 'Rejected'],
+      defaultValue: "Pending"
+     }, 
+       timeStamp: { 
          type:DataTypes.DATE, 
          defaultValue: DataTypes.NOW
-     }
+     } 
 },{}); 
 module.exports = Purchase 
