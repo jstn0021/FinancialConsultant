@@ -3,6 +3,8 @@ import PurchaseItems from "./purchaseItems.js";
 import User from "./user.js";
 import ItemsLists  from "./itemsLists.js";
 import Departments  from "./department.js";
+import BudgetItems from "./budgetItem.js";
+import BudgetValue from "./budgetsValue.js";
 Purchase.hasMany(PurchaseItems, { 
     foreignKey: 'PurchaseID', 
     sourceKey: 'PurchaseID', 
@@ -27,10 +29,32 @@ Purchase.belongsTo(User, {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
 });
+// BUDGET ITEM SELF JOIN 
+BudgetItems.hasMany(BudgetItems, { 
+    as: 'children', 
+    foreignKey: 'parent_id', 
+}); 
 
+BudgetItems.belongsTo(BudgetItems, {
+    as : 'parent', 
+    foreignKey: 'parent_id', 
+})
+
+// 1 - 1 BudgetsItem -> BudgetValue 
+
+BudgetItems.hasOne(BudgetValue, {
+    foreignKey: 'budget_item_id', 
+    as : 'values'
+}); 
+
+BudgetValue.belongsTo(BudgetItems, { 
+    foreignKey: 'budget_item_id', 
+}); 
 export { 
     Purchase, 
     PurchaseItems, 
     User,
-    ItemsLists
+    ItemsLists, 
+    BudgetItems, 
+    BudgetValue
 }

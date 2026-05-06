@@ -130,41 +130,95 @@ const PaymentVouchers = () => {
                   <div className='flex flex-row '>
                       <div className='w-87.5
                        grid grid-cols-10'>
-                         <div className="border-r-2 border-b-2 p-4 py-7 border-l-2 "></div>
-                         <div className="border-r-2 border-b-2 p-4 py-7"></div>
-                         <div className="border-r-2 border-b-2 p-4 py-7"></div>
-                         <div className="border-r-2 border-b-2 p-4 py-7"></div>
-                         <div className="border-r-2 border-b-2 p-4 py-7"></div>
-                         <div className="border-r-2 border-b-2 p-4 py-7"></div>
-                         <div className="border-r-2 border-b-2 p-4 py-7"></div>
-                         <div className="border-r-2 border-b-2 p-4 py-7"></div>
-                         <div className="border-r-2 border-b-2 p-4 py-7"></div>
-                         <div className="border-r-2 border-b-2 p-4 py-7"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5 border-l-2 "></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
                       </div>
                       <div className='flex-2 border-b-2'>
 
                       </div>
-                       <div className='w-87.5 flex-col'>
-                        <div className='flex flex-row border-2 border-t-0 justify-start'> 
-                             <div className='p-4 pr-7 
-                              '>
-                                <h4 className='text-lg'></h4>
-                             </div>
-                             <div className='flex-2 p-2 flex justify-end items-center'>
-                                <h4 className='text-lg'></h4>
-                             </div>
-                        </div>
-                        <div className='flex flex-row border-2 border-t-0 justify-start'> 
-                             <div className='p-3 pr-7 
-                            '>
-                                <h4 className='text-lg'></h4>
-                             </div>
-                             <div className='flex-2 p-2 flex justify-end items-center'>
-                                <h4 className='text-lg'></h4>
-                             </div>
-                        </div>
+                       <div className='w-87.5 border-2 border-t-0'>
                        
                     </div>
+                  </div>
+                  {/* 5th rows */}
+                   <div className='flex flex-row '>
+                      <div className='w-87.5
+                       grid grid-cols-10'>
+                         <div className="border-r-2 border-b-2 p-4 py-5 border-l-2 "></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                      </div>
+                      <div className='flex-2 border-b-2'>
+
+                      </div>
+                       <div className='w-87.5 border-2 border-t-0'>
+                       
+                    </div>
+                  </div>
+                  {/* 6th rows */}
+                   <div className='flex flex-row '>
+                      <div className='w-87.5
+                       grid grid-cols-10'>
+                         <div className="border-r-2 border-b-2 p-4 py-5 border-l-2 "></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                         <div className="border-r-2 border-b-2 p-4 py-5"></div>
+                      </div>
+                      <div className='flex-2 border-b-2'>
+
+                      </div>
+                       <div className='w-87.5 border-2 border-t-0'>
+                       
+                    </div>
+                  </div>
+                  {/* 7th rows */}
+                  <div className='flex flex-row'>
+                       <div className='w-87.5 flex flex-col '>
+                           <div className = 'border-2 border-t-0 flex justify-center items-center'>
+                            <h4 className='font-semibold '>ISSUING DEPT.</h4>  
+                           </div>
+                           <div className='border-2 border-t-0 flex justify-center items-center'>
+                            <h4 className='font-semibold '>JOB DEPT.</h4>  
+                           </div>
+                       </div>
+                       <div className='flex-2 flex flex-row  border-b-2'>
+                            <div className='flex-1 border-r-2'></div>
+                            <div className='flex-3 flex justify-center items-center'>
+                                <h4 className='font-semibold'>TOTAL</h4>
+                            </div>
+                       </div>
+                       <div className='w-87.5'>
+                         <div className='flex flex-row border-2 border-t-0 justify-start'> 
+                             <div className='h-13 pr-7 
+                              border-r-2'>
+                                <h4 className='text-lg pl-3'>PHP</h4>
+                             </div>
+                             <div className='flex-2 p-2 flex justify-end items-center'>
+                                <h4 className='text-lg'>22,320.98</h4>
+                             </div>
+                        </div>
+                       </div>
                   </div>
     </div> 
 
