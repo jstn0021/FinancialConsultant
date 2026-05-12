@@ -1,9 +1,8 @@
 import * as  XLSX from "exceljs"; 
 import { NextResponse } from "next/server";
+import { text } from "node:stream/consumers";
 
 export async function  ExportExcelFile(dataField , model, name) {
-
-
     try {
         let data = await model.findAll({
             attributes: dataField , 
@@ -106,13 +105,9 @@ export async function  ExportExcelFile(dataField , model, name) {
                 Remarks :""
             },
            
-         ]
-
-         
+         ]        
          const workbook = new XLSX.Workbook(); 
-         const worksheet = workbook.addWorksheet(name); 
-         
-
+         const worksheet = workbook.addWorksheet(name);       
          // logo picture 
          // header/ layout
          worksheet.mergeCells("A1:B4"); 
@@ -240,6 +235,15 @@ export async function  ExportExcelFile(dataField , model, name) {
                vertical: "top", 
                horizontal: "left"
          }
+         worksheet.getCell("A1").alignment = {
+               vertical: "bottom",
+               horizontal: "center",
+         };
+
+         worksheet.getCell("B1").alignment = { 
+               vertical: "bottom",
+               horizontal: "center",
+         };
          worksheet.getCell("E2").font = {
             size : 10, 
             bold: true
@@ -263,4 +267,435 @@ export async function  ExportExcelFile(dataField , model, name) {
          {status: 500 }
     );
     }
+}
+
+
+export async function ExportExcelBudgetFile(items, name) {
+
+  try {
+
+    // =========================================
+    // WORKBOOK
+    // =========================================
+
+    const workbook = new XLSX.Workbook();
+
+    const worksheet = workbook.addWorksheet("Budget");
+
+    // =========================================
+    // COLUMN WIDTHS
+    // =========================================
+
+    worksheet.columns = [
+      { width: 8 }, // A SN
+      { width: 8.30 }, // B DESCRIPTION
+      { width: 35 }, // C DESCRIPTION
+
+      { width: 10 }, // d UNIT
+      { width: 10 }, // E RATE
+      { width: 10 }, // F QTY
+      { width: 14 }, // G AMOUNT
+
+      { width: 10 }, // H RATE
+      { width: 10 }, // I QTY
+      { width: 14 }, // J COST
+
+      { width: 10 }, // K QTY
+      { width: 14 }, // L AMOUNT
+
+      { width: 10 }, // M QTY
+      { width: 14 }, // N AMOUNT
+
+      { width: 10 }, // O QTY
+      { width: 14 }, // P AMOUNT
+
+      { width: 10 }, // Q QTY
+      { width: 14 }, // R AMOUNT
+    ];
+
+    // =========================================
+    // TOP HEADER
+    // =========================================
+
+    worksheet.mergeCells("A1:B4");
+    worksheet.mergeCells("D1:G4");
+
+    worksheet.getCell("D1").value =
+      "CONSULTANCY SERVICES FOR NORTH SOUTH COMMUTER RAILWAY (NSCR)\n" +
+      "MALOLOS - TUTUBAN GENERAL CONSULTANT\n" +
+      "Contract No. PNRN1-01 (JICA L/A No. PH 262)";
+
+    worksheet.getCell("D1").font = {
+      bold: true,
+      size: 8,
+    };
+
+    worksheet.getCell("D1").alignment = {
+      wrapText: true,
+      vertical: "middle",
+      horizontal: "left",
+    };
+
+    // =========================================
+    // HEADER
+    // =========================================
+
+    worksheet.mergeCells("A12:A13");
+    worksheet.mergeCells("B12:C13");
+
+    worksheet.mergeCells("D12:G12");
+    worksheet.mergeCells("H12:J12");
+    worksheet.mergeCells("K12:L12");
+    worksheet.mergeCells("M12:N12");
+    worksheet.mergeCells("O12:P12");
+    worksheet.mergeCells("Q12:R12");
+
+    worksheet.getCell("A12").value = "SN";
+    worksheet.getCell("B12").value = "DESCRIPTION";
+    worksheet.getCell("D12").value = "Approved Cost";
+    worksheet.getCell("H12").value = "Modified Cost";
+    worksheet.getCell("K12").value = "Previous Claimed";
+    worksheet.getCell("M12").value = "This Month";
+    worksheet.getCell("O12").value = "Cumulative Claimed";
+    worksheet.getCell("Q12").value = "Remaining Balance";
+    worksheet.getCell("A14").value = "||"
+    worksheet.getCell("B14").value = "Reimbursables"
+     
+    // sub 
+    //Approved
+    worksheet.getCell("D13").value = "Unit"
+    worksheet.getCell("E13").value = "Rate"
+    worksheet.getCell("F13").value = "Qty"
+    worksheet.getCell("G13").value = "Amount"
+    //Modified 
+    worksheet.getCell("H13").value = "Rate"
+    worksheet.getCell("I13").value = "Qty"
+    worksheet.getCell("J13").value = "Cost"
+    //previous 
+    worksheet.getCell("K13").value = "Qty"
+    worksheet.getCell("L13").value = "Amount"
+    //this month 
+    worksheet.getCell("M13").value = "Qty"
+    worksheet.getCell("N13").value = "Amount"
+    //Cumulative 
+    worksheet.getCell("O13").value = "Qty"
+    worksheet.getCell("P13").value = "Amount"
+    // Remaining Balance 
+    worksheet.getCell("Q13").value = "Qty"
+    worksheet.getCell("R13").value = "Amount"
+
+    // =========================================
+    // HELPERS
+    // =========================================
+
+    const mediumBorder = {
+      style: "medium",
+      color: { argb: "000000" },
+    };
+
+    const thinBorder = {
+      style: "thin",
+      color: { argb: "000000" },
+    };
+
+    const dottedBorder = {
+      style: "dotted",
+      color: { argb: "000000" },
+    };
+
+    const formatNumber = (cell) => {
+      cell.numFmt = '#,##0.00';
+    };
+
+    // =========================================
+    // HEADER STYLE
+    // =========================================
+
+    [12, 13].forEach((rowNum) => {
+
+      const row = worksheet.getRow(rowNum);
+
+      row.height = 22;
+
+      row.eachCell((cell) => {
+
+        cell.font = {
+          bold: false,
+          color: { argb: "000000" },
+        };
+
+        cell.alignment = {
+          vertical: "middle",
+          horizontal: "center",
+        };
+   
+        cell.border = {
+          top: mediumBorder,
+          bottom: mediumBorder,
+          left: thinBorder,
+          right: thinBorder,
+        };
+
+      });
+
+    });
+     worksheet.getColumn("B").alignment  ={ 
+        vertical : 'middle',
+        horizontal : "left"
+     }
+    // =========================================
+    // FLATTEN TREE
+    // =========================================
+
+    const rows = [];
+
+    const flatten = (data = []) => {
+
+      data.forEach((item) => {
+
+        rows.push(item);
+
+        if (item.children?.length) {
+          flatten(item.children);
+        }
+
+      });
+
+    };
+
+    flatten(items);
+
+    // =========================================
+    // BODY
+    // =========================================
+
+    let rowIndex = 15;
+
+    rows.forEach((item) => {
+
+      const values = item.values || {};
+
+      const row = worksheet.getRow(rowIndex);
+
+      // MAIN ROW
+      if (item.level === 1) {
+
+        row.values = [
+          item.code || "",
+          "", 
+          item.description || "",
+
+          "",
+          "",
+          "",
+          "",
+
+          "",
+          "",
+          "",
+
+          "",
+          "",
+
+          "",
+          "",
+
+          "",
+          "",
+
+          "",
+          "",
+        ];
+
+      } else {
+
+        row.values = [
+            "", 
+            item.code, 
+            item.description|| "",
+
+          values.approved_unit || "",
+
+          values.approved_rate || 0,
+          values.approved_qty || 0,
+          values.approved_amount || 0,
+
+          values.revision_rate || 0,
+          values.revision_qty || 0,
+          values.revision_cost || 0,
+
+          values.prev_qty || 0,
+          values.prev_amount || 0,
+
+          values.month_qty || 0,
+          values.month_amount || 0,
+
+          values.cumulative_qty || 0,
+          values.cumulative_amount || 0,
+
+          values.remaining_qty || 0,
+          values.remaining_amount || 0,
+        ];
+
+      }
+
+      row.eachCell((cell, colNumber) => {
+
+        cell.font = {
+          bold: item.level === 1,
+        };
+
+        cell.alignment = {
+          vertical: "middle",
+          horizontal:
+            colNumber === 1
+              ? "center"
+              : colNumber >= 3
+              ? "center"
+              : "left",
+        };
+
+        // DESCRIPTION INDENT
+        if (colNumber === 2 && item.level > 1) {
+
+          cell.alignment = {
+            vertical: "middle",
+            horizontal: "left",
+            indent: item.level * 2,
+          };
+
+        }
+
+        cell.border = {
+          top: dottedBorder,
+          bottom: dottedBorder,
+          left: thinBorder,
+          right: thinBorder,
+        };
+
+      });
+
+      // NUMBER FORMAT
+      [
+         5, 6,
+        7, 8, 9,
+        10, 11,
+        12, 13,
+        14, 15,
+        16, 17,18
+      ].forEach((col) => {
+
+        const cell = row.getCell(col);
+
+        if (cell.value && cell.value !== 0) {
+          formatNumber(cell);
+        }
+
+      });
+
+      rowIndex++;
+
+    });
+
+    // =========================================
+    // TOTALS
+    // =========================================
+
+    const totalRow = worksheet.getRow(rowIndex);
+
+    worksheet.mergeCells(`A${rowIndex}:E${rowIndex}`);
+
+    totalRow.getCell(1).value = "TOTAL REIMBURSABLES";
+
+    totalRow.getCell(6).value = {
+      formula: `SUM(F15:F${rowIndex - 1})`,
+    };
+
+    totalRow.getCell(11).value = {
+      formula: `SUM(K15:K${rowIndex - 1})`,
+    };
+
+    totalRow.getCell(13).value = {
+      formula: `SUM(M15:M${rowIndex - 1})`,
+    };
+
+    totalRow.getCell(15).value = {
+      formula: `SUM(O15:O${rowIndex - 1})`,
+    };
+
+    totalRow.getCell(17).value = {
+      formula: `SUM(Q15:Q${rowIndex - 1})`,
+    };
+
+    totalRow.eachCell((cell) => {
+
+      cell.font = {
+        bold: true,
+      };
+
+      cell.alignment = {
+        vertical: "middle",
+        horizontal: "center",
+      };
+
+      cell.border = {
+        top: mediumBorder,
+        bottom: mediumBorder,
+        left: thinBorder,
+        right: thinBorder,
+      };
+
+      if (typeof cell.value !== "string") {
+        formatNumber(cell);
+      }
+
+    });
+
+    // =========================================
+    // OUTER BORDERS
+    // =========================================
+
+    worksheet.eachRow((row) => {
+
+      // LEFT OUTER
+      row.getCell(1).border = {
+        ...row.getCell(1).border,
+        left: mediumBorder,
+      };
+
+      // RIGHT OUTER
+      row.getCell(17).border = {
+        ...row.getCell(17).border,
+        right: mediumBorder,
+      };
+
+    });
+
+    // =========================================
+    // EXPORT
+    // =========================================
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: {
+        "Content-Disposition":
+          `attachment; filename=${name}.xlsx`,
+
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      },
+    });
+
+  } catch (err) {
+
+    return NextResponse.json({
+      error_message: err.message,
+    }, {
+      status: 500,
+    });
+
+  }
+
 }

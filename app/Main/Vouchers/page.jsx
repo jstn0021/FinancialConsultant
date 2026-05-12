@@ -5,22 +5,51 @@ import VourcherComponent from '@/app/components/vouchers'
 
 const PaymentVouchers = () => {
 
-    const [vouchers, setVouchers] = useState([1]);
-    const [files, setFiles] = useState([]);
-
+       const [vouchers, setVouchers] = useState([
+        {
+            description1: "",
+            description2: "",
+            amount1: "",
+            amount2: "",
+            total: ""
+        }
+    ]);
+     const [files, setFiles] = useState([]);
     // ADD VOUCHER
-    const handleAdd = () => {
-        setVouchers(prev => [...prev, prev.length + 1]);
-    }
+     const handleAdd = () => {
+        setVouchers(prev => [
+            ...prev,
+            {
+                voucherNo: "",
+                amount: "",
+                description: "", 
+                amount1: "",
+                amount2: "", 
+                total:"" 
+            }
+        ]);
+    };
 
     // REMOVE VOUCHER
     const handleRemoveVoucher = (indexToRemove) => {
-
         setVouchers(prev =>
             prev.filter((_, index) => index !== indexToRemove)
         );
-    }
+    };
+     
+      // HANDLE CHANGE
+    const handleChange = (index, e) => {
 
+        const { name, value } = e.target;
+
+        setVouchers(prev =>
+            prev.map((voucher, i) =>
+                i === index
+                    ? { ...voucher, [name]: value }
+                    : voucher
+            )
+        );
+    };
     // HANDLE FILE CHANGE
     const handleFileChange = (e) => {
 
@@ -48,17 +77,22 @@ const PaymentVouchers = () => {
             <div className='flex justify-end items-end'>
                 <button
                     onClick={handleAdd}
-                    className="px-4 py-2 mb-5 text-white rounded font-semibold bg-black hover:bg-gray-400"
+                    className="px-4 py-2 mb-5 text-white rounded font-semibold bg-lightRed hover:bg-gray-400"
                 >
                     Add
                 </button>
             </div>
 
             {/* VOUCHERS */}
-            {vouchers.map((item, index) => (
+            {vouchers.map((voucher, index) => (
                 <div key={index} className="mb-2 border p-2 rounded">
 
-                    <VourcherComponent />
+                      <VourcherComponent
+                    key={index}
+                    voucher={voucher}
+                    index={index}
+                    handleChange={handleChange}
+                />
 
                     {/* DELETE BUTTON */}
                     <div className="flex justify-end mt-3">
@@ -66,7 +100,7 @@ const PaymentVouchers = () => {
                             onClick={() => handleRemoveVoucher(index)}
                             className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
                         >
-                            Delete Voucher
+                          Delete Voucher
                         </button>
                     </div>
                 </div>
@@ -78,7 +112,7 @@ const PaymentVouchers = () => {
                     type="file"
                     multiple
                     onChange={handleFileChange}
-                    className="border p-2 w-50 rounded  text-white bg-black text-sm hover:bg-gray-400"
+                    className="border p-2 w-50 rounded  text-white bg-lightRed text-sm hover:bg-gray-400"
                 />
             </div>
 

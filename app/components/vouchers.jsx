@@ -1,6 +1,8 @@
 import React from 'react'
 
-const VourcherComponent = () => {
+const VourcherComponent = (props) => {
+    const {voucher, index, handleChange } = props 
+    
   return (
      <div  className='mt-10'>
          <div className='flex flex-row'>
@@ -95,11 +97,15 @@ const VourcherComponent = () => {
                     <div className='flex-2 flex-col'>
                          <div className='flex-1 border-b-2  p-3.5 flex justify-center items-center'>
                              {/* <h4 className='italic'>Purchase of Various medicines for Office Consumption with SI#125269</h4> */}
-                              <input type="text" className='w-full text-center italic' value={"Purchase of Various medicines for Office Consumption with SI#125269"} />
+                              <input type="text" className='w-full text-center italic' name='description1' value={voucher.description1 || "Purchase of Various medicines for Office Consumption with SI#125269"} 
+                              onChange={(e) => handleChange(index , e)}
+                              />
                          </div>
                          <div className='flex-1 border-b-2  p-3.5 flex justify-center items-center'>
                           {/* <h4 className='italic'>Purchase of Various medicines for Office Consumption with SI#125270</h4> */}
-                              <input type="text" className='w-full text-center italic' value={"Purchase of Various medicines for Office Consumption with SI#125270"} />
+                              <input type="text" className='w-full text-center italic' name='description2' value={voucher.description2 || "Purchase of Various medicines for Office Consumption with SI#125270"} 
+                                onChange={(e) => handleChange(index , e)}
+                              />
                          </div>
                     </div>
                     <div className='w-87.5 flex-col'>
@@ -110,7 +116,9 @@ const VourcherComponent = () => {
                              </div>
                              <div className='flex-2 p-2 flex justify-end items-center'>
                                 {/* <h4 className='text-lg'>13.195.09</h4> */}
-                               <input type="number" className='text-lg text-end' value={13195.09} />
+                               <input type="number" className='text-lg text-end' name='amount1' value={parseFloat(voucher.amount1) || 13195.09} 
+                               onChange={(e) => handleChange(index , e)}
+                               />
                              </div>
                         </div>
                         <div className='flex flex-row border-2 border-t-0 justify-start'> 
@@ -120,7 +128,9 @@ const VourcherComponent = () => {
                              </div>
                              <div className='flex-2 p-2 flex justify-end items-center'>
                                 {/* <h4 className='text-lg'>9,125.89</h4> */}
-                               <input type="number" className='text-lg text-end' value={9125.89} />
+                               <input type="number" name='amount2' className='text-lg text-end' value={parseFloat(voucher.amount2) || 9125.89} 
+                               onChange={(e) => handleChange(index , e)}
+                               />
                              </div>
                         </div>
                        
@@ -215,7 +225,9 @@ const VourcherComponent = () => {
                                 <h4 className='text-lg pl-3 pt-3'>PHP</h4>
                              </div>
                              <div className='flex-2 p-3 flex justify-end items-center'>
-                                 <input type="number" className='text-lg text-end' value={22320.98} />
+                                 <input type="number" className='text-lg text-end' name='total' value={ voucher.total || 22320.98} 
+                                  onChange={(e) => handleChange(index , e)}
+                                 />
                              </div>
                         </div>
                        </div>

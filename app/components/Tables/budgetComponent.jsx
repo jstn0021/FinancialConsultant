@@ -29,27 +29,29 @@ import { useBanner } from '@/hooks/Context/banner';
           {item.code}
         </td>
 
-        <td className="border-r-2 p-1 text-left flex">
+        <td className="p-1 text-left ">
           <input
             type="text"
-            value={item.description || ""}
+            value= { `${item.description}`|| ""}
             onChange={(e) =>
               updateField(item.id, "description", e.target.value, item.parent_id)
             }
-            style={{ width: `${(item.description || "").length}ch` }}
+                 style={{ width: `${(item.description || "").length + 3}ch` }}
             className= ' border-r-2 border-gray-300 w-full   bg-gray-100'
           />
-          {isMain && ( 
-            <div className='flex w-full justify-end items-end'>
+        </td>
+         <td className='border-r-2 pr-0.5'>
+             {isMain && ( 
+           
              <button
               onClick={() => addSub(item.id)}
               className="bg-black hover:bg-white hover:text-black border border-black text-white px-2 py-1 rounded text-xs "
               >
               <FaPlus  size={10}/>
             </button>
-            </div>
+           
           )}
-        </td>
+         </td>
    {/* Approved */}
         <td className='border-r-2 text-left'>
           {!isMain && (
@@ -500,7 +502,8 @@ const updateField = (id, field, value) => {
                 {/* GROUP HEADERS */}
           <tr>
             <th className='bg-black text-white border border-white' rowSpan="2">SN</th>
-            <th className='bg-black text-white border border-white' rowSpan="2">Description</th>
+            <th className='bg-black text-white border-l-2 border-l-white ' rowSpan="2">Description</th>
+            <th className='bg-black border-none' rowSpan={2}></th>
             <th className='bg-black text-white border border-white' colSpan="4">Approved</th>
             <th className='bg-black text-white border border-white' colSpan="3">Modified Cost</th>
             <th className='bg-black text-white border border-white' colSpan="2">Previous Claimed</th>
@@ -513,6 +516,7 @@ const updateField = (id, field, value) => {
           {/* SUB HEADERS */}
           <tr>
             {/* Approved */}
+            
             <th className='bg-black text-white border border-white'>Unit</th>
             <th className='bg-black text-white border border-white'>Rate</th>
             <th className='bg-black text-white border border-white'>Qty</th>

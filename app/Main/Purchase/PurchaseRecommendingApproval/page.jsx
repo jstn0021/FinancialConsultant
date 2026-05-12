@@ -113,8 +113,7 @@ export default function RecommendingApproval() {
      }
 
 return ( 
-       <>
-    
+       <>    
     <div className="flex relative mb-5 w-auto">
     </div>
       <div className = "grid grid-row-3 mb-10">  
@@ -154,24 +153,22 @@ return (
           onClick={() => setApprovalType("Admin")}
           className={`border border-darkRed  ${
             approvalType === "Admin"
-              ? "bg-darkRed text-white"
-              : "bg-white"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
           }`}
         >
           Admin
         </button>
-
         <button
           onClick={() => setApprovalType("ChiefApproval")}
           className={`border border-darkRed  ${
             approvalType === "ChiefApproval"
-              ? "bg-darkRed text-white"
-              : "bg-white"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
           }`}
         >
           Chief Administrator
         </button>
-
       </div>
     </div>
 
