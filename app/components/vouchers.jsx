@@ -2,8 +2,9 @@ import React from 'react'
 
 const VourcherComponent = (props) => {
     const {voucher, index, handleChange } = props 
+     
     
-  return (
+  return ( 
      <div  className='mt-10'>
          <div className='flex flex-row'>
               <div className='flex flex-2 flex-col'>

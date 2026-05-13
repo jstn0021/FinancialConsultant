@@ -423,11 +423,18 @@ export async function ExportExcelBudgetFile(items, name) {
           bold: false,
           color: { argb: "000000" },
         };
-
-        cell.alignment = {
-          vertical: "middle",
-          horizontal: "center",
-        };
+        
+        if (cell.value === "SN" || cell.value === "DESCRIPTION") { 
+            cell.alignment = { 
+                vertical: "bottom", 
+                horizontal: "left"
+            }
+        }else{ 
+            cell.alignment = {
+              vertical: "middle",
+              horizontal: "center",
+            };
+        }
    
         cell.border = {
           top: mediumBorder,
@@ -439,10 +446,7 @@ export async function ExportExcelBudgetFile(items, name) {
       });
 
     });
-     worksheet.getColumn("B").alignment  ={ 
-        vertical : 'middle',
-        horizontal : "left"
-     }
+ 
     // =========================================
     // FLATTEN TREE
     // =========================================
@@ -479,12 +483,11 @@ export async function ExportExcelBudgetFile(items, name) {
 
       // MAIN ROW
       if (item.level === 1) {
-
+         worksheet.mergeCells(`B${rowIndex}:C${rowIndex}`)
         row.values = [
           item.code || "",
-          "", 
           item.description || "",
-
+          
           "",
           "",
           "",
@@ -540,41 +543,50 @@ export async function ExportExcelBudgetFile(items, name) {
       }
 
       row.eachCell((cell, colNumber) => {
-
+      
+        
         cell.font = {
           bold: item.level === 1,
         };
-
+        
         cell.alignment = {
-          vertical: "middle",
-          horizontal:
-            colNumber === 1
-              ? "center"
-              : colNumber >= 3
-              ? "center"
-              : "left",
-        };
-
-        // DESCRIPTION INDENT
-        if (colNumber === 2 && item.level > 1) {
-
-          cell.alignment = {
             vertical: "middle",
-            horizontal: "left",
-            indent: item.level * 2,
-          };
-
-        }
-
-        cell.border = {
-          top: dottedBorder,
-          bottom: dottedBorder,
-          left: thinBorder,
-          right: thinBorder,
-        };
-
-      });
-
+            horizontal:
+            colNumber === 1
+            ? "center"
+            : colNumber >= 3
+            ? "center"
+            : "left",
+            };
+            
+            
+            // DESCRIPTION INDENT
+            if (colNumber === 3 && item.level > 1 || cell.value === "SN") {
+                cell.alignment = {
+                    vertical: "bottom",
+                    horizontal: "left",
+                };
+            }
+                cell.border = {
+                    top: dottedBorder,
+                    bottom: dottedBorder,
+                    left:  item.description? undefined : thinBorder ,
+                    right:  thinBorder  
+                };
+            
+      }); 
+        const colB = worksheet.getColumn("B");
+        colB.eachCell((cell, rowNumber) => {
+  // Only affect row 16 onward and cells with values
+if (rowNumber >= 15 && cell.value !== null && cell.value !== "") {
+    cell.border = {
+      top: undefined,
+      left: undefined,
+      right: undefined,
+      bottom: undefined,
+    };
+  }
+});
       // NUMBER FORMAT
       [
          5, 6,

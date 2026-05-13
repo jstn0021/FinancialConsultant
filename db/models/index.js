@@ -5,6 +5,9 @@ import ItemsLists  from "./itemsLists.js";
 import Departments  from "./department.js";
 import BudgetItems from "./budgetItem.js";
 import BudgetValue from "./budgetsValue.js";
+import Check from "./check.js";
+import CheckItem from "./checkItem.js";
+
 Purchase.hasMany(PurchaseItems, { 
     foreignKey: 'PurchaseID', 
     sourceKey: 'PurchaseID', 
@@ -50,10 +53,31 @@ BudgetItems.hasOne(BudgetValue, {
 BudgetValue.belongsTo(BudgetItems, { 
     foreignKey: 'budget_item_id', 
 }); 
+
+// check -> checkItems
+Check.hasMany(CheckItem , {
+  foreignKey: 'check_id',  
+  as : 'items'
+}); 
+CheckItem.belongsTo(Check, { 
+    foreignKey: "check_id", 
+    as: 'check'
+})
+//self join 
+CheckItem.hasMany(CheckItem , { 
+   foreignKey: 'parent_id', 
+   as: "children"
+}) 
+CheckItem.belongsTo(CheckItem, { 
+    foreignKey: 'parent_id', 
+    as: 'parent'
+})
 export { 
     Purchase, 
     PurchaseItems, 
     User,
+    Check, 
+    CheckItem, 
     ItemsLists, 
     BudgetItems, 
     BudgetValue

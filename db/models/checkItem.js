@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require('../connection'); 
 
-const CheckItem = sequelize.define('checkItem ',{ 
+const CheckItem = sequelize.define('checkItem',{ 
      id:{ 
         type: DataTypes.INTEGER, 
         primaryKey: true , 
@@ -11,7 +11,10 @@ const CheckItem = sequelize.define('checkItem ',{
         type: DataTypes.INTEGER , 
         allowNull: false
      }, 
-
+    parent_id : {
+        type: DataTypes.INTEGER, 
+        allowNull: true 
+    }, 
     title: { 
         type: DataTypes.STRING , 
         allowNull: false, 

@@ -1,20 +1,29 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import VourcherComponent from '@/app/components/vouchers'
+import axios from 'axios';
 
 const PaymentVouchers = () => {
 
-       const [vouchers, setVouchers] = useState([
-        {
-            description1: "",
-            description2: "",
-            amount1: "",
-            amount2: "",
-            total: ""
-        }
-    ]);
-     const [files, setFiles] = useState([]);
+    const [checks, setCheck] = useState(); 
+    const [files, setFiles] = useState([]); 
+    const [vouchers, setVouchers] = useState([ { description1: "", description2: "", amount1: "", amount2: "", total: "" } ]);
+     
+    
+    useEffect(() => { 
+         const fetchChecks = async() => { 
+             try { 
+               const response = await axios.get("/api/vouchers"); 
+               setCheck(response.data?.checks|| [] ); 
+             }catch(err){ 
+                  console.log(err);
+             }
+          }
+         fetchChecks(); 
+     }, []); 
+
+
     // ADD VOUCHER
      const handleAdd = () => {
         setVouchers(prev => [
@@ -52,17 +61,12 @@ const PaymentVouchers = () => {
     };
     // HANDLE FILE CHANGE
     const handleFileChange = (e) => {
-
         if (!e.target.files) return;
-
         const selectedFiles = Array.from(e.target.files);
-
         setFiles(prev => [...prev, ...selectedFiles]);
-
         // reset input
-        e.target.value = "";
+        e.target.value = "g";
     }
-
     // REMOVE FILE
     const handleRemoveFile = (indexToRemove) => {
 
@@ -82,14 +86,14 @@ const PaymentVouchers = () => {
                     Add
                 </button>
             </div>
-
+         
+            {JSON.stringify(checks)}
             {/* VOUCHERS */}
-            {vouchers.map((voucher, index) => (
+            {checks?.map((check, index) => (
                 <div key={index} className="mb-2 border p-2 rounded">
-
                       <VourcherComponent
-                    key={index}
-                    voucher={voucher}
+                    key={check.id}
+                    voucher={check}
                     index={index}
                     handleChange={handleChange}
                 />
