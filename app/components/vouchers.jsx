@@ -6,6 +6,7 @@ const VourcherComponent = (props) => {
     
   return ( 
      <div  className='mt-10'>
+        {JSON.stringify(voucher.children)}
          <div className='flex flex-row'>
               <div className='flex flex-2 flex-col'>
                     <h4 className='text-xl font-semibold'>PAYMENT VOUCHER</h4>
@@ -44,7 +45,7 @@ const VourcherComponent = (props) => {
                   </div>
                   <div className= 'flex-2 flex justify-center items-center border-2 border-l-0 border-r-0'> 
                      {/* Payee Name */}
-                      <h4 className='italic'>Triple C Medical Trading Corporation</h4>
+                      <h4 className='italic'>{voucher.title}</h4>
                   </div>
                   <div className='w-87.5 border-2 flex justify-center items-end'>
                      <h4>SIGNATURE</h4>
@@ -96,20 +97,29 @@ const VourcherComponent = (props) => {
                         <h4>9665R7268</h4>
                     </div>
                     <div className='flex-2 flex-col'>
-                         <div className='flex-1 border-b-2  p-3.5 flex justify-center items-center'>
+
+                        {/* description iteration  */}
+                          { 
+
+                              <div className='flex-1 border-b-2  p-3.5 flex justify-center items-center'>
                              {/* <h4 className='italic'>Purchase of Various medicines for Office Consumption with SI#125269</h4> */}
                               <input type="text" className='w-full text-center italic' name='description1' value={voucher.description1 || "Purchase of Various medicines for Office Consumption with SI#125269"} 
                               onChange={(e) => handleChange(index , e)}
                               />
                          </div>
+                            }
                          <div className='flex-1 border-b-2  p-3.5 flex justify-center items-center'>
                           {/* <h4 className='italic'>Purchase of Various medicines for Office Consumption with SI#125270</h4> */}
                               <input type="text" className='w-full text-center italic' name='description2' value={voucher.description2 || "Purchase of Various medicines for Office Consumption with SI#125270"} 
                                 onChange={(e) => handleChange(index , e)}
                               />
                          </div>
+
+
                     </div>
                     <div className='w-87.5 flex-col'>
+          
+                      {/*iteration amounts */}
                         <div className='flex flex-row border-2 border-t-0 justify-start'> 
                              <div className='p-3 pr-7 
                               border-r-2'>
@@ -135,7 +145,9 @@ const VourcherComponent = (props) => {
                              </div>
                         </div>
                        
-                    </div>
+
+                    </div> 
+                         
                  </div>
                  {/* 4TH ROWS */}
                   <div className='flex flex-row '>

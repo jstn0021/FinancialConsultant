@@ -87,9 +87,8 @@ const PaymentVouchers = () => {
                 </button>
             </div>
          
-            {JSON.stringify(checks)}
             {/* VOUCHERS */}
-            {checks?.map((check, index) => (
+            {checks[0].items?.map((check, index) => (
                 <div key={index} className="mb-2 border p-2 rounded">
                       <VourcherComponent
                     key={check.id}
