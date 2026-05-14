@@ -167,8 +167,6 @@ const PurchaseSubmitTable = React.memo((props) => {
               ))}
             </tr>
           </thead>
-          <div></div>
-          <nav></nav>
           <tbody>
             {props.data?.map((item, index) => (
               <tr key={index} className="border-b border-gray-300">

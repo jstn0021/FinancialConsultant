@@ -17,7 +17,7 @@ export default function Menus(role) {
       label: "Vouchers",
       icon: "□",
       section: "menu",
-      path: "/Main/Voucher",
+      path: "/Main/Vouchers",
     },
     {
       label: "Requisition List",
@@ -57,7 +57,7 @@ export default function Menus(role) {
       "Dashboard",
       "Purchase Requisition Form",
       "Requisition List",
-      "Vourchers",
+      "Vouchers",
       //  "My Requisition",
       //  "Profile",
     ],
