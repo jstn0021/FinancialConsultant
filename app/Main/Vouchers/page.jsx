@@ -1,161 +1,72 @@
-"use client"
+"use client";
+import VoucherTable from "@/app/components/Tables/voucher-table";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
-import React, { useEffect, useState } from 'react'
-import VourcherComponent from '@/app/components/vouchers'
-import axios from 'axios';
-
-const PaymentVouchers = () => {
-
-    const [checks, setCheck] = useState(); 
-    const [files, setFiles] = useState([]); 
-    const [vouchers, setVouchers] = useState([ { description1: "", description2: "", amount1: "", amount2: "", total: "" } ]);
-     
-    
-    useEffect(() => { 
-         const fetchChecks = async() => { 
-             try { 
-               const response = await axios.get("/api/vouchers"); 
-               setCheck(response.data?.checks|| [] ); 
-             }catch(err){ 
-                  console.log(err);
-             }
-          }
-         fetchChecks(); 
-     }, []); 
-
-
-    // ADD VOUCHER
-     const handleAdd = () => {
-        setVouchers(prev => [
-            ...prev,
-            {
-                voucherNo: "",
-                amount: "",
-                description: "", 
-                amount1: "",
-                amount2: "", 
-                total:"" 
-            }
-        ]);
-    };
-
-    // REMOVE VOUCHER
-    const handleRemoveVoucher = (indexToRemove) => {
-        setVouchers(prev =>
-            prev.filter((_, index) => index !== indexToRemove)
+const VouchersList = () => {
+  const [vouchers, setVourchers] = useState();
+  const [page, setPage] = useState(1);
+  const [limit] = useState(15);
+  const [totalPages, setTotalPages] = useState();
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      try {
+        const response = await axios.get(
+          `/api/vouchers?page=${page}&limit=${limit}`,
         );
+        setVourchers(response.data?.data || []);
+        setTotalPages(response.data.totalPages);
+      } catch (err) {
+        console.log(err);
+      }
     };
-     
-      // HANDLE CHANGE
-    const handleChange = (index, e) => {
+    fetchVouchers();
+  }, []);
+  return (
+    <div>
+      <div>
+        <VoucherTable
+          data={vouchers}
+          header={[
+            "Vouchers ID",
+            "Count",
+            "Amount",
+            "Claimable",
+            "Date Created",
+          ]}
+        />
+      </div>
 
-        const { name, value } = e.target;
+      {/* paginations */}
+      <div className="flex justify-center items-center mt-5">
+        <button
+          onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          className="px-3 py-1 bg-btnRed outline outline-darkRed hover:bg-white mr-1"
+          disabled={page === 1}
+        >
+          <FiChevronLeft size={22} />
+        </button>
+        {[...Array(totalPages)].map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setPage(index + 1)}
+            className={`px-4 py-1 border-r-2 border-gray-500 ${page === index + 1 ? "bg-darkRed text-white" : "bg-gray-200 hover:bg-darkRed hover:text-white"}  `}
+          >
+            {index + 1}
+          </button>
+        ))}
 
-        setVouchers(prev =>
-            prev.map((voucher, i) =>
-                i === index
-                    ? { ...voucher, [name]: value }
-                    : voucher
-            )
-        );
-    };
-    // HANDLE FILE CHANGE
-    const handleFileChange = (e) => {
-        if (!e.target.files) return;
-        const selectedFiles = Array.from(e.target.files);
-        setFiles(prev => [...prev, ...selectedFiles]);
-        // reset input
-        e.target.value = "g";
-    }
-    // REMOVE FILE
-    const handleRemoveFile = (indexToRemove) => {
+        <button
+          onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+          className="px-3 py-1 border-2 border-black bg-black text-white hover:text-black hover:bg-white ml-1"
+          disabled={page === totalPages}
+        >
+          <FiChevronRight size={22} />
+        </button>
+      </div>
+    </div>
+  );
+};
 
-        setFiles(prev =>
-            prev.filter((_, index) => index !== indexToRemove)
-        );
-    }
-
-    return (
-        <>
-            {/* ADD BUTTON */}
-            <div className='flex justify-end items-end'>
-                <button
-                    onClick={handleAdd}
-                    className="px-4 py-2 mb-5 text-white rounded font-semibold bg-lightRed hover:bg-gray-400"
-                >
-                    Add
-                </button>
-            </div>
-         
-            {/* VOUCHERS */}
-            {checks[0].items?.map((check, index) => (
-                <div key={index} className="mb-2 border p-2 rounded">
-                      <VourcherComponent
-                    key={check.id}
-                    voucher={check}
-                    index={index}
-                    handleChange={handleChange}
-                />
-
-                    {/* DELETE BUTTON */}
-                    <div className="flex justify-end mt-3">
-                        <button
-                            onClick={() => handleRemoveVoucher(index)}
-                            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
-                        >
-                          Delete Voucher
-                        </button>
-                    </div>
-                </div>
-            ))}
-
-            {/* FILE INPUT */}
-            <div className="mt-5 flex justify-end items-end">
-                <input
-                    type="file"
-                    multiple
-                    onChange={handleFileChange}
-                    className="border p-2 w-50 rounded  text-white bg-lightRed text-sm hover:bg-gray-400"
-                />
-            </div>
-
-            {/* FILE LIST */}
-            <div className='flex justify-end items-end'>
-                <div className="mt-5">
-
-                    <h2 className="font-bold text-lg mb-2">
-                        Uploaded Files
-                    </h2>
-
-                    {files.length === 0 && (
-                        <p>No files selected</p>
-                    )}
-
-                    {files.map((file, index) => (
-                        <div
-                            key={index}
-                            className="flex justify-between items-center border p-2 mb-2"
-                        >
-                            <div>
-                                <p>{file.name}</p>
-
-                                <p className="text-sm text-gray-500">
-                                    {(file.size / 1024).toFixed(2)} KB
-                                </p>
-                            </div>
-
-                            <button
-                                onClick={() => handleRemoveFile(index)}
-                                className="px-3 py-1 bg-red-500 text-white rounded"
-                            >
-                                Remove
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </>
-    )
-}
-
-export default PaymentVouchers
+export default VouchersList;
