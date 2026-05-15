@@ -42,8 +42,9 @@ export default function Sidebar() {
       {/* profile picture and then name */}
       <div className="mt-7 flex flex-col justify-center items-center">
         <img
-          src={`${!user?.profile || user?.profile === null ? "/profile/Generic avatar.png" : user?.profile}`}
-          alt="profile"
+          src={`${!user?.profile || user?.profile === null ? "/uploads/profile/Generic avatar.png" : user?.profile}`}
+          // src={"/profile/Geb"}
+          // alt="profile"
           className="w-20 h-20 mt-2 mb-3"
         />
         <h2 className="text-red-100 text-sm">{user?.name}</h2>

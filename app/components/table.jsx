@@ -26,7 +26,9 @@ const Table = (props) => {
           : Number(item.EndingInventory || 0);
 
       item.Quantity = Math.max(required - ending, 0);
+
       updated[index] = item;
+
       return updated;
     });
   };

@@ -79,6 +79,9 @@ const PurchaseSubmitTable = React.memo((props) => {
       // ITEM SELECT
       // =========================
       if (field === "ItemName") {
+        // always update typed value first
+        update[index].ItemName = value;
+
         const selectedItem = item.find(
           (i) => i.ItemName.trim().toLowerCase() === value.trim().toLowerCase(),
         );
@@ -89,7 +92,7 @@ const PurchaseSubmitTable = React.memo((props) => {
             ItemName: selectedItem.ItemName,
             Unit: selectedItem.Unit,
             UnitPrice: selectedItem.UnitPrice,
-            isManualQuantity: false, // reset mode
+            isManualQuantity: false,
             ...(isAdmin && {
               RequiredBalance: selectedItem.RequiredBalance || 0,
               EndingInventory: selectedItem.RequiredBalance || 0,
@@ -178,7 +181,7 @@ const PurchaseSubmitTable = React.memo((props) => {
                     onChange={handleChange}
                     name="ItemName"
                     readOnly={false}
-                    value={itemInfo[index]?.ItemName || ""} //add this
+                    value={itemInfo[index]?.ItemName || ""}
                   />
                 </td>
                 {user.role === "Admin" && (

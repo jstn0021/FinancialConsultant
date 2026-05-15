@@ -109,7 +109,7 @@ const PaymentVouchers = () => {
           type="file"
           multiple
           onChange={handleFileChange}
-          className="border p-2 w-50 rounded  text-white bg-lightRed text-sm hover:bg-gray-400"
+          className="border p-2 w-50 rounded  text-white bg-lightRed text-sm hover:bg-black"
         />
       </div>
 
@@ -117,9 +117,7 @@ const PaymentVouchers = () => {
       <div className="flex justify-end items-end">
         <div className="mt-5">
           <h2 className="font-bold text-lg mb-2">Uploaded Files</h2>
-
           {files.length === 0 && <p>No files selected</p>}
-
           {files.map((file, index) => (
             <div
               key={index}

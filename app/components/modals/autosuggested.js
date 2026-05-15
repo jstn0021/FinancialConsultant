@@ -1,8 +1,8 @@
-import { useBanner } from '@/hooks/Context/banner';
+import { useBanner } from "@/hooks/Context/banner";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 const AutoSuggestInput = React.memo((props) => {
-  const { item, index, onChange, name, value , readOnly } = props;
+  const { item, index, onChange, name, value, readOnly } = props;
 
   const [filtered, setFiltered] = useState([]);
   const [show, setShow] = useState(false);
@@ -11,8 +11,8 @@ const AutoSuggestInput = React.memo((props) => {
     const input = e.target.value;
 
     if (input.length > 0) {
-      const matches = item.filter(i =>
-        i.toLowerCase().startsWith(input.toLowerCase())
+      const matches = item.filter((i) =>
+        i.toLowerCase().startsWith(input.toLowerCase()),
       );
       setFiltered(matches);
       setShow(true);
@@ -32,12 +32,12 @@ const AutoSuggestInput = React.memo((props) => {
     <div className="relative w-52 items-center justify-center">
       <input
         type="text"
-        value={value} //controlled
+        value={value || ""} //controlled
         onChange={handleChange}
         onFocus={() => value && setShow(true)}
         className="border border-gray-300 bg-gray-200 text-black"
-        readOnly = {readOnly}
-        disabled = {readOnly}
+        readOnly={readOnly}
+        disabled={readOnly}
       />
 
       {show && filtered.length > 0 && (
@@ -56,4 +56,4 @@ const AutoSuggestInput = React.memo((props) => {
     </div>
   );
 });
-export default AutoSuggestInput
+export default AutoSuggestInput;
