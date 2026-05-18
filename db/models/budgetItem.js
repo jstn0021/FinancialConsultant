@@ -28,6 +28,10 @@ const BudgetItem = sequelize.define(
       type: DataTypes.JSON,
       allowNull: true,
     },
+    total: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
   },
   {
     tableName: "BudgetItems",

@@ -23,7 +23,32 @@
         <input id="password" type="password" />
       </div>
       <button onclick="handlesave()">save</button>
+      <table>
+        <thead>
+          <tr>
+            <th>head1</th>
+            <th>head2</th>
+            <th>head3</th>
+            <th>head4</th>
+          </tr>
+        </thead>
+        <tbody id="table_body">
+          <td></td>
+        </tbody>
+      </table>
+      <button onclick="addRow()">add</button>
     </div>
   </body>
-  <script src="./xample.js"></script>
+  <script>
+    function addRow() {
+      // find element body
+      let body = document.getElementById("table_body");
+      body.appendChild(`<tr>
+          <td>sdfsf</td>
+           <td>rerwe</td>
+            <td>fdfsd</td>
+             <td>dfsdfsd</td>
+        </tr>`);
+    }
+  </script>
 </html>

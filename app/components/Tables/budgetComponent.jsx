@@ -57,8 +57,10 @@ const Row = React.memo(function Row({
           )}
           {!isMain && (
             <Link
-              href={`/Main/Budgets/${item.description}`}
+              href={`/Main/Budgets/${item.id}`}
               className="text-xs px-1 hover:text-sm"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               {"view "}
             </Link>
@@ -576,7 +578,7 @@ const BudgetComponentTable = (props) => {
       <div className="flex justify-end items-end mb-3">
         <button
           onClick={addMain}
-          className="bg-lightRed hover:bg-gray-700 text-white px-4 py-2 rounded text-sm font-semibold"
+          className="bg-lightRed hover:bg-black text-white px-4 py-2 rounded text-sm font-semibold"
         >
           + Add Main Item
         </button>
