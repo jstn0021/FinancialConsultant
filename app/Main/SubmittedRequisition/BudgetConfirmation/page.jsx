@@ -141,34 +141,10 @@ export default function BudgetConfirmation() {
         <hr className="border-t border-gray-300" />
       </div>
       {/* filter  */}
-      {}
-      <div className="flex justify-end items-end mb-3">
-        <div className="border-t w-60 border-gray-300 grid grid-cols-[auto_auto]">
-          <button
-            onClick={() => setApprovalType("Admin")}
-            className={`border border-darkRed  ${
-              approvalType === "Admin"
-                ? "bg-white text-black"
-                : "bg-darkRed text-white"
-            }`}
-          >
-            Admin
-          </button>
-          <button
-            onClick={() => setApprovalType("ChiefApproval")}
-            className={`border border-darkRed  ${
-              approvalType === "ChiefApproval"
-                ? "bg-white text-black"
-                : "bg-darkRed text-white"
-            }`}
-          >
-            Chief Administrator
-          </button>
-        </div>
-      </div>
 
       <div className="max-h-200 overflow-hidden">
         <BudgetConfirmationTable
+          approve={false}
           tableHeader={[
             "REQUEST ID",
             "REQUESTOR NAME",
@@ -191,7 +167,7 @@ export default function BudgetConfirmation() {
       <div className="flex justify-center items-center mt-5 ">
         <button
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          className="px-3 py-1 bg-btnRed outline outline-darkRed hover:bg-white mr-1"
+          className={`px-3 py-1 bg-btnRed outline outline-darkRed mr-1 ${page !== 1 && "hover:bg-white"} `}
           disabled={page === 1}
         >
           <FiChevronLeft size={22} />
@@ -211,7 +187,7 @@ export default function BudgetConfirmation() {
         ))}
         <button
           onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-          className="px-3 py-1 border-2 border-black bg-black text-white hover:text-black  hover:bg-white ml-1"
+          className={`px-3 py-1 border-2 border-black bg-black text-white  ml-1 ${page !== totalPages && " hover:bg-white hover:text-black"} `}
           disabled={page === totalPages}
         >
           <FiChevronRight size={22} />

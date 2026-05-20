@@ -1,5 +1,7 @@
 import sequelize from "@/db/connection";
 import { Purchase, PurchaseItems, ItemsLists, User } from "@/db/models";
+import { createNextApprovalNotification } from "@/functions/notification";
+import { updateStatus } from "@/functions/status";
 import { NextResponse } from "next/server";
 
 // get purchase by id
@@ -46,14 +48,15 @@ export async function GET(request, { params }) {
 // remark , isClaimable
 
 export async function PATCH(request, { params }) {
-  // approve pr and find the prid
   const { purchaseid } = await params;
+
   try {
     const pr = await Purchase.findOne({
       where: {
         PurchaseID: purchaseid,
       },
     });
+
     if (!pr) {
       return NextResponse.json(
         {
@@ -61,14 +64,34 @@ export async function PATCH(request, { params }) {
         },
         { status: 404 },
       );
-    } else {
-      pr.isOnTheBudget = true;
-      await pr.save();
-      return NextResponse.json({ message: "Budget Confirm" }, { status: 200 });
     }
+
+    pr.isOnTheBudget = true;
+
+    // call function
+    const statusResult = await updateStatus("PR Approval", purchaseid);
+
+    // create Notification for Admin
+    const notify = await createNextApprovalNotification(
+      "Accountant",
+      "Head Admin",
+      purchaseid,
+    );
+
+    await pr.save();
+
+    return NextResponse.json(
+      {
+        message: "Budget Confirm",
+      },
+      { status: 200 },
+    );
   } catch (err) {
     return NextResponse.json(
-      { message: "Error Find", error: err.message },
+      {
+        message: "Error Find",
+        error: err.message,
+      },
       { status: 500 },
     );
   }

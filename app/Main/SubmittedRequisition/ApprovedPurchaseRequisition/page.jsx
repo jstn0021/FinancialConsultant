@@ -1,26 +1,26 @@
 "use client";
 import { use, useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import Table from "@/app/components/table";
 import axios from "axios";
-import Header from "@/app/components/header";
 import { FiSearch, FiChevronLeft, FiChevronRight } from "react-icons/fi";
-import { formDates } from "@/functions/formattDate";
-export default function PurchaseDetails() {
+import useUserContext from "@/hooks/Context/UserContext";
+import BudgetConfirmationTable from "@/app/components/Tables/budgetConfirmationTable";
+export default function ApprovedPurchase() {
   const [purchaseDetails, setPurchaseDetails] = useState();
   const [fomatted, setFormatted] = useState();
   //  const [currentPage, setCurrentPage] = useState(1);
   //  const [itemsPerPage] = useState(15); //10
   const [purchaseID, setPurchaseId] = useState();
   const [limit] = useState(15);
+  const { user } = useUserContext();
   const [search, setSearch] = useState(false);
   const [page, setPage] = useState(1);
-  // const [mode, setMode] = useState();
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
   const [dateStartDefault, setDateStartDefault] = useState();
   const [dateEndDefault, setDateEndDefault] = useState();
   const [totalPages, setTotalPages] = useState();
+  const [approvalType, setApprovalType] = useState("Admin");
+
   //  const indexOfLastItem = currentPage * itemsPerPage; // 1 * 10  = 10  ,  2 * 10  = 20
   //   const indexOfFirstItem = indexOfLastItem - itemsPerPage; // 10 - 10 = 0 , 20 - 10 = 10
   //  const currentItems = purchaseDetails?.purchases?.slice(
@@ -34,13 +34,17 @@ export default function PurchaseDetails() {
 
   const fetchPurchaseDetails = async () => {
     try {
-      const response = await axios.get(
-        `/api/purchase?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`,
+      let response;
+
+      // swith role to fetch data
+
+      response = await axios.get(
+        `/api/purchase/Approvals/ApprovedPurchase?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`,
       );
       setPurchaseDetails(response.data.data);
       setTotalPages(response.data.totalPages);
-      setDateStartDefault(response.data.rangeStart?.split("T")[0]);
-      setDateEndDefault(response.data.rangeEnd?.split("T")[0]);
+      setDateStartDefault(response.data.rangeStart.split("T")[0]);
+      setDateEndDefault(response.data.rangeEnd.split("T")[0]);
       console.log(response.data);
       //  setFormatted(formatDates(response.data.purchases[0].createdAt));
     } catch (error) {
@@ -56,7 +60,7 @@ export default function PurchaseDetails() {
   }, [purchaseDetails]);
   useEffect(() => {
     fetchPurchaseDetails();
-  }, [page]);
+  }, [page, approvalType]);
   useEffect(() => {
     if (dateStart || dateEnd) {
       fetchPurchaseDetails();
@@ -93,7 +97,6 @@ export default function PurchaseDetails() {
 
   return (
     <>
-      <Header title={"Requisition List"} />
       <div className="flex relative mb-5 w-auto"></div>
       <div className="grid grid-row-3 mb-10">
         <hr className="border-t border-gray-300" />
@@ -137,16 +140,18 @@ export default function PurchaseDetails() {
         </div>
         <hr className="border-t border-gray-300" />
       </div>
-      {/* select  */}
+      {/* filter  */}
+
       <div className="max-h-200 overflow-hidden">
-        <Table
+        <BudgetConfirmationTable
+          approve={true}
           tableHeader={[
             "REQUEST ID",
             "REQUESTOR NAME",
             "DEPARTMENT",
             "ITEMS",
             "TOTAL",
-            "REMARK",
+            "STATUS",
             "REQUISITION DATE",
             "ACTION",
           ]}
@@ -155,13 +160,14 @@ export default function PurchaseDetails() {
               ? purchaseDetails.filter((e) => e.PurchaseID === purchaseID)
               : purchaseDetails || []
           }
+          approvalType={approvalType}
         />
       </div>
       {/* paginations */}
       <div className="flex justify-center items-center mt-5 ">
         <button
           onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-          className="px-3 py-1 bg-btnRed outline outline-darkRed hover:bg-white mr-1"
+          className={`px-3 py-1 bg-btnRed outline outline-darkRed mr-1 ${page !== 1 && "hover:bg-white"} `}
           disabled={page === 1}
         >
           <FiChevronLeft size={22} />
@@ -179,10 +185,9 @@ export default function PurchaseDetails() {
             {index + 1}
           </button>
         ))}
-
         <button
           onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-          className="px-3 py-1 border-2 border-black bg-black text-white hover:text-black  hover:bg-white ml-1"
+          className={`px-3 py-1 border-2 border-black bg-black text-white  ml-1 ${page !== totalPages && " hover:bg-white hover:text-black"} `}
           disabled={page === totalPages}
         >
           <FiChevronRight size={22} />

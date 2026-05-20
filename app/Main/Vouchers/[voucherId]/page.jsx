@@ -72,12 +72,12 @@ const PaymentVouchers = () => {
     <>
       {/* ADD BUTTON */}
       <div className="flex justify-end items-end">
-        {/* <button
+        <button
           onClick={handleAdd}
           className="px-4 py-2 mb-5 text-white rounded font-semibold bg-lightRed hover:bg-gray-400"
         >
           Add
-        </button> */}
+        </button>
       </div>
 
       {/* VOUCHERS */}

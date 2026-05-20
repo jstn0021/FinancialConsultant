@@ -71,6 +71,7 @@ export async function GetSpecificRequest(
   const isProjectDirector = role === "Project Director";
   const isAdmin = role === "Admin";
   const isChiefAdmin = role === "Chief Administrator Manager";
+  const isChiefAccountant = role === "Chief Accountant";
 
   // -----------------------------
   // 1. ROLE BASE CONDITION
@@ -80,12 +81,20 @@ export async function GetSpecificRequest(
       ProjectDirectorSign: null,
       ChiefAdminManageSign: null,
     },
+
     "Project Director": {
       ProjectDirectorSign: null,
     },
+
     Admin: {
       AdminSign: null,
       ProjectDirectorSign: null,
+    },
+
+    "Chief Accountant": {
+      // Chief Accountant sees requests
+      // already signed by Employee, Admin,
+      // and Chief Admin
     },
   };
 
@@ -122,33 +131,64 @@ export async function GetSpecificRequest(
     const whereClause = {
       ...baseCondition,
 
-      EmployeeSign: {
-        [Sequelize.Op.not]: null,
-      },
-
       createdAt: {
         [Sequelize.Op.between]: [rangeStart, rangeEnd],
       },
-      isOnTheBudget: 1,
+
+      isOnTheBudget: true,
     };
 
     // -----------------------------
-    // 4. CHIEF ADMIN / DIRECTOR FLOW RULE
+    // 4. ROLE FLOW RULES
     // -----------------------------
     if (isProjectDirector) {
+      whereClause.EmployeeSign = {
+        [Sequelize.Op.not]: null,
+      };
+
       whereClause.AdminSign = {
         [Sequelize.Op.not]: null,
       };
+
       whereClause.ChiefAdminManageSign = {
         [Sequelize.Op.not]: null,
       };
     } else if (isAdmin) {
+      whereClause.EmployeeSign = {
+        [Sequelize.Op.not]: null,
+      };
+
       whereClause.ChiefAdminManageSign = null;
     } else if (isChiefAdmin) {
+      whereClause.EmployeeSign = {
+        [Sequelize.Op.not]: null,
+      };
+
       whereClause.AdminSign = {
         [Sequelize.Op.not]: null,
       };
+
       whereClause.ChiefAdminManageSign = null;
+    } else if (isChiefAccountant) {
+      // REQUIRED:
+      // EmployeeSign must have value
+      // AdminSign must have value
+      // ChiefAdminManageSign must have value
+      // isOnTheBudget = true
+
+      whereClause.EmployeeSign = {
+        [Sequelize.Op.not]: null,
+      };
+
+      whereClause.AdminSign = {
+        [Sequelize.Op.not]: null,
+      };
+
+      whereClause.ChiefAdminManageSign = {
+        [Sequelize.Op.not]: null,
+      };
+
+      whereClause.isOnTheBudget = true;
     }
 
     // -----------------------------
@@ -178,6 +218,7 @@ export async function GetSpecificRequest(
     );
   } catch (error) {
     console.log(error.message);
+
     return NextResponse.json(
       {
         error_message: error.message || "Internal Server Error",

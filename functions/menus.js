@@ -57,7 +57,7 @@ export default function Menus(role) {
         {
           label: "Approved Purchase Requesition",
           icon: "□",
-          path: "/Main/Purchase/RequisitionHistory",
+          path: "/Main/SubmittedRequisition/ApprovedPurchaseRequisition",
         },
       ],
     },

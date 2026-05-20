@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { useBanner } from "@/hooks/Context/banner";
 import ConfirmBox from "@/app/components/modals/confirmbox";
 import BudgetConfirmationTable from "@/app/components/Tables/budgetConfirmationTable";
-export default function PurchaseDetails() {
+export default function ApprovePurchaseDetails() {
   const pathname = usePathname();
   const params = useParams();
   const { user } = useUserContext();
@@ -135,6 +135,7 @@ export default function PurchaseDetails() {
 
       <div className="scrollbar-custom overflow-y-auto">
         <BudgetConfirmationTable
+          approve={true}
           tableHeader={
             purchaseDetails?.purchase?.user?.role !== "Admin"
               ? [

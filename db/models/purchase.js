@@ -45,6 +45,10 @@ const Purchase = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    mode: {
+      type: DataTypes.ENUM,
+      values: ["Small Amount", "Service Invoice"],
+    },
   },
   {},
 );

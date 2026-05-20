@@ -12,6 +12,7 @@ export async function accountingNofication(status, PRCODE, requestor) {
     case "Budget Confirmation":
       notification = `${requestor} create a Purchase Requisition`;
       break;
+
     default:
       break;
   }
@@ -26,9 +27,16 @@ export async function accountingNofication(status, PRCODE, requestor) {
     });
     if (accountant.length > 0) {
       for (const account of accountant) {
-        await createNotification(account.userID, notification);
+        const createApprove = await createNotification(
+          account.userID,
+          notification,
+        );
+        if (createApprove === false) {
+          return false;
+        }
       }
     }
+    return true;
   } catch (err) {
     return false;
   }
@@ -36,8 +44,8 @@ export async function accountingNofication(status, PRCODE, requestor) {
 
 // create notification  function next Approval Stage
 export async function createNextApprovalNotification(
+  current = " ",
   position,
-  approvalName,
   PRCODE,
 ) {
   // Admin , Chief and ProjectDirector
@@ -48,12 +56,20 @@ export async function createNextApprovalNotification(
       },
     });
 
-    if (user.length) {
-      createNotification(
-        user.userID,
-        `${approvalName} approve a Purchase Requisition ${PRCODE}`,
-      );
+    if (user) {
+      if (current === "Accountant") {
+        createNotification(
+          user.userID,
+          `${current} confirm budget for Purchase Requisition ${PRCODE}`,
+        );
+      } else {
+        createNotification(
+          user.userID,
+          `${current} approve a Purchase Requisition ${PRCODE}`,
+        );
+      }
     }
+    return true;
   } catch (err) {
     return false;
   }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { formatMoney } from "@/functions/formatCurrency";
 
 const BudgetConfirmationTable = (props) => {
-  const { role, approvalType } = props;
+  const { role, approve } = props;
   const handleChange = (index, field, value) => {
     props.setItems((prev) => {
       const updated = [...prev];
@@ -160,12 +160,25 @@ const BudgetConfirmationTable = (props) => {
                   {new Date(purchase.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-3">
-                  <Link
-                    href={`/Main/SubmittedRequisition/BudgetConfirmation/${purchase.PurchaseID}`}
-                    className="px-4 py-2 w-auto my-1 border border-darkRed bg-btnRed rounded-xl text-darkRed hover:bg-white text-sm"
-                  >
-                    View
-                  </Link>
+                  {approve ? (
+                    <>
+                      <Link
+                        href={`/Main/SubmittedRequisition/ApprovedPurchaseRequisition/${purchase.PurchaseID}`}
+                        className="px-4 py-2 w-auto my-1 border border-darkRed bg-btnRed rounded-xl text-darkRed hover:bg-white text-sm"
+                      >
+                        View
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href={`/Main/SubmittedRequisition/BudgetConfirmation/${purchase.PurchaseID}`}
+                        className="px-4 py-2 w-auto my-1 border border-darkRed bg-btnRed rounded-xl text-darkRed hover:bg-white text-sm"
+                      >
+                        View
+                      </Link>
+                    </>
+                  )}
                   {/* <a href={`/Main/Purchase/${purchase.PurchaseID}`} className="px-4 py-2 w-auto my-1 border border-darkRed bg-btnRed rounded-xl text-darkRed hover:bg-white text-sm" >
                             View
                           </a> */}

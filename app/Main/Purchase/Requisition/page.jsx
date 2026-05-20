@@ -1,275 +1,330 @@
-'use client' 
-import axios from 'axios';
-import React, { useCallback, useEffect, useState } from 'react'
-import PurchaseSubmitTable from '@/app/components/Tables/purchase-submit-table';
-import { formatDates } from '@/functions/formattDate';
-import { FiMinus , FiPlus } from 'react-icons/fi';
-import { formatMoney } from '@/functions/formatCurrency';
-import useUserContext from '@/hooks/Context/UserContext';
-import { useBanner } from '@/hooks/Context/banner';
+"use client";
+import axios from "axios";
+import React, { useCallback, useEffect, useState } from "react";
+import PurchaseSubmitTable from "@/app/components/Tables/purchase-submit-table";
+import { formatDates } from "@/functions/formattDate";
+import { FiMinus, FiPlus } from "react-icons/fi";
+import { formatMoney } from "@/functions/formatCurrency";
+import useUserContext from "@/hooks/Context/UserContext";
+import { useBanner } from "@/hooks/Context/banner";
 const CreateRequisition = () => {
-  const [data, setData] =  useState([]); 
-  const [row , setRow] = useState([]);
-  const {showError , showSuccess} = useBanner()
+  const [data, setData] = useState([]);
+  const [row, setRow] = useState([]);
+  const { showError, showSuccess } = useBanner();
   const [itemIds, setItemIds] = useState([]);
-  const  [total, setTotal ] = useState(); 
-  const [isRendered , setRendered] = useState(false)
-  const [disable , setDisable] =  useState(true); 
-   let count = 0 ; 
+  const [total, setTotal] = useState();
+  const [mode, setMode] = useState("Small Amount");
+  const [isRendered, setRendered] = useState(false);
+  const [disable, setDisable] = useState(true);
+  let count = 0;
   //const [totalRow, setTotalRow] = useState(0);
-  const [itemInfo, setItemInfo] = useState([{
-    ItemName : "", 
-    Unit: "", 
-    UnitPrice:0, 
-   Quantity:0, 
-    Total: 0 
-  }]);
-  const {user } = useUserContext(); 
+  const [itemInfo, setItemInfo] = useState([
+    {
+      ItemName: "",
+      Unit: "",
+      UnitPrice: 0,
+      Quantity: 0,
+      Total: 0,
+    },
+  ]);
+  const { user } = useUserContext();
   const [endindInventoryDate, setEndingInventoryDate] = useState(null);
-  let fetch ; 
-  
-   const handleSubmitInfo = useCallback(async () => {
-    console.log(itemInfo); 
-     if (itemInfo.length === 0) {
-         showError("No Items Inputed") 
-         return
-     }
-  
-      const limitedItemInfo =
-      itemInfo.length > row.length
-        ? itemInfo.slice(0, row.length)
-        : itemInfo;
-  
-      const limitedItemIds =
-      itemIds.length > row.length
-        ? itemIds.slice(0, row.length)
-        : itemIds;
-  
-      setItemInfo(limitedItemInfo);
-      setItemIds(limitedItemIds);
-     const filtered = limitedItemInfo.filter(
-    (item) =>
-      item.ItemName &&
-      parseFloat(item.Total) > 0
-  );
-  // user Role permission 
-  if( user.role === "Admin" &&  !endindInventoryDate){
-      showError("Ending Inventory Date is Required")
-      return
-  } 
-   if(!user.e_sign) { 
-      showError("You must have a e_signature"); 
-      return
-  }
-  
-      const itemInfoWithDate = filtered.map((item) => ({
+  let fetch;
+
+  const handleSubmitInfo = useCallback(async () => {
+    console.log(itemInfo);
+    if (itemInfo.length === 0) {
+      showError("No Items Inputed");
+      return;
+    }
+
+    const limitedItemInfo =
+      itemInfo.length > row.length ? itemInfo.slice(0, row.length) : itemInfo;
+
+    const limitedItemIds =
+      itemIds.length > row.length ? itemIds.slice(0, row.length) : itemIds;
+
+    setItemInfo(limitedItemInfo);
+    setItemIds(limitedItemIds);
+    const filtered = limitedItemInfo.filter(
+      (item) => item.ItemName && parseFloat(item.Total) > 0,
+    );
+    // user Role permission
+    if (user.role === "Admin" && !endindInventoryDate) {
+      showError("Ending Inventory Date is Required");
+      return;
+    }
+    if (!user.e_sign) {
+      showError("You must have a e_signature");
+      return;
+    }
+
+    const itemInfoWithDate = filtered.map((item) => ({
       ...item,
-      UserID:user.id,
+      UserID: user.id,
       EndingInventoryDate: endindInventoryDate,
-      }));
+    }));
 
+    if (itemInfoWithDate.length === 0) {
+      showError("Total must be greater than 0");
+      return;
+    }
 
-      
-  
-      if (itemInfoWithDate.length === 0) { 
-        showError("Total must be greater than 0")
-        return
+    const forms = {
+      TotalItem: total,
+      mode: mode,
+      EmployeeSign: user.e_sign,
+      purchaseItem: itemInfoWithDate,
+    };
+
+    try {
+      const response = await axios.post("/api/purchase", forms, {});
+      if (response.status === 200 || response.status === 201) {
+        showSuccess(response?.data?.message);
+        resetTable();
+        addTableRow(5);
       }
-     
-      const forms = { 
-        TotalItem : total, 
-        EmployeeSign: user.e_sign, 
-        purchaseItem: itemInfoWithDate
-      }
-      
-     
-     try {
-        const response = await axios.post("/api/purchase", forms ,{
-    
-      });
-        if(response.status === 200 || response.status === 201 ){ 
-          showSuccess(response?.data?.message); 
-          resetTable(); 
-          addTableRow(5); 
-        }
-      }catch (error) {
-       const data = error?.response?.data;
+    } catch (error) {
+      const data = error?.response?.data;
       if (data?.errors) {
-       const errorMessages = Object.entries(data.errors)
-        .map(([field, msgs]) => `${field}: ${msgs.join(", ")}`)
-        .join(" | ");
-  
-       showError(`${data.message} ${'->' + errorMessages}`);
-      } else {
-       showError(data?.message || "Something went wrong");
-      }
-   }
-    }, [itemInfo, itemIds, row, endindInventoryDate]);
-   
+        const errorMessages = Object.entries(data.errors)
+          .map(([field, msgs]) => `${field}: ${msgs.join(", ")}`)
+          .join(" | ");
 
-  const fetchData = async () =>{ 
-     try{ 
-       const response = await axios.get('/api/purchase/items');
-       setData(response.data.items); 
-       //   console.log(response.data);
-     }catch(error){ 
-       console.error("Error fetching data:", error); 
-     }
-  }
+        showError(`${data.message} ${"->" + errorMessages}`);
+      } else {
+        showError(data?.message || "Something went wrong");
+      }
+    }
+  }, [itemInfo, itemIds, row, endindInventoryDate]);
+
+  const fetchData = async () => {
+    try {
+      const response = await axios.get("/api/purchase/items");
+      setData(response.data.items);
+      //   console.log(response.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
   useEffect(() => {
     //  alert('fetch')
-    fetchData(); 
-    // console.log(data); 
-  },[handleSubmitInfo])
-     const addTableRow = (added = 1) => {
+    fetchData();
+    // console.log(data);
+  }, [handleSubmitInfo]);
+  const addTableRow = (added = 1) => {
     // adding multiple rows based on the input value
-      for(let i = 0; i < added; i++){
-        setRow(prevData => [...prevData, {id: prevData.length + 1, ItemName: "New Item", RequiredBalance: 0, EndingInventory: 0, Quantity: 0, Unit: "pcs", UnitPrice: 0}]);
-      }  
-     //setData([...data, {id: data.length + 1, ItemName: "New Item", RequiredBalance: 0, EndingInventory: 0, Quantity: 0, Unit: "pcs", UnitPrice: 0}])
-    } 
-       // console.log("Row changed:", value); 
-       // setRow(prevData => prevData.map(row => row.id === value.id ? {...row, ...value} : row)); 
-    const handleRowChange = (value) => {
+    for (let i = 0; i < added; i++) {
+      setRow((prevData) => [
+        ...prevData,
+        {
+          id: prevData.length + 1,
+          ItemName: "New Item",
+          RequiredBalance: 0,
+          EndingInventory: 0,
+          Quantity: 0,
+          Unit: "pcs",
+          UnitPrice: 0,
+        },
+      ]);
+    }
+    //setData([...data, {id: data.length + 1, ItemName: "New Item", RequiredBalance: 0, EndingInventory: 0, Quantity: 0, Unit: "pcs", UnitPrice: 0}])
+  };
+  // console.log("Row changed:", value);
+  // setRow(prevData => prevData.map(row => row.id === value.id ? {...row, ...value} : row));
+  const handleRowChange = (value) => {
     //  alert(`Value changed: ${value}`);
-      if (value === row.length) return;
+    if (value === row.length) return;
 
-      if (value > row.length) {   
-    addTableRow(value - row.length);
-     } else {
-    // remove rows if value is smaller
-        setRow(prev => prev.slice(0, value));
-        // setData(prev => prev.slice(0, value));
-        // setItemInfo(prev => prev.slice(0, value));
-        // setItemIds(prev => prev.slice(0, value));
-  }
-};
+    if (value > row.length) {
+      addTableRow(value - row.length);
+    } else {
+      // remove rows if value is smaller
+      setRow((prev) => prev.slice(0, value));
+      // setData(prev => prev.slice(0, value));
+      // setItemInfo(prev => prev.slice(0, value));
+      // setItemIds(prev => prev.slice(0, value));
+    }
+  };
 
-// handle able disable 
-useEffect(() => { 
-   const fillable =  itemInfo.filter(
-  (item) =>
-    item.ItemName &&
-    parseFloat(item.Total) > 0
-);
-if(!fillable || fillable.length === 0 ){ 
-   setDisable(true); 
-}else {
-   setTotal(fillable.reduce( (sum, item) => sum + (parseFloat(item?.Total) || 0), 0))
-   setDisable(false); 
-}
-}, [itemInfo])
+  // handle able disable
+  useEffect(() => {
+    const fillable = itemInfo.filter(
+      (item) => item.ItemName && parseFloat(item.Total) > 0,
+    );
+    if (!fillable || fillable.length === 0) {
+      setDisable(true);
+    } else {
+      setTotal(
+        fillable.reduce((sum, item) => sum + (parseFloat(item?.Total) || 0), 0),
+      );
+      setDisable(false);
+    }
+  }, [itemInfo]);
 
- const handleDeleteRow = () => {  
-    setRow(prevData => prevData.filter((_, i) => i !== row.length - 1));
-  //setData(prevData => prevData.filter((_, i) => i !== row.length - 1));
-    setItemInfo(prevData => prevData.filter((_, i) => i !== row.length - 1));
-    setItemIds(prevData => prevData.filter((_, i) => i !== row.length - 1));
-     // setRow(prevData => prevData.filter((_, i) => i !== index));// through index to delete specific row
-     // setData(prevData => prevData.filter((_, i) => i !== index));
-     // setItemInfo(prevData => prevData.filter((_, i) => i !== index));
-     // setItemIds(prevData => prevData.filter((_, i) => i !== index));
-     // console.log("Deleted row at index:", index);
-     // console.log("Updated data after deletion:", data);
-     // console.log("Updated itemInfo after deletion:", itemInfo);
-     // console.log("Updated itemIds after deletion:", itemIds);
+  const handleDeleteRow = () => {
+    setRow((prevData) => prevData.filter((_, i) => i !== row.length - 1));
+    //setData(prevData => prevData.filter((_, i) => i !== row.length - 1));
+    setItemInfo((prevData) => prevData.filter((_, i) => i !== row.length - 1));
+    setItemIds((prevData) => prevData.filter((_, i) => i !== row.length - 1));
+    // setRow(prevData => prevData.filter((_, i) => i !== index));// through index to delete specific row
     // setData(prevData => prevData.filter((_, i) => i !== index));
-  }
-   useEffect(() => { 
-     if(!isRendered){
-       setRendered(!isRendered)
-       addTableRow(3);
-     } else return
+    // setItemInfo(prevData => prevData.filter((_, i) => i !== index));
+    // setItemIds(prevData => prevData.filter((_, i) => i !== index));
+    // console.log("Deleted row at index:", index);
+    // console.log("Updated data after deletion:", data);
+    // console.log("Updated itemInfo after deletion:", itemInfo);
+    // console.log("Updated itemIds after deletion:", itemIds);
+    // setData(prevData => prevData.filter((_, i) => i !== index));
+  };
+  useEffect(() => {
+    if (!isRendered) {
+      setRendered(!isRendered);
+      addTableRow(3);
+    } else return;
+  }, []);
 
-   },[])
-
-   const resetTable = () => { 
+  const resetTable = () => {
     setRow([]);
     setItemInfo([]);
     setItemIds([]);
-    addTableRow(3)
-   }
-   if(!user){
-     return (
-     <div>Please Wait....</div>
-     )
-   }
+    addTableRow(3);
+  };
+  if (!user) {
+    return <div>Please Wait....</div>;
+  }
 
   return (
-   <> 
+    <>
       <div className="flex relative mb-5 w-auto">
         <div className="w-1/2 flex flex-row gap-2">
-        {/* {formatMoney(parseFloat(total), 'PHP', 'en-PH')} */}
-          <h5 className="text-xl font-bold">Requestor Department:  </h5> <h5 className = 'display-inline text-red-950 text-xl font-extrabold'>{user?.department}</h5>
+          {/* {formatMoney(parseFloat(total), 'PHP', 'en-PH')} */}
+          <h5 className="text-xl font-bold">Requestor Department: </h5>{" "}
+          <h5 className="display-inline text-red-950 text-xl font-extrabold">
+            {user?.department}
+          </h5>
         </div>
         <div className="w-1/2 flex flex-row gap-2 place-content-end">
           {/* <h5 className= 'place-self-end font-bold text-xl'>Requisition Date:</h5><h5 className = 'display-inline text-red-950 text-xl font-extrabold'></h5> */}
         </div>
-    </div>
-      <div className = "grid grid-row-3 mb-5">  
-      <hr className = 'border-t border-gray-300'/>
-      <div className = 'flex text-xl '> 
-      <h5 className ='display-inline text-black-500 font-bold text-xl p-5 px-0'> Requisition Date: {formatDates(new Date())}</h5> 
-      <h5 className ='display-inline text-red-700 font-bold p-5'> </h5>
-      </div> 
-      <hr className = 'border-t border-gray-300'/>
-      </div>     
-       {/* <button onClick={handleClick}>Fetch Item Info</button> */}
-       <div className='flex relative flex-row place-content-end mb-5 w-auto print:hidden'>
-          <div className='grid-cols-[auto_auto_auto] place-content-end flex flex-row '> 
-      
-      <button className="text-white outline outline-darkRed font-bold rounded-tl-lg rounded-bl-lg bg-black pl-2 py-1 w-10 hover:bg-gray-300 hover:text-black text-sm flex flex-row" onClick={()=>handleDeleteRow()}><FiMinus size={20}/></button>
-          <input type="Number" className='bg-gray-100 border border-gray-300 outline outline-gray-400 w-20 mx-1 text-center' 
-          value={row.length || 0} onChange={(e)=>handleRowChange(parseInt(e.target.value) || 0)} />
-        <button className='bg-darkRed text-white pl-2 py-1 w-10 text-sm outline outline-darkRed rounded-tr-lg rounded-br-lg  hover:bg-btnRed hover:text-black flex flex-row ' onClick={(e) => addTableRow(1)}><FiPlus size={20}/></button>
-           </div> 
-       </div>
-     <div className=" print:overflow-hidden">      
-       <PurchaseSubmitTable 
-       data={row} 
-       item={data} 
-       tableHeader={user?.role !== "Admin"?  ["NO","ITEM CATALOG # COMPLETE ITEM DESCRIPTION","QUANTITY","UNIT","UNIT PRICE","TOTAL"] :  ["NO", "ITEM", "REQUIRED BALANCE", "ENDING INVENTORY", "QUANTITY","UNIT" , "UNIT PRICE", "TOTAL"]}    
-       setData={setData}
-       setItemInfo={setItemInfo}
-       itemInfo={itemInfo}
-       setItemIds={setItemIds}
-       itemIds={itemIds}
-       setEndingInventoryDate={setEndingInventoryDate}
-       />
-       </div>
-        {/* buttons submit */}
-       {/* 
+      </div>
+      <div className="grid grid-row-3 mb-5">
+        <hr className="border-t border-gray-300" />
+        <div className="flex text-xl ">
+          <h5 className="display-inline text-black-500 font-bold text-xl p-5 px-0">
+            {" "}
+            Requisition Date: {formatDates(new Date())}
+          </h5>
+          <h5 className="display-inline text-red-700 font-bold p-5"> </h5>
+        </div>
+        <hr className="border-t border-gray-300" />
+      </div>
+      {/* <button onClick={handleClick}>Fetch Item Info</button> */}
+      <div className="flex relative flex-row justify-between items-center mb-5 w-auto print:hidden">
+        {/* LEFT SIDE */}
+        <div className="flex flex-row items-center gap-3">
+          <label className="font-bold text-lg">Mode:</label>
+
+          <select
+            value={mode}
+            onChange={(e) => setMode(e.target.value)}
+            className="border border-gray-300 outline outline-gray-300 bg-white px-3 py-1 rounded"
+          >
+            <option value="Small Amount">Small Amount</option>
+            <option value="Service Invoice">Service Invoice</option>
+          </select>
+        </div>
+
+        {/* RIGHT SIDE */}
+        <div className="grid-cols-[auto_auto_auto] place-content-end flex flex-row">
+          <button
+            className="text-white outline outline-darkRed font-bold rounded-tl-lg rounded-bl-lg bg-black pl-2 py-1 w-10 hover:bg-gray-300 hover:text-black text-sm flex flex-row"
+            onClick={() => handleDeleteRow()}
+          >
+            <FiMinus size={20} />
+          </button>
+
+          <input
+            type="Number"
+            className="bg-gray-100 border border-gray-300 outline outline-gray-400 w-20 mx-1 text-center"
+            value={row.length || 0}
+            onChange={(e) => handleRowChange(parseInt(e.target.value) || 0)}
+          />
+
+          <button
+            className="bg-darkRed text-white pl-2 py-1 w-10 text-sm outline outline-darkRed rounded-tr-lg rounded-br-lg hover:bg-btnRed hover:text-black flex flex-row"
+            onClick={() => addTableRow(1)}
+          >
+            <FiPlus size={20} />
+          </button>
+        </div>
+      </div>
+      <div className=" print:overflow-hidden">
+        <PurchaseSubmitTable
+          data={row}
+          item={data}
+          tableHeader={
+            user?.role !== "Admin"
+              ? [
+                  "NO",
+                  "ITEM CATALOG # COMPLETE ITEM DESCRIPTION",
+                  "QUANTITY",
+                  "UNIT",
+                  "UNIT PRICE",
+                  "TOTAL",
+                ]
+              : [
+                  "NO",
+                  "ITEM",
+                  "REQUIRED BALANCE",
+                  "ENDING INVENTORY",
+                  "QUANTITY",
+                  "UNIT",
+                  "UNIT PRICE",
+                  "TOTAL",
+                ]
+          }
+          setData={setData}
+          setItemInfo={setItemInfo}
+          itemInfo={itemInfo}
+          setItemIds={setItemIds}
+          itemIds={itemIds}
+          setEndingInventoryDate={setEndingInventoryDate}
+        />
+      </div>
+      {/* buttons submit */}
+      {/* 
        Design 
         
        Table 
               
               submit button               
        */}
-         <div className ='mt-5 mr-3 flex relative flex-row place-content-end mb-5 w-auto'>
-                           <div className='grid-cols-[auto_auto_auto] place-content-end'>
-                               <div className='w-auto h-auto bg-darkRed p-2 text-lg font-bold text-white'>
-                                   <h4>
-                                      Total: { formatMoney(
-                                            (parseFloat(total) || 0),
-                                           'PHP',
-                                           'en-PH'
-                                           )
-                                           }
-                                       </h4> 
-                               </div>
-                           </div>
-                        </div>
-          <div className='mt-10 flex relative flex-row place-content-end mb-5 w-auto'>
-          <div className='grid-cols-[auto_auto_auto] place-content-end'>  
-        <button className='bg-darkRed text-white py-1 w-30 text-lg outline outline-darkRed rounded-lg hover:bg-btnRed hover:text-black  disabled:bg-gray-400 disabled:cursor-not-allowed disabled:outline disabled:outline-white disabled:hover:text-white' disabled = {disable}  onClick={(e) => handleSubmitInfo()}>Submit</button>
-         {/* <button onClick={() => window.print()} className="print:hidden">
+      <div className="mt-5 mr-3 flex relative flex-row place-content-end mb-5 w-auto">
+        <div className="grid-cols-[auto_auto_auto] place-content-end">
+          <div className="w-auto h-auto bg-darkRed p-2 text-lg font-bold text-white">
+            <h4>
+              Total: {formatMoney(parseFloat(total) || 0, "PHP", "en-PH")}
+            </h4>
+          </div>
+        </div>
+      </div>
+      <div className="mt-10 flex relative flex-row place-content-end mb-5 w-auto">
+        <div className="grid-cols-[auto_auto_auto] place-content-end">
+          <button
+            className="bg-darkRed text-white py-1 w-30 text-lg outline outline-darkRed rounded-lg hover:bg-btnRed hover:text-black  disabled:bg-gray-400 disabled:cursor-not-allowed disabled:outline disabled:outline-white disabled:hover:text-white"
+            disabled={disable}
+            onClick={(e) => handleSubmitInfo()}
+          >
+            Submit
+          </button>
+          {/* <button onClick={() => window.print()} className="print:hidden">
   Print
 </button> */}
-           </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
-       </div>
-   </>
-  )
-}
-
-export default CreateRequisition
+export default CreateRequisition;
