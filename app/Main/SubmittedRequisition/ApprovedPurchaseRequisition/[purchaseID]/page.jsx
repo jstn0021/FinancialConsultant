@@ -87,6 +87,9 @@ export default function ApprovePurchaseDetails() {
 
   const handleConfirm = async () => {
     let response;
+
+    console.log("updated items", items);
+    return;
     try {
       response = await axios.patch(`/api/purchase/${params.purchaseID}`, {
         prCode,
@@ -140,12 +143,9 @@ export default function ApprovePurchaseDetails() {
           <h5 className="p-1 px-2 bg-black text-white font-semibold">
             PR CODE:{" "}
           </h5>
-          <input
-            type="text"
-            className="border border-gray-300 p-1"
-            value={prCode}
-            onChange={(e) => setPRCode(e.target.value)}
-          />
+          <h5 className="p-1 px-2 bg-gray-200 text-black font-semibold">
+            {purchaseDetails?.purchase?.PRCode || "Not Set"}
+          </h5>
         </div>
       </div>
       <div className="scrollbar-custom overflow-y-auto">
@@ -192,19 +192,20 @@ export default function ApprovePurchaseDetails() {
         <div className="absolute right-0 flex flex-row gap-0 mt-2">
           <h5 className="px-2 py-2 text-sm font-bold bg-black text-white display-inline">
             Total :
-          </h5>{" "}
+          </h5>
+          {""}
           <h5 className="px-2 py-2 text-sm font-bold bg-darkRed text-white display-inline ">
             {formatMoney(parseFloat(total), "PHP", "en-PH")}
           </h5>
         </div>
       </div>
       <div className="mt-13 flex justify-end items-end">
-        <button
+        {/* <button
           className="bg-lightRed rounded-md py-2 px-3 text-white font-bold hover:border hover:border-darkRed hover:bg-white hover:text-black"
           onClick={(e) => handleConfirm()}
         >
           Confirm
-        </button>
+        </button> */}
       </div>
 
       {/* accounting part claimable or non claimable  */}

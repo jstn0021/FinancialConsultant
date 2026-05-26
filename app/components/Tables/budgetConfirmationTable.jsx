@@ -5,27 +5,18 @@ import { formatMoney } from "@/functions/formatCurrency";
 
 const BudgetConfirmationTable = (props) => {
   const { role, approve } = props;
+
   const handleChange = (index, field, value) => {
-    props.setItems((prev) => {
-      const updated = [...prev];
-
-      const numericFields = ["RequiredBalance", "EndingInventory"];
-
-      const item = {
-        ...updated[index],
-        [field]: numericFields.includes(field) ? Number(value) : value,
-        EndingInventoryDate: props.EndingInventoryDate,
-      };
-
-      const required = Number(item.RequiredBalance || 0);
-      const ending = Number(item.EndingInventory || 0);
-
-      item.Quantity = Math.max(required - ending, 0);
-
-      updated[index] = item;
-
-      return updated;
-    });
+    props.setItems((prevItems) =>
+      prevItems.map((item, i) =>
+        i === index
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item,
+      ),
+    );
   };
   useEffect(() => {
     console.log(props.items);
@@ -91,6 +82,8 @@ const BudgetConfirmationTable = (props) => {
                   {/* <input className="bg-gray-200 border border-gray-300 outline-1 outline-gray-200"  type="text" defaultValue={item?.UnitPrice} readOnly= {true} /> */}
                   {item?.UnitPrice}
                 </td>
+
+                {/*  */}
                 <td className="px-4 py-2">
                   <input
                     className="bg-gray-200 border border-gray-300 outline-1 outline-gray-200"

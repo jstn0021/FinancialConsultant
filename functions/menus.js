@@ -25,24 +25,7 @@ export default function Menus(role) {
       section: "menu",
       path: "/Main/BudgetConfirmation",
     },
-    {
-      label: "Requisition List",
-      icon: "□",
-      section: "menu",
-      hasDropdown: true,
-      subItem: [
-        {
-          label: "Recommending Approval",
-          icon: "□",
-          path: "/Main/Purchase/PurchaseRecommendingApproval",
-        },
-        //   {
-        //      label : "Requisition History",
-        //      icon: "□",
-        //      path: "/Main/Purchase/RequisitionHistory"
-        //   }
-      ],
-    },
+
     {
       label: "Submitted Requisition",
       icon: "□",
@@ -60,6 +43,13 @@ export default function Menus(role) {
           path: "/Main/SubmittedRequisition/ApprovedPurchaseRequisition",
         },
       ],
+    },
+    //  Reimbursable
+    {
+      label: "Reimbursable",
+      icon: "□",
+      section: "menu",
+      path: "/Main/Budgets",
     },
 
     {
@@ -89,6 +79,8 @@ export default function Menus(role) {
       "Dashboard",
       "Purchase Requisition Form",
       "Submitted Requisition",
+      "Vouchers",
+      "Reimbursable",
     ],
     "Chief Administrator Manager": [
       "Dashboard",

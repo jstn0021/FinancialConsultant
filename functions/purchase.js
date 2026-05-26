@@ -136,6 +136,10 @@ export async function GetSpecificRequest(
       },
 
       isOnTheBudget: true,
+
+      PRCode: {
+        [Sequelize.Op.not]: null,
+      },
     };
 
     // -----------------------------

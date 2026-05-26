@@ -21,6 +21,7 @@ export default function PurchaseDetails() {
   const [isfetching, setIsFetching] = useState(true);
   const [formatted, setFormatted] = useState("");
   const [items, setItems] = useState([]);
+  const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
   const [EndingInventoryDate, setEndingInventoryDate] = useState();
   const [formattedEnding, setFormattedEnding] = useState();
@@ -83,17 +84,45 @@ export default function PurchaseDetails() {
   //update functions by id role based access control
   // add attachement
   // handle Approve
+  //validations
 
+  const isFormValid = () => {
+    // PR Code required
+    if (!prcode || prcode.trim() === "") {
+      showError("PR Code is required");
+      return false;
+    }
+
+    // Every item must have TypeOfExpenses
+    const hasEmptyExpenseType = items.some(
+      (item) => !item.TypeOfExpenses || item.TypeOfExpenses.trim() === "",
+    );
+
+    if (hasEmptyExpenseType) {
+      showError("All items must have Type of Expenses");
+      return false;
+    }
+
+    return true;
+  };
   const handleConfirm = async () => {
     let response;
+
+    // VALIDATION
+    if (!isFormValid()) {
+      return;
+    }
 
     try {
       response = await axios.patch(`/api/purchase/${params.purchaseID}`, {
         prcode,
+        items,
       });
+
       if (response.status === 200 || response.status === 201) {
         showSuccess(`Budget Confirm: ${params.purchaseID}`);
       }
+
       setTimeout(() => {
         router.push("/Main/SubmittedRequisition/BudgetConfirmation");
       }, 1800);
@@ -102,6 +131,17 @@ export default function PurchaseDetails() {
     }
   };
 
+  // handle modal for confirmation
+  const handleShowConfirm = () => {
+    if (!isFormValid()) {
+      return;
+    }
+    setShowConfirm(true);
+  };
+
+  const handleCancelConfirm = () => {
+    setShowConfirm(false);
+  };
   return (
     <>
       <div className="flex relative mb-5 w-auto">
@@ -200,11 +240,24 @@ export default function PurchaseDetails() {
       <div className="mt-13 flex justify-end items-end">
         <button
           className="bg-lightRed rounded-md py-2 px-3 text-white font-bold hover:border hover:border-darkRed hover:bg-white hover:text-black"
-          onClick={(e) => handleConfirm()}
+          onClick={handleShowConfirm}
         >
           Confirm
         </button>
       </div>
+      {/* create modal for confirmation  make it in center*/}
+
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 ">
+          <ConfirmBox
+            title="Confirm Budget Confirmation"
+            content={`Are you sure you want to confirm the budget for Purchase Code:`}
+            id={prcode}
+            handleConfirm={handleConfirm}
+            handleclose={handleCancelConfirm}
+          />
+        </div>
+      )}
 
       {/* accounting part claimable or non claimable  */}
       {/* <table className="border border-gray-300 w-full">
