@@ -28,5 +28,9 @@ const Check = sequelize.define("check", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  forApproval: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 });
 module.exports = Check;

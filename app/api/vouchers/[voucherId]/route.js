@@ -134,3 +134,25 @@ export async function DELETE(request, { params }) {
     return NextResponse.json({ error_message: err.message }, { status: 500 });
   }
 }
+
+export async function PATCH(request, { params }) {
+  const { voucherId } = await params;
+  try {
+    const check = await Check.findByPk(voucherId);
+    if (!check) {
+      return NextResponse.json(
+        { error_message: "Check item not found" },
+        { status: 404 },
+      );
+    }
+    // update for approval
+    await check.update({ forApproval: true });
+    return NextResponse.json(
+      { message: "Check item marked for approval successfully" },
+      { status: 200 },
+    );
+  } catch (err) {
+    console.log(err.message);
+    return NextResponse.json({ error_message: err.message }, { status: 500 });
+  }
+}

@@ -75,7 +75,7 @@ export default function Menus(role) {
       //  "My Requisition",
       //  "Profile",
     ],
-    Accountant: [
+    "Chief Accountant": [
       "Dashboard",
       "Purchase Requisition Form",
       "Submitted Requisition",

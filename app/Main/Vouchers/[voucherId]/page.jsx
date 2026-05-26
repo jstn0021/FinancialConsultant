@@ -6,17 +6,21 @@ import VoucherComponent from "@/app/components/vouchers";
 import { useParams } from "next/navigation";
 import { FiEdit } from "react-icons/fi";
 import { useBanner } from "@/hooks/Context/banner";
+import useUserContext from "@/hooks/Context/UserContext";
 const PaymentVouchers = () => {
   const [openModal, setOpenModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
+  const { user } = useUserContext();
   const { showError, showSuccess } = useBanner();
+  const [approving, setApproving] = useState(false);
   const [ChiefAdminSignature, setChiefAdminSignature] = useState(null);
   const [ChiefAccountSignature, setChiefAccountSignature] = useState(null);
   const [claimableStatus, setClaimableStatus] = useState({
     claimable: false,
     nonClaimable: false,
   });
+  const userRole = user?.role;
   const params = useParams();
   // EXISTING VOUCHERS
   const [checks, setChecks] = useState([]);
@@ -216,6 +220,19 @@ const PaymentVouchers = () => {
 
     setOpenModal(true);
   };
+
+  // handle approve
+  const handleApprove = () => {
+    setApproving(true);
+
+    // signature
+  };
+  const handleCancel = () => {
+    setApproving(false);
+
+    // signature
+  };
+
   return (
     <div className="p-5">
       <table>
@@ -420,74 +437,17 @@ const PaymentVouchers = () => {
           Non-Claimable
         </label>
       </div>
+      {/* approving */}
 
-      {/* table e_sign */}
-      <table className="mt-30 w-full table-fixed bg-gray-100 border border-gray-200">
-        <tbody>
-          <tr className="text-left">
-            <td className="p-2 w-1/3">Approved By:</td>
-            <td className="p-2 w-1/3">Approved By:</td>
-          </tr>
-
-          <tr className="text-center">
-            <td className="p-2 relative w-1/3">
-              {(purchaseDetails?.purchase?.AdminSign !== null ||
-                userRole === "Admin") && (
-                <img
-                  src={`${AdminSignature}`}
-                  alt="Signature"
-                  className={`absolute left-1/2 -translate-x-1/2 ${
-                    AdminSignature ? "-top-15 h-25" : "-top-8 h-12"
-                  } object-contain pointer-events-none`}
-                />
-              )}
-              <span>Admin</span>
-            </td>
-            <td className="p-2 relative w-1/3">
-              {(purchaseDetails?.purchase?.ChiefAdminManageSign !== null ||
-                userRole === "Chief Administrator Manager") && (
-                <img
-                  src={`${Chiefsignature}`}
-                  alt="Signature"
-                  className={`absolute left-1/2 -translate-x-1/2 ${
-                    Chiefsignature ? "-top-15 h-25" : "-top-8 h-12"
-                  } object-contain pointer-events-none`}
-                />
-              )}
-              <span>
-                {purchaseDetails?.purchase?.AdminSign != null
-                  ? `${user?.name}`
-                  : "Kai Sumitomo"}
-              </span>
-            </td>
-
-            <td className="p-2 relative w-1/3">
-              {(purchaseDetails?.purchase?.ProjectDirectorSign !== null ||
-                userRole === "Project Director") && (
-                <img
-                  src={`${PDirectorsignature}`}
-                  alt="Signature"
-                  className={`absolute left-1/2 -translate-x-1/2 ${
-                    PDirectorsignature ? "-top-15 h-25" : "-top-8 h-12"
-                  } object-contain pointer-events-none`}
-                />
-              )}
-              <span>Jorge Müller</span>
-            </td>
-          </tr>
-
-          <tr className="text-center">
-            <td className="text-white bg-black py-2 w-1/3">Employee Name</td>
-            <td className="text-white bg-black py-2 w-1/3">Admin</td>
-            <td className="text-white bg-black py-2 w-1/3">
-              {purchaseDetails?.purchase?.AdminSign != null
-                ? "Admin"
-                : "Chief Administrator Manager"}
-            </td>
-            <td className="text-white bg-black py-2 w-1/3">Project Director</td>
-          </tr>
-        </tbody>
-      </table>
+      {/* buttons  */}
+      <div className="flex justify-end  mt-3">
+        <button
+          onClick={handleApprove}
+          className="bg-btnRed text-white px-5 py-2 rounded mr-2 hover:bg-black"
+        >
+          Submit
+        </button>
+      </div>
     </div>
   );
 };
