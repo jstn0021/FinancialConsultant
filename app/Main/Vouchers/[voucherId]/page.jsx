@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import VoucherComponent from "@/app/components/vouchers";
@@ -31,7 +30,7 @@ const PaymentVouchers = () => {
   // FORM DATA
   const [formData, setFormData] = useState({
     title: "",
-    cash: "",
+    voucherTypeNumber: "",
     payment_item: "",
     payment_voucher_date: new Date().toISOString().split("T")[0],
     voucherType: "CASH USD",
@@ -174,7 +173,7 @@ const PaymentVouchers = () => {
       // RESET
       setFormData({
         title: "",
-        cash: "",
+        voucherTypeNumber: "",
         payment_item: "",
         payment_voucher_date: new Date().toISOString().split("T")[0],
         voucherType: "CASH USD",
@@ -206,7 +205,7 @@ const PaymentVouchers = () => {
 
     setFormData({
       title: voucher.title || "",
-      cash: voucher.cash || "",
+      voucherTypeNumber: voucher.voucherTypeNumber || "",
       payment_item: voucher.payment_item || "",
       payment_voucher_date:
         voucher.payment_voucher_date?.split("T")[0] ||
@@ -367,10 +366,10 @@ const PaymentVouchers = () => {
               />
 
               <input
-                type="number"
-                name="cash"
+                type="text"
+                name="voucherTypeNumber"
                 placeholder={`${formData.voucherType.includes("CASH") ? "Cash No." : "Bank No."}`}
-                value={formData.cash}
+                value={formData.voucherTypeNumber}
                 onChange={handleParentChange}
                 className="border p-2 rounded"
               />

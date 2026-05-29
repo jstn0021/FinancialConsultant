@@ -39,7 +39,7 @@ export async function POST(request, { params }) {
   const { voucherId } = await params;
   const {
     title,
-    cash,
+    voucherTypeNumber,
     payment_item,
     payment_voucher_date,
     voucherType,
@@ -57,7 +57,7 @@ export async function POST(request, { params }) {
         check_id: voucherId,
         parent_id: null,
         title,
-        cash,
+        voucherTypeNumber,
         payment_voucher_date,
         payment_voucher_formatted_date: formatVoucherDate(payment_voucher_date),
         payment_item,
@@ -78,6 +78,8 @@ export async function POST(request, { params }) {
         parent_id: parentVoucher.id,
         title: child.title,
         amount: child.amount,
+        payment_voucher_date,
+        payee_name: title,
       }));
       await CheckItem.bulkCreate(childrenData, { transaction });
     }
@@ -181,11 +183,12 @@ export async function PUT(request, { params }) {
 
     const {
       title,
-      cash,
+      voucherTypeNumber,
       payment_item,
       payment_voucher_date,
       voucherType,
       slipNo,
+      job,
       pm,
       children,
     } = body;
@@ -214,7 +217,7 @@ export async function PUT(request, { params }) {
     await parentVoucher.update(
       {
         title,
-        cash,
+        voucherTypeNumber,
         payment_item,
         voucherType,
         slipNo,
@@ -286,7 +289,7 @@ export async function PUT(request, { params }) {
     );
   } catch (err) {
     await transaction.rollback();
-
+    console.log(err.message);
     return NextResponse.json(
       {
         error_message: err.message,

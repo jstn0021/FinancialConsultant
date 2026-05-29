@@ -8,6 +8,9 @@ import BudgetValue from "./budgetsValue.js";
 import Check from "./check.js";
 import CheckItem from "./checkItem.js";
 import Notification from "./notification.js";
+import CashBooks from "./cashbooks.js";
+import US_Cash_Bank from "./cashbook_us.js";
+import PH_Cash_Bank from "./cashbook_ph.js";
 
 Purchase.hasMany(PurchaseItems, {
   foreignKey: "PurchaseID",
@@ -73,6 +76,27 @@ CheckItem.belongsTo(CheckItem, {
   foreignKey: "parent_id",
   as: "parent",
 });
+
+// 1 to many
+// Cashbook many cashbook_us
+CashBooks.hasMany(US_Cash_Bank, {
+  foreignKey: "cashbook_id",
+  sourceKey: "cashbook_id",
+});
+CashBooks.hasMany(PH_Cash_Bank, {
+  foreignKey: "cashbook_id",
+  sourceKey: "cashbook_id",
+});
+
+US_Cash_Bank.belongsTo(CashBooks, {
+  foreignKey: "cashbook_id",
+  targetKey: "cashbook_id",
+});
+PH_Cash_Bank.belongsTo(CashBooks, {
+  foreignKey: "cashbook_id",
+  targetKey: "cashbook_id",
+});
+
 export {
   Purchase,
   PurchaseItems,
@@ -83,4 +107,7 @@ export {
   BudgetItems,
   BudgetValue,
   Notification,
+  CashBooks,
+  US_Cash_Bank,
+  PH_Cash_Bank,
 };

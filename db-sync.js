@@ -1,6 +1,6 @@
 const sequelize = require("./db/connection");
 
-const { Check } = require("./db/models/index");
+const { CheckItem } = require("./db/models/index");
 sequelize
   .sync({ alter: true })
   .then(() => {

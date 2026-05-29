@@ -47,13 +47,11 @@ const CheckItem = sequelize.define(
       values: ["CASH USD", "BANK USD", "CASH PHP", "BANK PHP"],
       defaultValue: "CASH PHP",
     },
-    payee_name: {
-      type: DataTypes.STRING,
-    },
+
     payment_voucher_formatted_date: {
       type: DataTypes.STRING,
     },
-    payment_vourcher_date: {
+    payment_voucher_date: {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },

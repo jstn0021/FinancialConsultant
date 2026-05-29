@@ -22,7 +22,7 @@ const VourcherComponent = (props) => {
         <div className="self-end-safe border-2 h-auto border-black">
           <div className="flex flex-col ">
             <h4 className="border-b-2 p-3 px-5 border-black font-bold">Cash</h4>
-            <h4 className="p-3">{voucher.cash || 0}</h4>
+            <h4 className="p-3">{voucher.voucherTypeNumber || 0}</h4>
           </div>
         </div>
         <div className="border-2 h-auto border-black border-l-0">
@@ -240,10 +240,18 @@ const VourcherComponent = (props) => {
             </div>
             <div className="flex-2 p-3 flex justify-end items-center">
               <h4 className="text-lg">
-                {voucher?.children?.reduce(
-                  (store, current) => store + current.amount,
-                  0,
-                ) || 0}
+                {voucher.voucherType.includes("PHP")
+                  ? formatMoney(
+                      voucher?.children?.reduce(
+                        (store, current) => store + current.amount,
+                        0,
+                      ) || 0,
+                    )
+                  : formatMoney(
+                      voucher?.children.reduce(
+                        (store, current) => store + current.amount,
+                      ) || 0,
+                    )}
               </h4>
               {/* <input
                 type="number"
