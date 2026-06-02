@@ -1,8 +1,19 @@
-import { cashbooks } from "@/functions/cashbook";
+import { CashBooks } from "@/db/models";
 import { NextResponse } from "next/server";
 
-export async function GET(request) {
-  const cash = await cashbooks("CASH PHP");
+export async function POST(request) {
+  const body = await request.json();
+  const { dateRangeStart, dateRangeEnd, category, currency } = body;
+  try {
+    const cashbooks = await CashBooks.create({
+      dateRangeStart,
+      dateRangeEnd,
+      currency,
+      category,
+    });
 
-  return NextResponse.json({ cash }, { status: 200 });
+    return NextResponse.json({ message: cashbooks }, { status: 200 });
+  } catch (err) {
+    return NextResponse.json({ error_message }, { status: 500 });
+  }
 }

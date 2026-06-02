@@ -1,143 +1,151 @@
 "use server";
 import { Sequelize } from "sequelize";
-import {
-  CashBooks,
-  Check,
-  CheckItem,
-  PH_Cash_Bank,
-  US_Cash_Bank,
-} from "../db/models/index.js";
+import { CashBooks, PH_Cash_Bank, US_Cash_Bank } from "../db/models/index.js";
 import sequelize from "../db/connection.js";
 
-export async function cashbooks(voucherType) {
-  const transaction = await sequelize.transaction();
+import { validateRequiredFields } from "./validations.js";
+import { Op } from "sequelize";
 
+export async function createCashbookEntry() {
   try {
-    // get all check/voucher by voucher type
-    const vouchers = await Check.findAll({
-      include: [
-        {
-          model: CheckItem,
-          as: "items",
-          attributes: [
-            "voucherType",
-            "id",
-            "slipNo",
-            "payment_item",
-            "payment_voucher_date",
-            "job",
-            "parent_id",
-            "amount",
-          ],
+    const startOfMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1,
+    );
 
-          //   where: {
-          //     voucherType,
-          //     parent_id: {
-          //       [Sequelize.Op.not]: null,
-          //     },
-          //   },
+    const startOfNextMonth = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth() + 1,
+      1,
+    );
 
-          required: false,
+    const combinations = [
+      { currency: "PH", category: "Cash" },
+      { currency: "PH", category: "Bank" },
+      { currency: "US", category: "Cash" },
+      { currency: "US", category: "Bank" },
+    ];
 
-          include: [
-            {
-              model: CheckItem,
-              as: "children",
-
-              attributes: [
-                "voucherType",
-                "id",
-                "slipNo",
-                "payment_item",
-                "payment_voucher_date",
-                "job",
-                "parent_id",
-                "amount",
-              ],
-            },
-          ],
+    for (const combination of combinations) {
+      const cashbook = await CashBooks.findOne({
+        where: {
+          currency: combination.currency,
+          category: combination.category,
+          createdAt: {
+            [Op.gte]: startOfMonth,
+            [Op.lt]: startOfNextMonth,
+          },
         },
-      ],
-    });
+      });
 
-    const [category, currency] = voucherType.split(" ");
-    console.log(currency);
+      if (!cashbook) {
+        await CashBooks.create({
+          currency: combination.currency,
+          category: combination.category,
+        });
 
-    let cashbook;
-    let childCashbook;
-    let childParent;
-    switch (currency) {
-      case "PHP":
-        // create cashbook
-        cashbook = await CashBooks.create(
-          {
-            PH,
-            category,
-          },
-          { transaction },
-        );
-        if (vouchers?.length > 0) {
-          vouchers.map((child) => {
-            if (child.items?.length > 0) {
-              child.items.map(async (item) => {
-                childCashbook = item.children?.map((ch) => ({
-                  cashbook_id: 3,
-                  date: item.payment_voucher_date,
-                  job_No: item.job,
-                  payee_payer_no: item.payment_item,
-                  payee_payer: item.title,
-                  payment: item.amount,
-                }));
-                if (vouchers?.length > 0) {
-                  childCashbook = vouchers.map((child) => ({
-                    cashbook_id: cashbook.cashbook_id,
-                    date: child.payment_voucher_date,
-                    job_No: child.job,
-                    payee_payer_no: child.payee_name,
-                    amount: child.amount,
-                  }));
-                  await US_Cash_Bank.bulkCreate(childCashbook, {
-                    transaction,
-                  });
-                }
-              });
-            }
-          });
-        }
-
-        // create children
-        break;
-
-      case "USD":
-        // create USD cashbook
-        cashbook = await CashBooks.create(
-          {
-            currency,
-            category,
-          },
-          { transaction },
-        );
-        // create children
-
-        break;
-
-      default:
-        return;
+        // console.log(`Created ${combination.currency} ${combination.category}`);
+      }
     }
-
-    await transaction.commit();
 
     return {
       success: true,
+      message: "Cashbook entries checked successfully",
     };
   } catch (error) {
-    await transaction.rollback();
-
     console.error(error);
 
     return {
       success: false,
-      error: error.message,
+      message: error.message,
+    };
+  }
+}
+export async function insertCashbooks(
+  cashbookDetailed,
+  voucherType,
+  cashbookID,
+) {
+  // const validation = validateRequiredFields(
+  //   {
+  //     date: cashbookDetailed.date,
+  //     job_No: cashbookDetailed.job_No,
+  //     payee_payer: cashbookDetailed.payee_payer,
+  //     payee_payer_no: cashbookDetailed.payment_item,
+  //     description: cashbookDetailed.description,
+  //     payment: cashbookDetailed.payment,
+  //   },
+  //   [
+  //     {
+  //       name: "date",
+  //       label: "Date",
+  //       required: true,
+  //       type: "date",
+  //     },
+  //     {
+  //       name: "job_No",
+  //       label: "Job No",
+  //       required: true,
+  //     },
+  //     {
+  //       name: "payee_payer_no",
+  //       label: "Payee/Payer No",
+  //       required: true,
+  //     },
+  //     {
+  //       name: "amount",
+  //       label: "Amount",
+  //       required: true,
+  //       type: "number",
+  //       min: 0,
+  //     },
+  //   ],
+  // );
+
+  // if (!validation.isValid) {
+  //   return {
+  //     success: false,
+  //     message: "Validation failed",
+  //     errors: validation.errors,
+  //   };
+  // }
+
+  const dbTransaction = await sequelize.transaction();
+
+  try {
+    const seperate = voucherType.split(" ");
+    const currency = seperate[1];
+
+    const cashBankModel = currency === "PHP" ? PH_Cash_Bank : US_Cash_Bank;
+
+    const cashBankEntry = await cashBankModel.create(
+      {
+        date: cashbookDetailed.date,
+        job_No: cashbookDetailed.job_No,
+        payee_payer: cashbookDetailed.payee_payer,
+        payee_payer_no: cashbookDetailed.payment_item,
+        description: cashbookDetailed.description,
+        payment: cashbookDetailed.payment,
+      },
+      { transaction: dbTransaction },
+    );
+
+    await dbTransaction.commit();
+
+    return {
+      success: true,
+      message: "Cashbook entry created successfully",
+      cashbookID,
+      cashBankEntry,
+    };
+  } catch (err) {
+    await dbTransaction.rollback();
+    console.log("error", err.message);
+    return {
+      success: false,
+      message: "Error creating cashbook entry",
+      error: err.message,
     };
   }
 }

@@ -70,6 +70,20 @@ export const validateRequiredFields = (values, requiredFields) => {
 
       return;
     }
+    // date validation
+    if (field.type === "date" && value && isNaN(new Date(value).getTime())) {
+      errors[field.name] =
+        field.invalidMessage || `${field.label} must be a valid date`;
+
+      return;
+    }
+    // date validation
+    if (field.type === "date" && value && isNaN(new Date(value).getTime())) {
+      errors[field.name] =
+        field.invalidMessage || `${field.label} must be a valid date`;
+
+      return;
+    }
 
     // minimum validation
     if (field.min !== undefined && Number(value) < field.min) {

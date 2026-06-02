@@ -58,6 +58,12 @@ const PaymentVouchers = () => {
         claimable: response.data?.specificCheck?.claimable === true,
         nonClaimable: response.data?.specificCheck?.claimable === false,
       });
+      setChiefAccountSignature(
+        response.data?.specificCheck?.ChiefAccountSignature || null,
+      );
+      setChiefAdminSignature(
+        response.data?.specificCheck?.ChiefAdminSignature || null,
+      );
     } catch (error) {
       console.log(error);
     }

@@ -41,6 +41,18 @@ const CashBooks = sequelize.define(
       allowNull: 0,
       defaultValue: 0,
     },
+    is_already_have_subdata: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    dateRangeStart: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    dateRangeEnd: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {},
 );

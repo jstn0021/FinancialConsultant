@@ -38,6 +38,10 @@ const PH_Cash_Bank = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    payee_payer: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     receipt: {
       type: DataTypes.FLOAT,
       allowNull: true,

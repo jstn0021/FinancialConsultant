@@ -1,4 +1,5 @@
-import { Check } from "@/db/models";
+import { Check, CheckItem } from "@/db/models";
+import { createCashbookEntry } from "@/functions/cashbook";
 import { GetFilterizeVoucher } from "@/functions/vouchers";
 import { NextResponse } from "next/server";
 
@@ -33,11 +34,11 @@ export async function POST(request) {
     }
     await voucher.update({ ChiefAdminSignature: body.e_sign });
 
-    // adding in the cashbooks
-    // parents table cashbook
-    // field  { PROJECT , CURRENCY , ID , CASHBOOKTYPE }
-    // ADD IN Child or the designated CASHBOOKTYPE
-    return NextResponse.json({ message: `You Approve Voucher` });
+    // const cashbookEntries = await createCashbookEntry();
+
+    return NextResponse.json({
+      message: `You Approve Voucher `,
+    });
   } catch (err) {
     return NextResponse.json({ error_message: err.message }, { status: 500 });
   }
