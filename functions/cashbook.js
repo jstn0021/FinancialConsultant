@@ -16,7 +16,7 @@ export async function createCashbookEntry() {
 
     const startOfNextMonth = new Date(
       new Date().getFullYear(),
-      new Date().getMonth() + 1,
+      new TBDate().getMonth() + 1,
       1,
     );
 
@@ -116,15 +116,15 @@ export async function insertCashbooks(
   try {
     const seperate = voucherType.split(" ");
     const currency = seperate[1];
-
     const cashBankModel = currency === "PHP" ? PH_Cash_Bank : US_Cash_Bank;
 
     const cashBankEntry = await cashBankModel.create(
       {
+        cashbook_id: cashbookID,
         date: cashbookDetailed.date,
         job_No: cashbookDetailed.job_No,
         payee_payer: cashbookDetailed.payee_payer,
-        payee_payer_no: cashbookDetailed.payment_item,
+        payee_payer_no: cashbookDetailed.payee_payer_no,
         description: cashbookDetailed.description,
         payment: cashbookDetailed.payment,
       },

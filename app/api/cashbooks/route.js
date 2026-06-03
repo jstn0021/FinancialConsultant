@@ -17,3 +17,12 @@ export async function POST(request) {
     return NextResponse.json({ error_message }, { status: 500 });
   }
 }
+
+export async function GET(request) {
+  try {
+    const cashbooks = await CashBooks.findAll();
+    return NextResponse.json({ cashbooks }, { status: 200 });
+  } catch (err) {
+    return NextResponse.json({ error_message: err.message }, { status: 500 });
+  }
+}

@@ -19,6 +19,14 @@ export default function Menus(role) {
       section: "menu",
       path: "/Main/Vouchers",
     },
+
+    {
+      label: "Cashbooks",
+      icon: "□",
+      section: "menu",
+      path: "/Main/Cashbooks",
+    },
+
     {
       label: "Budget Confirmation",
       icon: "□",
@@ -99,6 +107,7 @@ export default function Menus(role) {
       "Submitted Requisition",
       "Vouchers",
       "Reimbursable",
+      "Cashbooks",
     ],
     "Chief Administrator Manager": [
       "Dashboard",

@@ -288,7 +288,7 @@ const VouchersList = () => {
       {/* modal  */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-[350px] p-6">
+          <div className="bg-white rounded-lg shadow-lg w-87.5 p-6">
             <h2 className="text-xl font-bold mb-4 text-black">
               Add New Voucher
             </h2>

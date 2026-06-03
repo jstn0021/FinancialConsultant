@@ -243,28 +243,20 @@ const VourcherComponent = (props) => {
                 {voucher.voucherType.includes("PHP")
                   ? formatMoney(
                       voucher?.children?.reduce(
-                        (store, current) => store + current.amount,
+                        (store, current) => store + Number(current.amount || 0),
                         0,
-                      ) || 0,
+                      ),
+                      "PHP",
                     )
                   : formatMoney(
-                      voucher?.children.reduce(
-                        (store, current) => store + current.amount,
-                      ) || 0,
+                      voucher?.children?.reduce(
+                        (store, current) => store + Number(current.amount || 0),
+                        0,
+                      ),
+                      "USD",
+                      "en-US",
                     )}
               </h4>
-              {/* <input
-                type="number"
-                className="text-lg text-end"
-                name="total"
-                value={
-                  voucher?.children?.reduce(
-                    (store, current) => store + current.amount,
-                    0,
-                  ) || 0
-                }
-                onChange={(e) => handleChange(index, e)}
-              /> */}
             </div>
           </div>
         </div>
