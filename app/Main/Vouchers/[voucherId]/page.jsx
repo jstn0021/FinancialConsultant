@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { FiEdit } from "react-icons/fi";
 import ConfirmBox from "@/app/components/modals/confirmbox";
 import { useBanner } from "@/hooks/Context/banner";
+import { getSuppliers } from "@/functions/supplier";
 import useUserContext from "@/hooks/Context/UserContext";
 const PaymentVouchers = () => {
   const [openModal, setOpenModal] = useState(false);
@@ -13,11 +14,14 @@ const PaymentVouchers = () => {
   const [editId, setEditId] = useState(null);
   const { user } = useUserContext();
   const router = useRouter();
+  const [suppliers, setSuppliers] = useState([]);
   const { showError, showSuccess } = useBanner();
   const [DisplayedAmount, setDisplayedAmount] = useState(false);
   const [isApproving, setApproving] = useState(false);
   const [ChiefAdminSignature, setChiefAdminSignature] = useState(null);
   const [ChiefAccountSignature, setChiefAccountSignature] = useState(null);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredSuppliers, setFilteredSuppliers] = useState([]);
   const [claimableStatus, setClaimableStatus] = useState({
     claimable: false,
     nonClaimable: false,
@@ -31,12 +35,15 @@ const PaymentVouchers = () => {
   const [formData, setFormData] = useState({
     title: "",
     voucherTypeNumber: "",
-    payment_item: "",
+    // payment_item: "",
+    accountCode: "", // ✅ bago
+    glCode: "", // ✅ bago
     payment_voucher_date: new Date().toISOString().split("T")[0],
     voucherType: "CASH USD",
     slipNo: "",
     job: "9665R7268",
     pm: "",
+    receiptOrPayment: "", // ✅ dagdag dito
     children: [
       {
         title: "",
@@ -58,6 +65,11 @@ const PaymentVouchers = () => {
         claimable: response.data?.specificCheck?.claimable === true,
         nonClaimable: response.data?.specificCheck?.claimable === false,
       });
+      // supplier name
+      const payeeName = await getSuppliers();
+      console.log("payeeName", payeeName.data);
+
+      setSuppliers(payeeName.data);
     } catch (error) {
       console.log(error);
     }
@@ -108,7 +120,29 @@ const PaymentVouchers = () => {
       [name]: value,
     }));
   };
+  const handlePayeeChange = (e) => {
+    const value = e.target.value;
+    setFormData((prev) => ({ ...prev, title: value }));
 
+    if (value.trim() === "") {
+      setFilteredSuppliers([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const matches = suppliers
+      .map((s) => s.supplierName)
+      .filter((name) => name.toLowerCase().includes(value.toLowerCase()));
+
+    setFilteredSuppliers(matches);
+    setShowSuggestions(matches.length > 0);
+  };
+
+  const handleSelectSupplier = (name) => {
+    setFormData((prev) => ({ ...prev, title: name }));
+    setShowSuggestions(false);
+    setFilteredSuppliers([]);
+  };
   // HANDLE CHILD ROW
   const handleRowChange = (index, e) => {
     const { name, value } = e.target;
@@ -151,20 +185,23 @@ const PaymentVouchers = () => {
   const handleSubmit = async () => {
     try {
       if (isEdit) {
-        // UPDATE
-        await axios.put(`/api/vouchers/${editId}`, {
-          check_id: params.voucherId,
-          ...formData,
-        });
+        // UPDATE;
+        // await axios.put(`/api/vouchers/${editId}`, {
+        //   check_id: params.voucherId,
+        //   ...formData,
+        (payment_item, // ✅ override yung spread
+          // });
 
+          console.log("edit", formData));
+        console.log("payment_item:", payment_item); // ✅ check muna
         showSuccess(`Voucher updated successfully`);
       } else {
-        // CREATE
-        await axios.post(`/api/vouchers/${params.voucherId}`, {
-          check_id: params.voucherId,
-          ...formData,
-        });
-
+        //CREATE;
+        // await axios.post(`/api/vouchers/${params.voucherId}`, {
+        //   check_id: params.voucherId,
+        //   ...formData,
+        // });
+        console.log("add", formData);
         showSuccess("Voucher created successfully");
       }
 
@@ -202,18 +239,20 @@ const PaymentVouchers = () => {
     setIsEdit(true);
 
     setEditId(voucher.id);
+    const splitItem = (voucher.payment_item || "").split(" ");
 
     setFormData({
       title: voucher.title || "",
       voucherTypeNumber: voucher.voucherTypeNumber || "",
-      payment_item: voucher.payment_item || "",
+      accountCode: splitItem[0] || "", // ✅ palitan yung payment_item
+      glCode: splitItem[1] || "",
       payment_voucher_date:
         voucher.payment_voucher_date?.split("T")[0] ||
         voucher.createdAt?.split("T")[0],
 
       voucherType: voucher.voucherType || "CASH USD",
       slipNo: voucher.slipNo || "",
-
+      receiptOrPayment: voucher.receiptOrPayment || "",
       job: voucher.job || "",
       pm: voucher.pm || "",
 
@@ -346,6 +385,16 @@ const PaymentVouchers = () => {
                 <option value="CASH PHP">CASH PHP</option>
                 <option value="BANK PHP">BANK PHP</option>
               </select>
+              <select
+                name="receiptOrPayment"
+                value={formData.receiptOrPayment}
+                onChange={handleParentChange}
+                className="border p-2 rounded"
+              >
+                <option value="">-- Select Type --</option>
+                <option value="receipt">Receipt</option>
+                <option value="payment">Payment</option>
+              </select>
 
               <input
                 type="number"
@@ -356,14 +405,36 @@ const PaymentVouchers = () => {
                 className="border p-2 rounded"
               />
 
-              <input
-                type="text"
-                name="title"
-                placeholder="Title"
-                value={formData.title}
-                onChange={handleParentChange}
-                className="border p-2 rounded"
-              />
+              {/* auto suggest  payeename*/}
+              <div className="relative">
+                <input
+                  type="text"
+                  name="title"
+                  placeholder="Payee Name"
+                  value={formData.title}
+                  onChange={handlePayeeChange}
+                  onBlur={() =>
+                    setTimeout(() => setShowSuggestions(false), 150)
+                  }
+                  onFocus={() => {
+                    if (filteredSuppliers.length > 0) setShowSuggestions(true);
+                  }}
+                  className="border p-2 rounded w-full"
+                />
+                {showSuggestions && (
+                  <ul className="absolute z-50 top-full left-0 right-0 bg-white border border-gray-200 rounded shadow-lg max-h-48 overflow-y-auto mt-1">
+                    {filteredSuppliers.map((name, index) => (
+                      <li
+                        key={index}
+                        onMouseDown={() => handleSelectSupplier(name)}
+                        className="px-3 py-2 text-sm hover:bg-blue-50 cursor-pointer"
+                      >
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
               <input
                 type="text"
@@ -376,9 +447,18 @@ const PaymentVouchers = () => {
 
               <input
                 type="text"
-                name="payment_item"
-                placeholder="Payment Item"
-                value={formData.payment_item}
+                name="accountCode"
+                placeholder="Account Code"
+                value={formData.accountCode}
+                onChange={handleParentChange}
+                className="border p-2 rounded"
+              />
+
+              <input
+                type="text"
+                name="glCode"
+                placeholder="GL Code"
+                value={formData.glCode}
                 onChange={handleParentChange}
                 className="border p-2 rounded"
               />
