@@ -231,3 +231,82 @@ export async function GetSpecificRequest(
     );
   }
 }
+export async function GetPurchaseWithUserId(
+  userID,
+  startParam,
+  endParam,
+  page = 1,
+  limit = 10,
+) {
+  try {
+    page = Number(page);
+    limit = Number(limit);
+
+    if (Number.isNaN(page) || page < 1) page = 1;
+    if (Number.isNaN(limit) || limit < 1) limit = 10;
+
+    const offset = (page - 1) * limit;
+
+    // Get date range from database
+    const dateRange = await Purchase.findOne({
+      attributes: [
+        [Sequelize.fn("MIN", Sequelize.col("createdAt")), "earliestDate"],
+        [Sequelize.fn("MAX", Sequelize.col("createdAt")), "latestDate"],
+      ],
+      raw: true,
+    });
+
+    const earliestDate = dateRange?.earliestDate
+      ? new Date(dateRange.earliestDate)
+      : new Date();
+
+    const latestDate = dateRange?.latestDate
+      ? new Date(dateRange.latestDate)
+      : new Date();
+
+    const rangeStart = startParam
+      ? new Date(`${startParam}T00:00:00.000Z`)
+      : earliestDate;
+
+    const rangeEnd = endParam
+      ? new Date(`${endParam}T23:59:59.999Z`)
+      : latestDate;
+
+    const whereClause = {
+      UserID: userID,
+      createdAt: {
+        [Sequelize.Op.between]: [rangeStart, rangeEnd],
+      },
+    };
+
+    const { rows, count } = await Purchase.findAndCountAll({
+      where: whereClause,
+      include: [{ model: User }, { model: PurchaseItems }],
+      order: [["PurchaseID", "DESC"]],
+      offset,
+      limit,
+      distinct: true,
+    });
+
+    const data = rows.map((row) => row.get({ plain: true }));
+
+    return {
+      success: true,
+      data,
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+      rangeStart: rangeStart.toISOString(),
+      rangeEnd: rangeEnd.toISOString(),
+      message: "Purchase request fetched successfully",
+    };
+  } catch (error) {
+    console.error("GetPurchaseWithUserId Error:", error);
+
+    return {
+      success: false,
+      error_message: error.message || "Internal Server Error",
+    };
+  }
+}

@@ -70,6 +70,22 @@ export default function Menus(role) {
         },
       ],
     },
+
+    //my requisition list
+
+    {
+      label: "My Requisition",
+      icon: "□",
+      section: "menu",
+      path: "/Main/Purchase/MyRequisition",
+    },
+    {
+      label: "User Management",
+      icon: "□",
+      section: "menu",
+      path: "/Main/UserManagement",
+    },
+
     //  Reimbursable
     {
       label: "Reimbursable",
@@ -90,7 +106,7 @@ export default function Menus(role) {
   const roleMenuMap = {
     "Regular Employee": [
       "Purchase Requisition Form",
-      // "My Requisition",
+      "My Requisition",
       // "Profile"
     ],
     Admin: [
@@ -98,12 +114,13 @@ export default function Menus(role) {
       "Purchase Requisition Form",
       "Requisition List",
       "Vouchers",
-      //  "My Requisition",
+      "My Requisition",
       //  "Profile",
     ],
     "Chief Accountant": [
       "Dashboard",
       "Purchase Requisition Form",
+      "My Requisition",
       "Submitted Requisition",
       "Vouchers",
       "Reimbursable",
@@ -112,6 +129,7 @@ export default function Menus(role) {
     Accounting: [
       "Dashboard",
       "Purchase Requisition Form",
+      "My Requisition",
       "Submitted Requisition",
       "Vouchers",
       "Reimbursable",
@@ -120,6 +138,7 @@ export default function Menus(role) {
     "Chief Administrator Manager": [
       "Dashboard",
       "Purchase Requisition Form",
+      "My Requisition",
       "Requisition List",
       "Vouchers",
       //  "My Requisition",
@@ -128,6 +147,7 @@ export default function Menus(role) {
     "Project Director": [
       "Dashboard",
       "Purchase Requisition Form",
+      "My Requisition",
       "Requisition List",
       //  "My Requisition",
       //  "Profile",
@@ -135,8 +155,9 @@ export default function Menus(role) {
     SuperAdmin: [
       "Dashboard",
       "Purchase Requisition Form",
+      "My Requisition",
       //  "My Requisition",
-      //  "User Management",
+      "User Management",
       //  "Profile"
     ],
   };

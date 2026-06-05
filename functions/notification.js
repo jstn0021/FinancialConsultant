@@ -1,6 +1,7 @@
 "use server";
 import { Notification, User } from "../db/models/index.js";
-
+require("dotenv").config();
+import nodemailer from "nodemailer";
 // notification all accounting
 export async function accountingNofication(status, PRCODE, requestor) {
   let notification = "";
@@ -25,6 +26,7 @@ export async function accountingNofication(status, PRCODE, requestor) {
         department: "Accounting",
       },
     });
+
     if (accountant.length > 0) {
       for (const account of accountant) {
         const createApprove = await createNotification(
@@ -41,6 +43,15 @@ export async function accountingNofication(status, PRCODE, requestor) {
     return false;
   }
 }
+
+// transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 // create notification  function next Approval Stage
 export async function createNextApprovalNotification(
@@ -74,17 +85,37 @@ export async function createNextApprovalNotification(
     return false;
   }
 }
-export async function createNotification(receiver, notification) {
+
+export async function createNotification(receiver, notification, email) {
   // await
   const payload = {
     notification: notification,
     userID: receiver,
   };
+  // find user email
+  const userEmail = await User.findOne({
+    where: {
+      userID: receiver,
+    },
+    attributes: ["email"],
+  });
 
+  //send
   try {
     const notify = await Notification.create(payload);
+    await transporter.sendMail({
+      from: `"FINANCIAL CONSULTANT SYSTEM" <${process.env.EMAIL_USER}`,
+      to: userEmail.email,
+      subject: "New Notification - FINANCIAL CONSULTANT SYSTEM",
+      html: `
+       <div>
+         <p>${notification}</p>
+        <div/>
+      `,
+    });
     return true;
   } catch (err) {
+    console.log(err.message);
     return false;
   }
 }

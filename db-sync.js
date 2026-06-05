@@ -1,6 +1,6 @@
 const sequelize = require("./db/connection");
 
-const { CashBooks } = require("./db/models/index");
+const { User } = require("./db/models/index");
 sequelize
   .sync({ alter: true })
   .then(() => {

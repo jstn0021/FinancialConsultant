@@ -2,11 +2,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatMoney } from "@/functions/formatCurrency";
+import { useRouter } from "next/navigation";
 
 const Table = (props) => {
-  const { role, approvalType } = props;
+  const { role, approvalType, ownList } = props;
+  const router = useRouter();
   const handleChange = (index, field, value) => {
-    props.setItems((prev) => {
+    props?.setItems((prev) => {
       const updated = [...prev];
 
       const item = {
@@ -35,6 +37,22 @@ const Table = (props) => {
   useEffect(() => {
     console.log(props.items);
   }, []);
+  //onChange
+  const handleChangeAction = (id, action) => {
+    switch (action) {
+      case "View":
+        // view function
+        router.push(`/api/Purchase/MyRequisiton/${id}`);
+        return;
+      case "Cancel":
+        // cancel funtion
+        alert("Cancel");
+        return;
+
+      default:
+        return;
+    }
+  };
   return (
     <>
       <div className="table-container w-full">
@@ -144,6 +162,44 @@ const Table = (props) => {
                 </td>
               </tr>
             ))}
+
+            {/*for my requisition List */}
+            {ownList?.map((purchase, index) => (
+              <tr key={index} className="border-b border-gray-300">
+                <td className="px-1 py-3">{purchase.PurchaseID}</td>
+                <td className="px-4 py-3">
+                  {purchase.purchaseItems?.length || 0}
+                </td>
+                <td className="px-4 py-3">
+                  {formatMoney(
+                    purchase.purchaseItems?.reduce(
+                      (total, item) => total + item.Quantity * item.UnitPrice,
+                      0,
+                    ) || 0,
+                    "PHP",
+                    "en-PH",
+                  )}
+                </td>
+                <td className="px-4 py-3">{purchase.Status}</td>
+                <td className="px-4 py-3">
+                  {new Date(purchase.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-4 py-3">
+                  <select
+                    onChange={(e) => {
+                      handleChangeAction(purchase.PurchaseID, e.target.value);
+                    }}
+                    className="px-1 py-1 w-auto my-1 border border-darkRed bg-btnRed rounded-xl text-darkRed hover:bg-white text-sm"
+                  >
+                    <option value="">Action</option>
+                    <option value="View">View</option>
+                    <option value="Cancel">Cancel</option>
+                  </select>
+                </td>
+              </tr>
+            ))}
+
+            {/* for my requisition ListDetailed */}
           </tbody>
         </table>
       </div>
