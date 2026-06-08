@@ -522,9 +522,14 @@ function ms(ws, r1, c1, r2, c2, value, opts = {}) {
 
 function blueHdr(ws, r1, c1, r2, c2, value) {
   return ms(ws, r1, c1, r2, c2, value, {
-    font: FONT_WHT(),
+    font: {
+      name: "Arial Narrow",
+      size: 9,
+      bold: true,
+      color: { argb: "FF000000" },
+    },
     align: "center",
-    fill: FILL_DKBLUE,
+    fill: FILL_HDRGRAY,
     border: B_ALL,
     wrap: true,
   });
@@ -825,45 +830,45 @@ export async function POST(request) {
     ws.getRow(R).height = 14;
     R++;
 
-    // ── BUSINESS TAX TABLE ────────────────────────────────────────────────────
-    blueHdr(
-      ws,
-      R,
-      1,
-      R + 1,
-      4,
-      "Money Payments Subject to Withholding of Business Tax (Government & Private)",
-    );
-    blueHdr(ws, R, 5, R + 1, 5, "ATC");
-    blueHdr(ws, R, 6, R, 9, "AMOUNT OF MONEY PAYMENTS");
-    blueHdr(ws, R, 10, R + 1, 10, "Tax Withheld for the Quarter");
-    ws.getRow(R).height = 20;
-    R++;
+    // // ── BUSINESS TAX TABLE ────────────────────────────────────────────────────
+    // blueHdr(
+    //   ws,
+    //   R,
+    //   1,
+    //   R + 1,
+    //   4,
+    //   "Money Payments Subject to Withholding of Business Tax (Government & Private)",
+    // );
+    // blueHdr(ws, R, 5, R + 1, 5, "ATC");
+    // blueHdr(ws, R, 6, R, 9, "AMOUNT OF MONEY PAYMENTS");
+    // blueHdr(ws, R, 10, R + 1, 10, "Tax Withheld for the Quarter");
+    // ws.getRow(R).height = 20;
+    // R++;
 
-    blueHdr(ws, R, 6, R, 6, "1st Month\nof the Quarter");
-    blueHdr(ws, R, 7, R, 7, "2nd Month\nof the Quarter");
-    blueHdr(ws, R, 8, R, 8, "3rd Month\nof the Quarter");
-    blueHdr(ws, R, 9, R, 9, "Total");
-    ws.getRow(R).height = 26;
-    R++;
+    // blueHdr(ws, R, 6, R, 6, "1st Month\nof the Quarter");
+    // blueHdr(ws, R, 7, R, 7, "2nd Month\nof the Quarter");
+    // blueHdr(ws, R, 8, R, 8, "3rd Month\nof the Quarter");
+    // blueHdr(ws, R, 9, R, 9, "Total");
+    // ws.getRow(R).height = 26;
+    // R++;
 
-    for (let i = 0; i < 3; i++) {
-      ms(ws, R, 1, R, 4, "");
-      [5, 6, 7, 8, 9, 10].forEach((col) => {
-        ws.getCell(R, col).border = B_ALL;
-        ws.getCell(R, col).value = "";
-      });
-      ws.getRow(R).height = 12;
-      R++;
-    }
+    // for (let i = 0; i < 3; i++) {
+    //   ms(ws, R, 1, R, 4, "");
+    //   [5, 6, 7, 8, 9, 10].forEach((col) => {
+    //     ws.getCell(R, col).border = B_ALL;
+    //     ws.getCell(R, col).value = "";
+    //   });
+    //   ws.getRow(R).height = 12;
+    //   R++;
+    // }
 
-    ms(ws, R, 1, R, 4, "Total", { font: FONT_BOLD, fill: FILL_LTGRAY });
-    [5, 6, 7, 8, 9, 10].forEach((col) => {
-      ws.getCell(R, col).border = B_ALL;
-      ws.getCell(R, col).fill = FILL_LTGRAY;
-    });
-    ws.getRow(R).height = 14;
-    R++;
+    // ms(ws, R, 1, R, 4, "Total", { font: FONT_BOLD, fill: FILL_LTGRAY });
+    // [5, 6, 7, 8, 9, 10].forEach((col) => {
+    //   ws.getCell(R, col).border = B_ALL;
+    //   ws.getCell(R, col).fill = FILL_LTGRAY;
+    // });
+    // ws.getRow(R).height = 14;
+    // R++;
 
     // ── DECLARATION ───────────────────────────────────────────────────────────
     ms(

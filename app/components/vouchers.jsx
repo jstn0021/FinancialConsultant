@@ -48,7 +48,10 @@ const VourcherComponent = (props) => {
           </div>
 
           <div className="border-x-2 p-2 px-5.5  border-black">
-            <h4>{voucher.payment_item}</h4>
+            {/* <h4>{voucher.payment_item}</h4> */}
+            <h4>
+              {`${voucher.accountCode || ""} ${voucher.glCode || ""}`.trim()}
+            </h4>
           </div>
           <div className=" p-2 border-l-0 border-r-0">
             <h4 className="font-semibold">PAYEE (NAME)</h4>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const ATC_OPTIONS = [
   {
@@ -73,6 +73,27 @@ export default function BIR2307Page() {
   const [m3, setM3] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [suppliers, setSuppliers] = useState([]);
+  const [vouchers, setVouchers] = useState([]);
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      const res = await fetch("/api/suppliers");
+      const data = await res.json();
+      setSuppliers(data);
+    };
+    fetchSuppliers();
+  }, []);
+
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      const res = await fetch("/api/vouchers?limit=100");
+      const data = await res.json();
+      setVouchers(data.data || []);
+    };
+    fetchVouchers();
+  }, []);
 
   const total =
     (parseFloat(m1) || 0) + (parseFloat(m2) || 0) + (parseFloat(m3) || 0);
@@ -231,12 +252,77 @@ export default function BIR2307Page() {
                 label="Payee's Name (Last Name, First Name, Middle Name for Individual OR Registered Name for Non-Individual)"
               />
               <InputRow>
-                <input
-                  className={inputBase}
-                  value={payeeName}
-                  onChange={(e) => setPayeeName(e.target.value)}
-                  placeholder="Payee name"
-                />
+                <select
+                  className={selectBase}
+                  onChange={(e) => {
+                    const selectedVoucher = vouchers
+                      .flatMap((v) => v.items || [])
+                      .find((item) => item.id === parseInt(e.target.value));
+
+                    console.log("selectedVoucher:", selectedVoucher);
+                    console.log("suppliers:", suppliers);
+                    if (selectedVoucher) {
+                      const supplier = suppliers.find(
+                        // (s) =>
+                        // s.supplierName.trim() ===
+                        // selectedVoucher.title.trim(),
+                        (s) =>
+                          selectedVoucher.title
+                            .trim()
+                            .toLowerCase()
+                            .includes(s.supplierName.trim().toLowerCase()) ||
+                          s.supplierName
+                            .trim()
+                            .toLowerCase()
+                            .includes(
+                              selectedVoucher.title.trim().toLowerCase(),
+                            ),
+                      );
+                      // console.log("matched supplier:", supplier);
+                      setPayeeName(selectedVoucher.title || "");
+                      if (supplier) {
+                        setPayeeTin(supplier.supplierTin || "");
+                        setPayeeAddress(supplier.supplierAddress || "");
+                        setPayeeZip(supplier.zipCode || "");
+                      }
+                      const voucherDate = new Date(
+                        selectedVoucher.payment_voucher_date,
+                      );
+                      const month = voucherDate.getMonth() + 1;
+                      const quarterStartMonth = [1, 4, 7, 10].find(
+                        (m) => month >= m && month < m + 3,
+                      );
+                      const monthInQuarter = month - quarterStartMonth + 1;
+                      const amount = selectedVoucher.amount || 0;
+
+                      if (monthInQuarter === 1) {
+                        setM1(amount);
+                        setM2("");
+                        setM3("");
+                      }
+                      if (monthInQuarter === 2) {
+                        setM1("");
+                        setM2(amount);
+                        setM3("");
+                      }
+                      if (monthInQuarter === 3) {
+                        setM1("");
+                        setM2("");
+                        setM3(amount);
+                      }
+                    }
+                  }}
+                >
+                  <option value="">-- Select Voucher --</option>
+                  {vouchers
+                    .flatMap((v) => v.items || [])
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.title} —{" "}
+                        {item.payment_voucher_date?.split("T")[0]}
+                      </option>
+                    ))}
+                </select>
               </InputRow>
 
               <tr>
@@ -429,11 +515,47 @@ export default function BIR2307Page() {
                 <Td className="text-right font-bold">{fmt(total)}</Td>
                 <Td className="text-right font-bold">{fmt(tax)}</Td>
               </tr>
+
+              <tr className="bg-neutral-50">
+                <Td colSpan={4} className="font-bold">
+                  Money Payments Subject to Withholding of Business Tax
+                  (Government &amp; Private)
+                </Td>
+                <Td />
+                <Td className="text-right"></Td>
+                <Td className="text-right"></Td>
+                <Td className="text-right"></Td>
+                <Td className="text-right font-bold"></Td>
+                <Td className="text-right font-bold"></Td>
+              </tr>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="h-6">
+                  <Td colSpan={4} />
+                  <Td />
+                  <Td />
+                  <Td />
+                  <Td />
+                  <Td />
+                  <Td />
+                </tr>
+              ))}
+
+              <tr className="bg-neutral-50">
+                <Td colSpan={4} className="font-bold">
+                  Total
+                </Td>
+                <Td />
+                <Td className="text-right"></Td>
+                <Td className="text-right"></Td>
+                <Td className="text-right"></Td>
+                <Td className="text-right font-bold"></Td>
+                <Td className="text-right font-bold"></Td>
+              </tr>
             </tbody>
           </table>
 
           {/* MONEY PAYMENTS (Business Tax) */}
-          <table className="w-full min-w-[1100px] border-collapse">
+          {/* <table className="w-full min-w-[1100px] border-collapse">
             <thead>
               <tr>
                 <Th colSpan={4} rowSpan={2}>
@@ -476,7 +598,7 @@ export default function BIR2307Page() {
                 <Td />
               </tr>
             </tbody>
-          </table>
+          </table> */}
 
           {/* DECLARATION */}
           <table className="w-full min-w-[1100px] border-collapse">

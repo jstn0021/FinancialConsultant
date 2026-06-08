@@ -186,22 +186,20 @@ const PaymentVouchers = () => {
     try {
       if (isEdit) {
         // UPDATE;
-        // await axios.put(`/api/vouchers/${editId}`, {
-        //   check_id: params.voucherId,
-        //   ...formData,
-        (payment_item, // ✅ override yung spread
-          // });
+        await axios.put(`/api/vouchers/${editId}`, {
+          check_id: params.voucherId,
+          ...formData,
+        });
 
-          console.log("edit", formData));
-        console.log("payment_item:", payment_item); // ✅ check muna
+        // console.log("edit", formData));
         showSuccess(`Voucher updated successfully`);
       } else {
         //CREATE;
-        // await axios.post(`/api/vouchers/${params.voucherId}`, {
-        //   check_id: params.voucherId,
-        //   ...formData,
-        // });
-        console.log("add", formData);
+        await axios.post(`/api/vouchers/${params.voucherId}`, {
+          check_id: params.voucherId,
+          ...formData,
+        });
+        // console.log("add", formData);
         showSuccess("Voucher created successfully");
       }
 
@@ -211,12 +209,14 @@ const PaymentVouchers = () => {
       setFormData({
         title: "",
         voucherTypeNumber: "",
-        payment_item: "",
+        accountCode: "", // ✅
+        glCode: "", // ✅
         payment_voucher_date: new Date().toISOString().split("T")[0],
         voucherType: "CASH USD",
         slipNo: "",
         job: "",
         pm: "",
+        receiptOrPayment: "", // ✅ dagdag dito
         children: [
           {
             title: "",
@@ -239,13 +239,13 @@ const PaymentVouchers = () => {
     setIsEdit(true);
 
     setEditId(voucher.id);
-    const splitItem = (voucher.payment_item || "").split(" ");
+    // const splitItem = (voucher.payment_item || "").split(" ");
 
     setFormData({
       title: voucher.title || "",
       voucherTypeNumber: voucher.voucherTypeNumber || "",
-      accountCode: splitItem[0] || "", // ✅ palitan yung payment_item
-      glCode: splitItem[1] || "",
+      accountCode: voucher.accountCode || "", // ✅ direct na sa column
+      glCode: voucher.glCode || "", // ✅ direct na sa column
       payment_voucher_date:
         voucher.payment_voucher_date?.split("T")[0] ||
         voucher.createdAt?.split("T")[0],

@@ -39,7 +39,7 @@ const CheckItem = sequelize.define(
     accountCode: {
       type: DataTypes.STRING,
     },
-    aglCode: {
+    glCode: {
       type: DataTypes.STRING,
     },
     voucherTypeNumber: {
