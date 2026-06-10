@@ -1,54 +1,51 @@
-import { User } from "@/db/models";
-import { NextResponse } from "next/server";
+export async function PATCH(req, { params }) {
+  try {
+    const { userid } = await params;
 
+    const formData = await req.formData();
+    const body = Object.fromEntries(formData.entries());
 
+    //   Only allow safe fields to be updated
+    const allowedFields = [
+      "firstname",
+      "lastname",
+      "email",
+      "role",
+      "department",
+      "position",
+    ];
+    const updateData = {};
 
-// Get Function 
-export async function GET(request, {params}) {
-    try{ 
-       const {userid} = await params;  
-       const user = await User.findByPk(userid); 
-       if(user){ 
-           return NextResponse.json({userInfo: user}, {status: 201})
-       }else{ 
-         return NextResponse.json({error_message: "Something went Wrong"} , {status: 500})
-        }
-    }catch(error){ 
-        return NextResponse.json({error_message:error.message} , {status: 500})
+    for (const field of allowedFields) {
+      if (body[field] !== undefined && body[field] !== "") {
+        updateData[field] = body[field];
+      }
     }
-}
 
-export async function PATCH(request ,{params}) {
-    try {
-        const {userid} = await params; 
-        const formData = await request.formData(); 
-        const body = Object.fromEntries(formData.entries()); 
-        
-        const userProfile = await User.findByPk(userid); 
-        if(!userProfile){ 
-            return  NextResponse.json({error_message: "User Account Not found"}, {status: 404}); 
-        }
-          
-       const file  = formData.get("profile_pic"); 
-       let imagePath = null 
-
-       if(file && file.name){ 
-        const bytes = await file.arrayBuffer(); 
-        const buffer = Buffer.from(bytes); 
-        
-        const fileName = `${Date.now()}-${file.name}`; 
-        const path = `./public/uploads/profile/${fileName}`;
-
-        const fs = require("fs");
-        fs.writeFileSync(path, buffer);
-
-        imagePath = `/uploads/${fileName}`;
-       //update 
-        return NextResponse.json({message: fileName} , {status: 200})
-    
-       }
-
-    }catch(error){ 
-       return NextResponse.json({error_message: error.message} , {status: 500})
+    //   Only hash & update password if provided
+    if (body.password && body.password.trim() !== "") {
+      const bcrypt = require("bcrypt");
+      updateData.password = await bcrypt.hash(body.password, 10);
     }
+
+    console.log("Updating userID:", userid, "with:", updateData); //   debug
+
+    const [rowsAffected] = await User.update(updateData, {
+      where: { userID: userid },
+    });
+
+    console.log("Rows affected:", rowsAffected); //   should be 1
+
+    if (rowsAffected === 0) {
+      return NextResponse.json(
+        { error_message: "User not found or nothing changed" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json({ message: "Updated OK" }, { status: 200 });
+  } catch (error) {
+    console.error("PATCH error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }
