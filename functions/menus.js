@@ -93,6 +93,12 @@ export default function Menus(role) {
       section: "menu",
       path: "/Main/Budgets",
     },
+    {
+      label: "BIR 2307",
+      icon: "□",
+      section: "menu",
+      path: "/Main/bir2307",
+    },
 
     {
       label: "Logout",
@@ -107,6 +113,7 @@ export default function Menus(role) {
     "Regular Employee": [
       "Purchase Requisition Form",
       "My Requisition",
+
       // "Profile"
     ],
     Admin: [
@@ -115,6 +122,7 @@ export default function Menus(role) {
       "Requisition List",
       "Vouchers",
       "My Requisition",
+      "BIR 2307",
       //  "Profile",
     ],
     "Chief Accountant": [
@@ -125,6 +133,7 @@ export default function Menus(role) {
       "Vouchers",
       "Reimbursable",
       "Cashbooks",
+      "BIR 2307",
     ],
     Accounting: [
       "Dashboard",
@@ -134,6 +143,7 @@ export default function Menus(role) {
       "Vouchers",
       "Reimbursable",
       "Cashbooks",
+      "BIR 2307",
     ],
     "Chief Administrator Manager": [
       "Dashboard",
@@ -141,6 +151,7 @@ export default function Menus(role) {
       "My Requisition",
       "Requisition List",
       "Vouchers",
+      "BIR 2307",
       //  "My Requisition",
       //  "Profile",
     ],
@@ -149,6 +160,7 @@ export default function Menus(role) {
       "Purchase Requisition Form",
       "My Requisition",
       "Requisition List",
+      "BIR 2307",
       //  "My Requisition",
       //  "Profile",
     ],
@@ -158,6 +170,7 @@ export default function Menus(role) {
       "My Requisition",
       //  "My Requisition",
       "User Management",
+      "BIR 2307",
       //  "Profile"
     ],
   };

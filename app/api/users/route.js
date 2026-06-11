@@ -77,6 +77,7 @@ export async function POST(request) {
 //   GET USERS
 export async function GET() {
   try {
+    await sequelize.sync();
     const users = await User.findAll({
       attributes: { exclude: ["password"] },
     });

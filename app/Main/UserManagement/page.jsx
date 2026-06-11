@@ -248,7 +248,7 @@ export default function UsersPage() {
                 value={form.email || ""}
                 onChange={handleChange}
                 className="p-2 border rounded"
-                placeholder="Email"
+                placeholder="Email Address required"
               />
               <input
                 name="role"

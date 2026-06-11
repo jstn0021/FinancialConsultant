@@ -2,18 +2,22 @@ import { User } from "@/db/models";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { writeFile, mkdir } from "fs/promises";
+import { cookies } from "next/headers";
+import { signToken } from "@/lib/auth";
 import path from "path";
 
-//   UPDATE USER
+// UPDATE USER
 export async function PATCH(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const userid = searchParams.get("id"); //   safe, no URL encoding issues
+    const userid = searchParams.get("id");
+    console.log("PATCH userid:", userid);
 
     const formData = await req.formData();
     const body = Object.fromEntries(formData.entries());
+    const updateData = {};
 
-    //   Handle e_signature file upload
+    // Handle e_signature file upload
     const signatureFile = formData.get("e_signature");
     if (
       signatureFile &&
@@ -41,8 +45,6 @@ export async function PATCH(req) {
       "department",
       "position",
     ];
-    const updateData = {};
-
     for (const field of allowedFields) {
       if (body[field] !== undefined && body[field] !== "") {
         updateData[field] = body[field];
@@ -53,39 +55,53 @@ export async function PATCH(req) {
       updateData.password = await bcrypt.hash(body.password, 10);
     }
 
-    console.log("Updating userID:", userid, "with:", updateData);
-
-    const [rowsAffected] = await User.update(updateData, {
-      where: { userID: userid }, //   exact match, no encoding issues
+    await User.update(updateData, {
+      where: { userID: userid.trim() },
     });
 
-    console.log("Rows affected:", rowsAffected);
+    // RE-FETCH updated user para sa bagong token
+    const updatedUser = await User.findByPk(userid.trim());
 
-    if (rowsAffected === 0) {
-      return NextResponse.json(
-        { error_message: "User not found or nothing changed" },
-        { status: 404 },
-      );
-    }
+    // REFRESH TOKEN
+    const newToken = await signToken({
+      id: updatedUser.userID,
+      userID: updatedUser.userID,
+      role: updatedUser.role,
+      profile: updatedUser.profile_pic,
+      department: updatedUser.department,
+      e_sign: updatedUser.e_signature,
+      name: `${updatedUser.lastname}, ${updatedUser.firstname} ${
+        !updatedUser.middle ||
+        updatedUser.middle === "N/A" ||
+        updatedUser.middle === null
+          ? ""
+          : updatedUser.middle
+      }`,
+    });
+
+    (await cookies()).set("token", newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24,
+      path: "/",
+    });
 
     return NextResponse.json({ message: "Updated OK" }, { status: 200 });
   } catch (error) {
     console.error("PATCH error:", error);
-
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-//   PERMANENT DELETE
+// PERMANENT DELETE
 export async function DELETE(req) {
   try {
     const { searchParams } = new URL(req.url);
     const userid = searchParams.get("id");
+    console.log("DELETE userid:", userid);
 
-    await User.destroy({
-      where: { userID: userid }, //   Permanent delete na, hindi lang status update
-    });
-
+    await User.destroy({ where: { userID: userid.trim() } });
     return NextResponse.json({ message: "Deleted" });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
