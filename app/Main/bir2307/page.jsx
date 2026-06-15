@@ -159,27 +159,30 @@ export default function BIR2307Page() {
     <div className="min-h-screen bg-neutral-200 px-3 py-6 font-sans md:px-6">
       <div className="mx-auto w-full max-w-[1400px] border border-black bg-white p-4 shadow-lg md:p-6">
         {/* HEADER */}
-        <div className="mb-2 flex items-center justify-between border-b border-neutral-500 pb-2">
+        <div className="relative mb-2 flex items-center justify-between border-b border-neutral-500 pb-2">
           <div className="min-w-[70px] text-[11px] leading-tight">
             BCS/
             <br />
             Item:
           </div>
 
-          <div className="flex-1 text-center text-[13px] font-bold leading-tight md:text-[14px]">
-            Republic of the Philippines
-            <br />
-            Department of Finance
-            <br />
-            Bureau of Internal Revenue
-          </div>
-
-          <div className="min-w-[100px] text-right text-[10px]">
-            2307 01/18ENCS
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-3">
+            <img
+              src="/uploads/bir logo/logo.webp"
+              alt="Logo"
+              className="h-14 w-auto"
+            />
+            <div className="text-center text-[13px] font-bold leading-tight md:text-[14px]">
+              Republic of the Philippines
+              <br />
+              Department of Finance
+              <br />
+              Bureau of Internal Revenue
+            </div>
           </div>
         </div>
 
-        <div className="my-3 flex items-center justify-between gap-4">
+        <div className="relative my-3 flex items-center justify-between gap-4">
           <div className="min-w-[110px]">
             <div className="text-[10px] md:text-[11px]">BIR Form No.</div>
             <div className="text-center text-3xl font-bold leading-none md:text-4xl">
@@ -190,13 +193,21 @@ export default function BIR2307Page() {
             </div>
           </div>
 
-          <div className="flex-1 text-center text-xl font-bold leading-tight md:text-2xl">
+          <div className="absolute left-1/2 -translate-x-1/2 text-center text-xl font-bold leading-tight md:text-2xl">
             Certificate of Creditable Tax
             <br />
             Withheld at Source
           </div>
 
-          <div className="w-20" />
+          {/* RIGHT - Barcode */}
+          <div className="min-w-[100px] text-right text-[10px]">
+            <img
+              src="/uploads/bir logo/barcode.jpg"
+              alt="barcode"
+              className="ml-auto mb-1 h-12 w-auto"
+            />
+            2307 01/18ENCS
+          </div>
         </div>
 
         <div className="mb-2 border-b border-neutral-300 pb-2 text-[11px] leading-relaxed md:text-[12px]">
@@ -553,52 +564,6 @@ export default function BIR2307Page() {
               </tr>
             </tbody>
           </table>
-
-          {/* MONEY PAYMENTS (Business Tax) */}
-          {/* <table className="w-full min-w-[1100px] border-collapse">
-            <thead>
-              <tr>
-                <Th colSpan={4} rowSpan={2}>
-                  Money Payments Subject to Withholding of Business Tax
-                  (Government &amp; Private)
-                </Th>
-                <Th rowSpan={2}>ATC</Th>
-                <Th colSpan={4}>AMOUNT OF MONEY PAYMENTS</Th>
-                <Th rowSpan={2}>Tax Withheld for the Quarter</Th>
-              </tr>
-              <tr>
-                <Th>1st Month of the Quarter</Th>
-                <Th>2nd Month of the Quarter</Th>
-                <Th>3rd Month of the Quarter</Th>
-                <Th>Total</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <tr key={i} className="h-6">
-                  <Td colSpan={4} />
-                  <Td />
-                  <Td />
-                  <Td />
-                  <Td />
-                  <Td />
-                  <Td />
-                </tr>
-              ))}
-
-              <tr className="bg-neutral-50">
-                <Td colSpan={4} className="font-bold">
-                  Total
-                </Td>
-                <Td />
-                <Td />
-                <Td />
-                <Td />
-                <Td />
-                <Td />
-              </tr>
-            </tbody>
-          </table> */}
 
           {/* DECLARATION */}
           <table className="w-full min-w-[1100px] border-collapse">

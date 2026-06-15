@@ -11,14 +11,12 @@ export async function POST(request) {
 
     if (!userID || !password) {
       return NextResponse.json(
-        {
-          error_message: "Missing credentials",
-        },
+        { error_message: "Missing credentials" },
         { status: 400 },
       );
     }
 
-    //find account in db
+    // find account in db
     const userAccount = await User.findByPk(userID);
 
     if (!userAccount) {
@@ -32,13 +30,11 @@ export async function POST(request) {
     const isMatch = await bcrypt.compare(password, userAccount.password);
     if (!isMatch) {
       return NextResponse.json(
-        {
-          error_message: "Invalid credential",
-        },
+        { error_message: "Invalid credential" },
         { status: 401 },
       );
     }
-    console.log(body);
+
     // create token
     const token = await signToken({
       id: userAccount.userID,
@@ -47,15 +43,21 @@ export async function POST(request) {
       profile: userAccount.profile_pic,
       department: userAccount.department,
       e_sign: userAccount.e_signature,
-      name: `${userAccount.lastname}, ${userAccount.firstname} ${!userAccount.middle || userAccount.middle === "N/A" || userAccount.middle === null ? "" : userAccount.middle}`,
+      name: `${userAccount.lastname}, ${userAccount.firstname} ${
+        !userAccount.middle ||
+        userAccount.middle === "N/A" ||
+        userAccount.middle === null
+          ? ""
+          : userAccount.middle
+      }`,
     });
 
     // store in cookie
-    (await cookies()).set(`token`, token, {
+    (await cookies()).set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week expiration
+      maxAge: 60 * 60 * 24,
       path: "/",
     });
 

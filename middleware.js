@@ -3,16 +3,18 @@ import { verifyToken } from "./lib/auth";
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
-  const { method } = request;
 
   // Public auth routes
-  if (pathname.startsWith("/api/login") || pathname.startsWith("/api/cookie")) {
+  if (
+    pathname.startsWith("/api/login") ||
+    pathname.startsWith("/api/cookies") // ← may 's' na
+  ) {
     return NextResponse.next();
   }
 
   // USER REGISTRATION: only POST allowed, NO AUTH CHECK
   if (pathname.startsWith("/api/users") && request.method === "POST") {
-    return NextResponse.next(); // IMPORTANT: stop here (no token check)
+    return NextResponse.next();
   }
 
   // Everything else requires token
@@ -26,7 +28,17 @@ export async function middleware(request) {
   }
 
   try {
-    await verifyToken(token);
+    const decoded = await verifyToken(token);
+
+    // E-SIGN GUARD
+    const hasEsign = decoded.e_sign && decoded.e_sign.trim() !== "";
+    const isUserProfile = pathname.startsWith("/Main/Profile");
+    const isApiRoute = pathname.startsWith("/api");
+
+    if (!hasEsign && !isUserProfile && !isApiRoute) {
+      return NextResponse.redirect(new URL("/Main/Profile", request.url));
+    }
+
     return NextResponse.next();
   } catch (error) {
     if (!pathname.startsWith("/api")) {

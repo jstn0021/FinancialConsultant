@@ -3,65 +3,86 @@ import { User } from "@/db/models";
 import { validationRequiredFields } from "@/functions/validations";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { error } from "node:console";
 import { generatUserID } from "@/functions/autogenerate";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
 
-// post
+//   CREATE USER
 export async function POST(request) {
-  await sequelize.sync();
-  const requiredFields = [
-    "lastname",
-    "firstname",
-    "department",
-    "position",
-    "role",
-    "status",
-    "password",
-  ];
-  const body = await request.json();
-
-  const validation = await validationRequiredFields(requiredFields, body.users);
-  console.log(validation);
-  if (validation && Object.keys(validation).length > 0) {
-    return NextResponse.json({ error_message: validation }, { status: 400 });
-  }
-
   try {
-    // hashing password set userId
-    const salt = 10;
-    const user = body.users[0];
-    const userID = await generatUserID(user.lastname);
-    const hashedPassword = await bcrypt.hash(user.password, salt);
+    await sequelize.sync();
 
-    //  save account to database
+    const formData = await request.formData();
+    const user = Object.fromEntries(formData.entries());
+
+    console.log("USER:", user);
+
+    //   Handle e_signature file upload
+    const signatureFile = formData.get("e_signature");
+    if (
+      signatureFile &&
+      signatureFile instanceof File &&
+      signatureFile.size > 0
+    ) {
+      const buffer = Buffer.from(await signatureFile.arrayBuffer());
+      const uploadDir = path.join(
+        process.cwd(),
+        "public",
+        "uploads",
+        "signatures",
+      );
+      await mkdir(uploadDir, { recursive: true });
+      const filename = `${Date.now()}-${signatureFile.name}`;
+      await writeFile(path.join(uploadDir, filename), buffer);
+      user.e_signature = `/uploads/signatures/${filename}`; // ← path lang ang stored sa DB
+    } else {
+      delete user.e_signature; // ← alisin kung walang file
+    }
+
+    if (!user.password || user.password.trim() === "") {
+      user.password = "Default@123";
+    }
+
+    const requiredFields = [
+      "lastname",
+      "firstname",
+      "department",
+      "position",
+      "role",
+    ];
+    const validation = await validationRequiredFields(requiredFields, [user]);
+
+    if (validation && Object.keys(validation).length > 0) {
+      return NextResponse.json({ error_message: validation }, { status: 400 });
+    }
+
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    const userID = await generatUserID(user.lastname);
+
     const created = await User.create({
       ...user,
+      userID,
       password: hashedPassword,
-      userID: userID,
+      status: "Active",
     });
 
-    if (created && Object.keys(created).length > 0) {
-      return NextResponse.json({ created: created }, { status: 200 });
-    } else {
-      return NextResponse.json(
-        { error_message: "Something Wrong" },
-        { status: 500 },
-      );
-    }
+    return NextResponse.json({ created }, { status: 201 });
   } catch (error) {
-    console.log(JSON.stringify(error));
-    return NextResponse.json({ error_message: error.mess }, { status: 500 });
+    console.error("❌ POST ERROR:", error.message);
+    console.error("❌ FULL ERROR:", JSON.stringify(error, null, 2));
+    return NextResponse.json({ error_message: error.message }, { status: 500 });
   }
 }
 
-//Get
+//   GET USERS
 export async function GET() {
   try {
+    await sequelize.sync();
     const users = await User.findAll({
       attributes: { exclude: ["password"] },
     });
     return NextResponse.json({ users }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error_message: error.message });
+    return NextResponse.json({ error_message: error.message }, { status: 500 });
   }
 }
