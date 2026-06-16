@@ -12,6 +12,7 @@ import CashBooks from "./cashbooks.js";
 import US_Cash_Bank from "./cashbook_us.js";
 import PH_Cash_Bank from "./cashbook_ph.js";
 import Supplier from "./Supplier.js";
+import Creditor from "./Creditor.js";
 
 Purchase.hasMany(PurchaseItems, {
   foreignKey: "PurchaseID",
@@ -112,4 +113,5 @@ export {
   US_Cash_Bank,
   PH_Cash_Bank,
   Supplier,
+  Creditor,
 };

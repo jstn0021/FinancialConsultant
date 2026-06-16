@@ -1,23 +1,21 @@
 import { NextResponse } from "next/server";
 import { verifyToken } from "./lib/auth";
+import { getAllowedPaths } from "./functions/menus";
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Public auth routes
   if (
     pathname.startsWith("/api/login") ||
-    pathname.startsWith("/api/cookies") // ← may 's' na
+    pathname.startsWith("/api/cookies")
   ) {
     return NextResponse.next();
   }
 
-  // USER REGISTRATION: only POST allowed, NO AUTH CHECK
   if (pathname.startsWith("/api/users") && request.method === "POST") {
     return NextResponse.next();
   }
 
-  // Everything else requires token
   const token = request.cookies.get("token")?.value;
 
   if (!token) {
@@ -37,6 +35,16 @@ export async function middleware(request) {
 
     if (!hasEsign && !isUserProfile && !isApiRoute) {
       return NextResponse.redirect(new URL("/Main/Profile", request.url));
+    }
+
+    // ROLE-BASED PAGE GUARD
+    if (pathname.startsWith("/Main") && !isUserProfile) {
+      const allowedPaths = getAllowedPaths(decoded.role);
+      const isAllowed = allowedPaths.some((p) => pathname.startsWith(p));
+
+      if (!isAllowed) {
+        return NextResponse.redirect(new URL("/Main/Home", request.url));
+      }
     }
 
     return NextResponse.next();

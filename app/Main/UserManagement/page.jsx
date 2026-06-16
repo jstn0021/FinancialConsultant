@@ -7,6 +7,11 @@ export default function UsersPage() {
   const [form, setForm] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [deptFilter, setDeptFilter] = useState("All");
+  const departments = [
+    "All",
+    ...new Set(users.map((u) => u.department).filter(Boolean)),
+  ];
 
   // FETCH USERS
   const fetchUsers = async () => {
@@ -84,11 +89,102 @@ export default function UsersPage() {
     fetchUsers();
   };
 
-  // FILTER
-  const filtered = users.filter((u) =>
-    `${u.firstname} ${u.lastname}`.toLowerCase().includes(search.toLowerCase()),
-  );
+  // IMPORT EXCEL
+  const [importing, setImporting] = useState(false);
 
+  const handleImportExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // VALIDATE EXCEL COLUMNS FIRST
+    const requiredColumns = [
+      "lastname",
+      "firstname",
+      "email",
+      "department",
+      "position",
+      "role",
+      "status",
+      "password",
+    ];
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const XLSX = await import("xlsx");
+        const buffer = event.target.result;
+        const workbook = XLSX.read(buffer, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+        if (jsonData.length === 0) {
+          alert("Excel file is empty.");
+          e.target.value = "";
+          return;
+        }
+
+        // CHECK MISSING COLUMNS
+        const fileColumns = Object.keys(jsonData[0]);
+        const missingColumns = requiredColumns.filter(
+          (col) => !fileColumns.includes(col),
+        );
+
+        if (missingColumns.length > 0) {
+          alert(
+            `Missing required columns:\n${missingColumns.map((c) => `• ${c}`).join("\n")}`,
+          );
+          e.target.value = "";
+          return;
+        }
+
+        // PROCEED WITH UPLOAD
+        setImporting(true);
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const res = await fetch("/api/users/upload-excel", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
+            alert(`Users imported successfully! (${data.count} users added)`);
+            await fetchUsers();
+          } else {
+            alert(
+              data.error_message
+                ? typeof data.error_message === "object"
+                  ? JSON.stringify(data.error_message, null, 2)
+                  : data.error_message
+                : "Import failed",
+            );
+          }
+        } catch (err) {
+          alert("Something went wrong while importing.");
+        } finally {
+          setImporting(false);
+          e.target.value = "";
+        }
+      } catch (err) {
+        alert("Failed to read Excel file. Make sure it's a valid .xlsx file.");
+        e.target.value = "";
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
+
+  // FILTER
+  const filtered = users.filter((u) => {
+    const matchesSearch = `${u.firstname} ${u.lastname}`
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesDept = deptFilter === "All" || u.department === deptFilter;
+    return matchesSearch && matchesDept;
+  });
   return (
     <div>
       {/* TOP ACTION */}
@@ -98,14 +194,69 @@ export default function UsersPage() {
           className="p-2 border rounded w-1/3"
           onChange={(e) => setSearch(e.target.value)}
         />
-        <button
-          onClick={handleAdd}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+        <select
+          value={deptFilter}
+          onChange={(e) => setDeptFilter(e.target.value)}
+          className="p-2 border rounded w-1/4 text-sm"
         >
-          + Add User
-        </button>
-      </div>
+          {departments.map((dept) => (
+            <option key={dept} value={dept}>
+              {dept}
+            </option>
+          ))}
+        </select>
 
+        <div className="flex gap-2">
+          <div className="relative group">
+            <label className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded cursor-pointer text-sm flex items-center gap-1">
+              {importing ? "Importing..." : "Import Excel"}
+              <span className="text-white/70 text-xs">ⓘ</span>
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImportExcel}
+                className="hidden"
+                disabled={importing}
+              />
+            </label>
+
+            {/* TOOLTIP */}
+            <div className="absolute left-0 top-full mt-2 z-50 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-64 text-xs text-gray-600">
+              <p className="font-semibold text-gray-700 mb-2">
+                Required Excel Columns:
+              </p>
+              <ul className="space-y-1">
+                {[
+                  "lastname",
+                  "firstname",
+                  "middle (optional)",
+                  "email",
+                  "department",
+                  "position",
+                  "role",
+                  "status",
+                  "password",
+                ].map((col) => (
+                  <li key={col} className="flex items-center gap-1">
+                    <span className="text-green-500">✓</span>
+                    <code className="bg-gray-100 px-1 rounded">{col}</code>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-gray-400 italic">
+                Hover to see, click to upload.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={handleAdd}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            + Add User
+          </button>
+        </div>
+      </div>
       {/* TABLE */}
       <div className="bg-white rounded shadow overflow-hidden">
         <table className="w-full text-sm">
