@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useState } from "react";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
+import NotificationBell from "../components/NotificationBell";
 
 export default function Sidebar() {
   const [openPurchase, setOpenPurchase] = useState(false);
@@ -57,6 +58,7 @@ export default function Sidebar() {
           className="w-20 h-20 mt-2 mb-3"
         />
         <h2 className="text-red-100 text-sm">{user?.name}</h2>
+        <NotificationBell />
       </div>
       {/* content side bar  */}
       {/* Main Menu */}

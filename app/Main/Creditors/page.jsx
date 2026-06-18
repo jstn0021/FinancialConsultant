@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const API_BASE = "/api/creditors";
 const PAGE_SIZE = 20;
@@ -17,6 +17,35 @@ const EMPTY_FORM = {
   tin3: "",
 };
 
+const REQUIRED_COLS = ["code", "creditorsName"];
+const OPTIONAL_COLS = [
+  "address1",
+  "address2",
+  "city",
+  "country",
+  "tin1",
+  "tin2",
+  "tin3",
+];
+
+// Converts empty strings to null for nullable fields before sending to API
+function normalizeForm(form) {
+  const NULLABLE = [
+    "address1",
+    "address2",
+    "city",
+    "country",
+    "tin1",
+    "tin2",
+    "tin3",
+  ];
+  const out = { ...form };
+  for (const key of NULLABLE) {
+    if (out[key] === "") out[key] = null;
+  }
+  return out;
+}
+
 function Modal({ title, onClose, children }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -24,7 +53,7 @@ function Modal({ title, onClose, children }) {
         <div className="modal-header">
           <h2>{title}</h2>
           <button className="btn-icon" onClick={onClose}>
-            x
+            ✕
           </button>
         </div>
         {children}
@@ -40,13 +69,17 @@ function CreditorForm({
   onCancel,
   loading,
 }) {
-  const [form, setForm] = useState(initial);
-  const set = (field) => (e) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const [form, setForm] = useState(() => ({
+    ...EMPTY_FORM,
+    ...Object.fromEntries(
+      Object.entries(initial).map(([k, v]) => [k, v ?? ""]),
+    ),
+  }));
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(form);
+    onSubmit(normalizeForm(form));
   };
 
   return (
@@ -63,7 +96,6 @@ function CreditorForm({
           />
         </div>
       </div>
-
       <div className="form-group">
         <label>Creditor Name *</label>
         <input
@@ -73,7 +105,6 @@ function CreditorForm({
           placeholder="Full name or company"
         />
       </div>
-
       <div className="form-group">
         <label>Address Line 1</label>
         <input
@@ -82,7 +113,6 @@ function CreditorForm({
           placeholder="Street address"
         />
       </div>
-
       <div className="form-group">
         <label>Address Line 2</label>
         <input
@@ -91,7 +121,6 @@ function CreditorForm({
           placeholder="Barangay, subdivision, etc."
         />
       </div>
-
       <div className="form-row">
         <div className="form-group">
           <label>City</label>
@@ -112,7 +141,6 @@ function CreditorForm({
           </select>
         </div>
       </div>
-
       <div>
         <label className="tin-section-label">TIN</label>
         <div className="tin-row">
@@ -142,7 +170,6 @@ function CreditorForm({
           </div>
         </div>
       </div>
-
       <div className="form-actions">
         <button
           type="button"
@@ -160,6 +187,185 @@ function CreditorForm({
   );
 }
 
+// ── Import Excel Form (inside modal) ──────────────────────────────────────────
+function ImportForm({ onSuccess, onClose }) {
+  const fileRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  function handleFileChange(e) {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    const isExcel =
+      selected.type.includes("spreadsheet") ||
+      selected.name.endsWith(".xlsx") ||
+      selected.name.endsWith(".xls");
+    if (!isExcel) {
+      setError("Please upload a valid Excel file (.xlsx or .xls).");
+      setFile(null);
+      return;
+    }
+    setFile(selected);
+    setError(null);
+    setResult(null);
+  }
+
+  async function handleImport() {
+    if (!file) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/creditors/import", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Import failed.");
+      } else {
+        setResult(data);
+        setFile(null);
+        if (fileRef.current) fileRef.current.value = "";
+        if (data.created > 0) onSuccess?.();
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleReset() {
+    setFile(null);
+    setResult(null);
+    setError(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  return (
+    <div className="import-form">
+      {/* Caution notice */}
+      <div className="import-caution">
+        <span className="import-caution-icon">⚠️</span>
+        <div>
+          <p className="import-caution-title">
+            Make sure your Excel file has these exact column headers:
+          </p>
+          <p className="import-col-label">Required</p>
+          <div className="import-col-list">
+            {REQUIRED_COLS.map((col) => (
+              <span key={col} className="import-col-tag import-col-required">
+                <span className="import-col-asterisk">*</span> {col}
+              </span>
+            ))}
+          </div>
+          <p className="import-col-label">Optional</p>
+          <div className="import-col-list">
+            {OPTIONAL_COLS.map((col) => (
+              <span key={col} className="import-col-tag import-col-optional">
+                {col}
+              </span>
+            ))}
+          </div>
+          <ul className="import-rules">
+            <li>
+              Column names are <strong>case-sensitive</strong> — use exactly as
+              shown.
+            </li>
+            <li>
+              Rows with a duplicate <code>code</code> will be skipped.
+            </li>
+            <li>
+              Rows missing <code>code</code> or <code>creditorsName</code> will
+              be skipped.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* File picker */}
+      <div className="form-group" style={{ marginTop: 4 }}>
+        <label>Select Excel File</label>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".xlsx,.xls"
+          onChange={handleFileChange}
+          className="import-file-input"
+        />
+        {file && (
+          <span className="import-file-name">
+            📄 {file.name} ({(file.size / 1024).toFixed(1)} KB)
+          </span>
+        )}
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="import-alert import-alert-error">❌ {error}</div>
+      )}
+
+      {/* Result */}
+      {result && (
+        <div className="import-alert import-alert-success">
+          <p className="import-result-title">✅ Import complete</p>
+          <div className="import-result-stats">
+            <span>
+              <strong>{result.created}</strong> created
+            </span>
+            <span>
+              <strong>{result.skipped}</strong> skipped
+            </span>
+            <span>
+              <strong>{result.errors?.length ?? 0}</strong> errors
+            </span>
+          </div>
+          {result.errors?.length > 0 && (
+            <ul className="import-error-list">
+              {result.errors.map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="form-actions">
+        <button
+          className="btn btn-secondary"
+          onClick={onClose}
+          disabled={loading}
+        >
+          Close
+        </button>
+        {(file || result || error) && !result && (
+          <button
+            className="btn btn-secondary"
+            onClick={handleReset}
+            disabled={loading}
+          >
+            Clear
+          </button>
+        )}
+        <button
+          className="btn btn-primary"
+          onClick={handleImport}
+          disabled={!file || loading}
+        >
+          {loading ? "Importing…" : "Import"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function CreditorsPage() {
   const [creditors, setCreditors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -246,6 +452,7 @@ export default function CreditorsPage() {
 
   const handleDelete = async () => {
     const { creditor } = modal;
+    console.log("Deleting code:", creditor.code); // ← dagdag to
     setFormLoading(true);
     try {
       const res = await fetch(`${API_BASE}/${creditor.code}`, {
@@ -282,6 +489,8 @@ export default function CreditorsPage() {
         .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
         .btn-secondary { background: #f3f4f6; color: #374151; }
         .btn-secondary:hover:not(:disabled) { background: #e5e7eb; }
+        .btn-success { background: #16a34a; color: #fff; }
+        .btn-success:hover:not(:disabled) { background: #15803d; }
         .btn-danger { background: #dc2626; color: #fff; }
         .btn-danger:hover:not(:disabled) { background: #b91c1c; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -342,6 +551,28 @@ export default function CreditorsPage() {
         .toast-error { background: #450a0a; color: #fecaca; }
         @keyframes slide-up { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+        /* ── Import styles ── */
+        .import-form { display: flex; flex-direction: column; gap: 16px; }
+        .import-caution { display: flex; gap: 12px; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 16px; }
+        .import-caution-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+        .import-caution-title { font-size: 0.8125rem; font-weight: 600; color: #92400e; margin-bottom: 10px; }
+        .import-col-label { font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #b45309; margin-bottom: 5px; margin-top: 2px; }
+        .import-col-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .import-col-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 5px; font-size: 0.75rem; font-family: monospace; font-weight: 600; }
+        .import-col-required { background: #fef3c7; border: 1px solid #f59e0b; color: #78350f; }
+        .import-col-optional { background: #fff; border: 1px solid #fcd34d; color: #92400e; font-weight: 400; }
+        .import-col-asterisk { color: #dc2626; font-size: 0.875rem; }
+        .import-rules { font-size: 0.75rem; color: #92400e; list-style: disc; padding-left: 14px; display: flex; flex-direction: column; gap: 3px; }
+        .import-rules code { background: #fef3c7; padding: 0 3px; border-radius: 3px; font-size: 0.7rem; }
+        .import-file-input { padding: 6px; border: 1px dashed #d1d5db; border-radius: 8px; font-size: 0.875rem; background: #f9fafb; cursor: pointer; width: 100%; }
+        .import-file-name { font-size: 0.75rem; color: #6b7280; margin-top: 4px; display: block; }
+        .import-alert { border-radius: 8px; padding: 12px 14px; font-size: 0.875rem; }
+        .import-alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; }
+        .import-alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; }
+        .import-result-title { font-weight: 600; margin-bottom: 6px; }
+        .import-result-stats { display: flex; gap: 16px; font-size: 0.875rem; }
+        .import-error-list { margin-top: 8px; font-size: 0.75rem; color: #dc2626; list-style: disc; padding-left: 14px; max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+
         @media (max-width: 640px) {
           .form-row { grid-template-columns: 1fr; }
           .tin-row { grid-template-columns: 1fr; }
@@ -366,6 +597,12 @@ export default function CreditorsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <button
+              className="btn btn-success"
+              onClick={() => setModal("import")}
+            >
+              ↑ Import Excel
+            </button>
             <button className="btn btn-primary" onClick={() => setModal("add")}>
               + Add Creditor
             </button>
@@ -503,6 +740,22 @@ export default function CreditorsPage() {
         </div>
       </div>
 
+      {/* ── Import Modal ── */}
+      {modal === "import" && (
+        <Modal
+          title="Import Creditors via Excel"
+          onClose={() => setModal(null)}
+        >
+          <ImportForm
+            onSuccess={() => {
+              fetchCreditors();
+              showToast("Creditors imported successfully.");
+            }}
+            onClose={() => setModal(null)}
+          />
+        </Modal>
+      )}
+
       {modal === "add" && (
         <Modal title="Add Creditor" onClose={() => setModal(null)}>
           <CreditorForm
@@ -533,7 +786,7 @@ export default function CreditorsPage() {
               {modal.creditor.creditorsName ||
                 `Creditor #${modal.creditor.code}`}
             </strong>
-            ? This action cannot be undone.
+            ?
           </div>
           <div className="form-actions">
             <button
