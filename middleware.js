@@ -28,20 +28,28 @@ export async function middleware(request) {
   try {
     const decoded = await verifyToken(token);
 
-    // E-SIGN GUARD
-    const hasEsign = decoded.e_sign && decoded.e_sign.trim() !== "";
-    const isUserProfile = pathname.startsWith("/Main/Profile");
     const isApiRoute = pathname.startsWith("/api");
+    const isUserProfile = pathname.startsWith("/Main/Profile");
 
+    // ── E-SIGN GUARD ─────────────────────────────────────────────
+    const hasEsign = decoded.e_sign && decoded.e_sign.trim() !== "";
     if (!hasEsign && !isUserProfile && !isApiRoute) {
       return NextResponse.redirect(new URL("/Main/Profile", request.url));
     }
 
-    // ROLE-BASED PAGE GUARD
+    // ── MUST CHANGE PASSWORD GUARD ───────────────────────────────
+    const mustChange =
+      decoded.mustChangePassword === true || decoded.mustChangePassword === 1;
+    if (mustChange && !isUserProfile && !isApiRoute) {
+      return NextResponse.redirect(
+        new URL("/Main/Profile?setup=true", request.url),
+      );
+    }
+
+    // ── ROLE-BASED PAGE GUARD ─────────────────────────────────────
     if (pathname.startsWith("/Main") && !isUserProfile) {
       const allowedPaths = getAllowedPaths(decoded.role);
       const isAllowed = allowedPaths.some((p) => pathname.startsWith(p));
-
       if (!isAllowed) {
         return NextResponse.redirect(new URL("/Main/Home", request.url));
       }

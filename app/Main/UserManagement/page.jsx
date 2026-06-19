@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import UpdateUserModal from "../../components/modals/usermanagement/update";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -7,13 +8,14 @@ export default function UsersPage() {
   const [form, setForm] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false); // ← ADD
+  const [selectedUser, setSelectedUser] = useState(null); // ← ADD
   const [deptFilter, setDeptFilter] = useState("All");
   const departments = [
     "All",
     ...new Set(users.map((u) => u.department).filter(Boolean)),
   ];
 
-  // FETCH USERS
   const fetchUsers = async () => {
     const res = await fetch("/api/users");
     const data = await res.json();
@@ -24,79 +26,58 @@ export default function UsersPage() {
     fetchUsers();
   }, []);
 
-  // INPUT
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // EDIT
+  // EDIT — now opens UpdateUserModal instead of inline modal
   const handleEdit = (user) => {
-    setEditingId(user.userID);
-    setForm({
-      firstname: user.firstname || "",
-      lastname: user.lastname || "",
-      email: user.email || "",
-      role: user.role || "",
-      department: user.department || "",
-      position: user.position || "",
-      e_signature: user.e_signature || "",
-    });
-    setShowModal(true);
+    console.log("EDIT CLICKED:", user);
+    setSelectedUser(user);
+    setShowEditModal(true);
   };
 
-  // ADD BUTTON
   const handleAdd = () => {
-    setForm({});
+    setForm({ userID: "" });
     setEditingId(null);
     setShowModal(true);
   };
 
-  // SAVE
+  // SAVE (Add only — edit is handled by UpdateUserModal now)
   const handleSubmit = async () => {
     const formData = new FormData();
     for (let key in form) {
       formData.append(key, form[key] || "");
     }
 
-    if (editingId) {
-      await fetch(`/api/users/manage?id=${encodeURIComponent(editingId)}`, {
-        method: "PATCH",
-        body: formData,
-      });
-    } else {
-      const res = await fetch("/api/users", {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) return;
-    }
+    const res = await fetch("/api/users", {
+      method: "POST",
+      body: formData,
+    });
+    if (!res.ok) return;
 
     setShowModal(false);
     setForm({});
     await fetchUsers();
   };
 
-  // DELETE
   const handleDelete = async (id) => {
     const confirm = window.confirm(
       "Are you sure you want to delete this user?",
     );
     if (!confirm) return;
-
     await fetch(`/api/users/manage?id=${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
     fetchUsers();
   };
 
-  // IMPORT EXCEL
   const [importing, setImporting] = useState(false);
 
   const handleImportExcel = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // VALIDATE EXCEL COLUMNS FIRST
     const requiredColumns = [
       "lastname",
       "firstname",
@@ -123,12 +104,10 @@ export default function UsersPage() {
           return;
         }
 
-        // CHECK MISSING COLUMNS
         const fileColumns = Object.keys(jsonData[0]);
         const missingColumns = requiredColumns.filter(
           (col) => !fileColumns.includes(col),
         );
-
         if (missingColumns.length > 0) {
           alert(
             `Missing required columns:\n${missingColumns.map((c) => `• ${c}`).join("\n")}`,
@@ -137,7 +116,6 @@ export default function UsersPage() {
           return;
         }
 
-        // PROCEED WITH UPLOAD
         setImporting(true);
         const formData = new FormData();
         formData.append("file", file);
@@ -147,9 +125,7 @@ export default function UsersPage() {
             method: "POST",
             body: formData,
           });
-
           const data = await res.json();
-
           if (res.ok) {
             alert(`Users imported successfully! (${data.count} users added)`);
             await fetchUsers();
@@ -162,22 +138,20 @@ export default function UsersPage() {
                 : "Import failed",
             );
           }
-        } catch (err) {
+        } catch {
           alert("Something went wrong while importing.");
         } finally {
           setImporting(false);
           e.target.value = "";
         }
-      } catch (err) {
+      } catch {
         alert("Failed to read Excel file. Make sure it's a valid .xlsx file.");
         e.target.value = "";
       }
     };
-
     reader.readAsArrayBuffer(file);
   };
 
-  // FILTER
   const filtered = users.filter((u) => {
     const matchesSearch = `${u.firstname} ${u.lastname}`
       .toLowerCase()
@@ -185,6 +159,7 @@ export default function UsersPage() {
     const matchesDept = deptFilter === "All" || u.department === deptFilter;
     return matchesSearch && matchesDept;
   });
+
   return (
     <div>
       {/* TOP ACTION */}
@@ -219,8 +194,6 @@ export default function UsersPage() {
                 disabled={importing}
               />
             </label>
-
-            {/* TOOLTIP */}
             <div className="absolute left-0 top-full mt-2 z-50 hidden group-hover:block bg-white border border-gray-200 rounded-lg shadow-lg p-3 w-64 text-xs text-gray-600">
               <p className="font-semibold text-gray-700 mb-2">
                 Required Excel Columns:
@@ -257,6 +230,7 @@ export default function UsersPage() {
           </button>
         </div>
       </div>
+
       {/* TABLE */}
       <div className="bg-white rounded shadow overflow-hidden">
         <table className="w-full text-sm">
@@ -268,11 +242,9 @@ export default function UsersPage() {
               <th className="p-3 text-left">Actions</th>
             </tr>
           </thead>
-
           <tbody>
             {filtered.map((u) => (
               <tr key={u.userID} className="border-t hover:bg-gray-50">
-                {/* USER */}
                 <td className="p-3 flex items-center gap-3">
                   <img
                     src={u.profile_pic || "/default-avatar.png"}
@@ -291,10 +263,6 @@ export default function UsersPage() {
                       <span className="text-gray-400">Email: </span>
                       {u.email}
                     </div>
-                    <div className="text-xs text-gray-500">
-                      <span className="text-gray-400">Password: </span>
-                      {u.password || "—"}
-                    </div>
                     {u.e_signature && (
                       <div className="mt-1">
                         <span className="text-xs text-gray-400">
@@ -309,8 +277,6 @@ export default function UsersPage() {
                     )}
                   </div>
                 </td>
-
-                {/* INFO */}
                 <td className="p-3 text-sm">
                   <div>
                     <span className="text-xs text-gray-400">Role: </span>
@@ -325,19 +291,13 @@ export default function UsersPage() {
                     {u.position}
                   </div>
                 </td>
-
-                {/* STATUS */}
                 <td className="p-3">
                   <span
-                    className={`px-3 py-1 text-xs rounded-full text-white ${
-                      u.status === "Active" ? "bg-green-500" : "bg-red-500"
-                    }`}
+                    className={`px-3 py-1 text-xs rounded-full text-white ${u.status === "Active" ? "bg-green-500" : "bg-red-500"}`}
                   >
                     {u.status}
                   </span>
                 </td>
-
-                {/* ACTIONS */}
                 <td className="p-3">
                   <div className="flex gap-2">
                     <button
@@ -369,17 +329,30 @@ export default function UsersPage() {
         </table>
       </div>
 
-      {/* MODAL */}
+      {/* ADD USER MODAL (inline — for new users only) */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-
           <div className="relative bg-white p-6 rounded-xl shadow-lg w-[420px] animate-fadeIn">
-            <h2 className="text-lg font-semibold mb-4">
-              {editingId ? "Edit User" : "Add User"}
-            </h2>
-
+            <h2 className="text-lg font-semibold mb-4">Add User</h2>
             <div className="grid gap-3">
+              <input
+                name="userID"
+                value={form.userID || ""}
+                onChange={handleChange}
+                onBlur={async (e) => {
+                  const val = e.target.value.trim();
+                  if (!val) return;
+                  const res = await fetch(
+                    `/api/users/check-id?userID=${encodeURIComponent(val)}`,
+                  );
+                  const data = await res.json();
+                  if (data.taken) alert(`User ID "${val}" is already taken.`);
+                }}
+                className="p-2 border rounded w-full"
+                placeholder="User ID (e.g. EMP-2024-001)"
+                required
+              />
               <input
                 name="firstname"
                 value={form.firstname || ""}
@@ -428,7 +401,6 @@ export default function UsersPage() {
                 className="p-2 border rounded"
                 placeholder="Password (optional)"
               />
-
               <div>
                 <label className="text-xs text-gray-500 mb-1 block">
                   E-Signature
@@ -441,7 +413,6 @@ export default function UsersPage() {
                   }
                   className="p-2 border rounded w-full text-sm"
                 />
-                {/* Preview — existing signature lang (string URL), hindi yung bagong file */}
                 {form.e_signature && typeof form.e_signature === "string" && (
                   <img
                     src={form.e_signature}
@@ -451,8 +422,6 @@ export default function UsersPage() {
                 )}
               </div>
             </div>
-
-            {/* ACTIONS */}
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={() => setShowModal(false)}
@@ -469,6 +438,18 @@ export default function UsersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* EDIT USER MODAL (UpdateUserModal component) */}
+      {showEditModal && selectedUser && (
+        <UpdateUserModal
+          user={selectedUser}
+          handleclose={() => {
+            setShowEditModal(false);
+            setSelectedUser(null);
+          }}
+          onSaved={fetchUsers}
+        />
       )}
     </div>
   );

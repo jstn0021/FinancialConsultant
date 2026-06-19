@@ -52,10 +52,13 @@ export default function Sidebar() {
       {/* profile picture and then name */}
       <div className="mt-7 flex flex-col justify-center items-center">
         <img
-          src={`${!user?.profile || user?.profile === null ? "/uploads/profile/Generic avatar.png" : user?.profile}`}
+          src={
+            user?.profile ||
+            `https://ui-avatars.com/api/?name=${user?.name}&background=dc2626&color=fff`
+          }
           // src={"/profile/Geb"}
           // alt="profile"
-          className="w-20 h-20 mt-2 mb-3"
+          className="w-20 h-20 mt-2 mb-3 rounded-full object-cover border-2 border-white/30"
         />
         <h2 className="text-red-100 text-sm">{user?.name}</h2>
         <NotificationBell />
