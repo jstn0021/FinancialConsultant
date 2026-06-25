@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import VoucherComponent from "@/app/components/vouchers";
 import { useParams, useRouter } from "next/navigation";
@@ -20,6 +20,12 @@ import {
 } from "@/lib/sendWelcomeEmail";
 import { findDepartment, findSpecificRole } from "@/functions/notification";
 const PaymentVouchers = () => {
+  const [showCalculationModal, setShowCalculationModal] = useState(false);
+  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
+
+  const [selectedCalculationId, setSelectedCalculationId] = useState("");
+  const [selectedOperator, setSelectedOperator] = useState("+");
+  const [calculationValue, setCalculationValue] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -504,7 +510,62 @@ const PaymentVouchers = () => {
         break;
     }
   };
+  const calculationOptions = useMemo(() => {
+    return (
+      checks?.items?.flatMap((item) =>
+        (item.children || []).map((child) => ({
+          id: child.id,
+          title: child.title,
+          amount: Number(child.amount),
+        })),
+      ) || []
+    );
+  }, [checks]);
 
+  const handleCalculationConfirm = () => {
+    const selectedItem = calculationOptions.find(
+      (item) => item.id === Number(selectedCalculationId),
+    );
+
+    if (!selectedItem) return;
+
+    const baseAmount = selectedItem.amount;
+    const value = Number(calculationValue);
+
+    let result = baseAmount;
+
+    switch (selectedOperator) {
+      case "+":
+        result = baseAmount + value;
+        break;
+
+      case "-":
+        result = baseAmount - value;
+        break;
+
+      case "*":
+        result = baseAmount * value;
+        break;
+
+      case "/":
+        result = baseAmount / value;
+        break;
+
+      default:
+        break;
+    }
+
+    const updatedRows = [...formData.children];
+
+    updatedRows[selectedRowIndex].amount = result.toFixed(2);
+
+    setFormData((prev) => ({
+      ...prev,
+      children: updatedRows,
+    }));
+
+    setShowCalculationModal(false);
+  };
   return (
     <div className="p-5">
       <table>
@@ -746,8 +807,23 @@ const PaymentVouchers = () => {
                       onChange={(e) => handleRowChange(index, e)}
                       className="w-full border p-2 rounded"
                     />
-                  </div>
 
+                    <button
+                      type="button"
+                      className="mt-2 w-full bg-blue-500 text-white py-2 rounded"
+                      onClick={() => {
+                        setSelectedRowIndex(index);
+
+                        setSelectedCalculationId("");
+                        setSelectedOperator("+");
+                        setCalculationValue("");
+
+                        setShowCalculationModal(true);
+                      }}
+                    >
+                      Add Formula
+                    </button>
+                  </div>
                   <div className="col-span-2">
                     <button
                       onClick={() => handleDeleteRow(index)}
@@ -948,6 +1024,65 @@ const PaymentVouchers = () => {
             </button>
           </div>
         )}
+      {showCalculationModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Create Calculation</h2>
+
+            {/* Existing Description */}
+            <select
+              value={selectedCalculationId}
+              onChange={(e) => setSelectedCalculationId(e.target.value)}
+              className="w-full border p-2 rounded mb-3"
+            >
+              <option value="">Select Description</option>
+
+              {calculationOptions.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title} ({item.amount.toLocaleString()})
+                </option>
+              ))}
+            </select>
+
+            {/* Operation */}
+            <select
+              value={selectedOperator}
+              onChange={(e) => setSelectedOperator(e.target.value)}
+              className="w-full border p-2 rounded mb-3"
+            >
+              <option value="+">+</option>
+              <option value="-">-</option>
+              <option value="*">*</option>
+              <option value="/">/</option>
+            </select>
+
+            {/* Value */}
+            <input
+              type="number"
+              placeholder="Enter Value"
+              value={calculationValue}
+              onChange={(e) => setCalculationValue(e.target.value)}
+              className="w-full border p-2 rounded mb-4"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                className="border px-4 py-2 rounded"
+                onClick={() => setShowCalculationModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+                onClick={handleCalculationConfirm}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
