@@ -25,10 +25,13 @@ export async function GET(request, { params }) {
       summary.period_end,
     );
 
-    // rs = { ph_books, us_books }
-    const buffer = await buildSummaryWorkbook({ ...rs, summary });
+    const buffer = await buildSummaryWorkbook({
+      ...rs,
+      summary: summary.toJSON(),
+    });
 
-    return new NextResponse(buffer, {
+    // Gamitin ang native Response, hindi NextResponse — mas reliable para sa binary
+    return new Response(buffer, {
       status: 200,
       headers: {
         "Content-Type":

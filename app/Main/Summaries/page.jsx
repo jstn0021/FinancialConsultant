@@ -13,12 +13,12 @@ const fmt = (dt) => {
 };
 
 const fmtNum = (n) =>
-  n != null ?
-    Number(n).toLocaleString("en-PH", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
-  : "0.00";
+  n != null
+    ? Number(n).toLocaleString("en-PH", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : "0.00";
 
 export default function SummariesPage() {
   const [summaries, setSummaries] = useState([]);
@@ -36,7 +36,7 @@ export default function SummariesPage() {
   const [syncing, setSyncing] = useState(null);
   const [viewData, setViewData] = useState(null);
   const [toast, setToast] = useState(null);
-
+  const [id, setID] = useState("");
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -96,8 +96,9 @@ export default function SummariesPage() {
     if (found) {
       setForm((f) => ({
         ...f,
-        period_start:
-          found.dateRangeStart ? found.dateRangeStart.slice(0, 10) : "",
+        period_start: found.dateRangeStart
+          ? found.dateRangeStart.slice(0, 10)
+          : "",
         period_end: found.dateRangeEnd ? found.dateRangeEnd.slice(0, 10) : "",
       }));
     }
@@ -151,6 +152,7 @@ export default function SummariesPage() {
   const handleView = async (row) => {
     try {
       const res = await axios.get(`/api/summaries/${row.summary_id}`);
+      setID(row.summary_id);
       setViewData(res.data.data);
     } catch {
       showToast("Failed to load details", "error");
@@ -168,7 +170,29 @@ export default function SummariesPage() {
       showToast("Delete failed", "error");
     }
   };
+  // handle download
+  const handleDownload = async (summaryId) => {
+    try {
+      const res = await axios.get(`/api/summaries/${summaryId}/export`, {
+        responseType: "blob",
+      });
 
+      const url = URL.createObjectURL(
+        new Blob([res.data], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        }),
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `summary-${summaryId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      showToast("Export failed", "error");
+    }
+  };
   // ── field name normalizers (handles both projec_ and project_) ──
   const getName = (d) => d?.projec_name ?? d?.project_name ?? "";
   const getCode = (d) => d?.projec_code ?? d?.project_code ?? "";
@@ -251,19 +275,20 @@ export default function SummariesPage() {
                 </tr>
               </thead>
               <tbody>
-                {loading ?
+                {loading ? (
                   <tr>
                     <td colSpan={6} className="text-center py-10 text-gray-400">
                       Loading…
                     </td>
                   </tr>
-                : summaries.length === 0 ?
+                ) : summaries.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center py-10 text-gray-400">
                       No summaries yet. Click + Add Summary to create one.
                     </td>
                   </tr>
-                : summaries.map((row, i) => (
+                ) : (
+                  summaries.map((row, i) => (
                     <tr
                       key={row.summary_id}
                       className={`border-t border-gray-100 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
@@ -314,7 +339,7 @@ export default function SummariesPage() {
                       </td>
                     </tr>
                   ))
-                }
+                )}
               </tbody>
             </table>
           </div>
@@ -415,7 +440,7 @@ export default function SummariesPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {items.length === 0 ?
+                      {items.length === 0 ? (
                         <tr>
                           <td
                             colSpan={4}
@@ -424,16 +449,19 @@ export default function SummariesPage() {
                             No {label} data — click Sync
                           </td>
                         </tr>
-                      : items.map((d, i) => {
+                      ) : (
+                        items.map((d, i) => {
                           const isPrev =
                             d.item_name === "Balance from Previous Month";
                           return (
                             <tr
                               key={d.id}
                               className={`border-t border-gray-100 ${
-                                isPrev ? "bg-yellow-50 font-medium"
-                                : i % 2 === 0 ? "bg-white"
-                                : "bg-gray-50"
+                                isPrev
+                                  ? "bg-yellow-50 font-medium"
+                                  : i % 2 === 0
+                                    ? "bg-white"
+                                    : "bg-gray-50"
                               }`}
                             >
                               <td className="px-3 py-1.5 text-gray-800 text-xs">
@@ -451,7 +479,7 @@ export default function SummariesPage() {
                             </tr>
                           );
                         })
-                      }
+                      )}
 
                       {/* Total */}
                       <tr className="border-t-2 border-gray-900 bg-gray-100">
@@ -531,6 +559,16 @@ export default function SummariesPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* create a button export*/}
+          <div className="flex justify-end items-end">
+            <button
+              className="bg-green-800 p-3 text-white hover:bg-black"
+              onClick={() => handleDownload(viewData.summary_id)}
+            >
+              Export Summary
+            </button>
           </div>
         </div>
       )}
@@ -637,11 +675,11 @@ export default function SummariesPage() {
                 disabled={saving}
                 className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-gray-900 hover:bg-gray-700 disabled:opacity-60 transition-colors"
               >
-                {saving ?
-                  "Saving…"
-                : editTarget ?
-                  "Save Changes"
-                : "Create Summary"}
+                {saving
+                  ? "Saving…"
+                  : editTarget
+                    ? "Save Changes"
+                    : "Create Summary"}
               </button>
             </div>
           </div>

@@ -21,7 +21,6 @@ export default function DashboardPage() {
         const newStats = {};
         const fetches = [];
 
-        // ─── COMMON: MY REQUISITIONS ───────────────────────────────
         fetches.push(
           fetch("/api/purchase").then(async (r) => {
             const d = await r.json();
@@ -29,7 +28,7 @@ export default function DashboardPage() {
             const mine = all
               .filter(
                 (p) =>
-                  p.user?.userID === userData.userID ||
+                  p.User?.UserID === userData.userID ||
                   p.UserID === userData.userID,
               )
               .slice(0, 5);
@@ -37,7 +36,6 @@ export default function DashboardPage() {
           }),
         );
 
-        // ─── ADMIN ─────────────────────────────────────────────────
         if (role === "Admin") {
           fetches.push(
             fetch("/api/users").then(async (r) => {
@@ -49,13 +47,11 @@ export default function DashboardPage() {
               const purchases = d.data || [];
               newStats.totalPurchase = d.total || purchases.length;
               setRecentPurchase(purchases.slice(0, 5));
-              // No. of Submitted Purchase (lahat)
               newStats.submittedPurchase = d.total || purchases.length;
             }),
           );
         }
 
-        // ─── ACCOUNTING ────────────────────────────────────────────
         if (role === "Accounting") {
           fetches.push(
             fetch("/api/vouchers").then(async (r) => {
@@ -70,7 +66,6 @@ export default function DashboardPage() {
               newStats.submittedPurchase = d.total || purchases.length;
               setRecentPurchase(purchases.slice(0, 5));
             }),
-            // No. of Approved Purchase (Status === Accounting Confirmation)
             fetch("/api/purchase/Approvals/BudgetConfirmation").then(
               async (r) => {
                 const d = await r.json();
@@ -80,7 +75,6 @@ export default function DashboardPage() {
           );
         }
 
-        // ─── CHIEF ACCOUNTANT ──────────────────────────────────────
         if (role === "Chief Accountant") {
           fetches.push(
             fetch("/api/vouchers").then(async (r) => {
@@ -94,14 +88,12 @@ export default function DashboardPage() {
               const budgets = Array.isArray(d) ? d : d.data || d.budgets || [];
               newStats.totalBudget = budgets.length;
             }),
-            // No. of Approved Purchase (Accounting Confirmation)
             fetch("/api/purchase/Approvals/BudgetConfirmation").then(
               async (r) => {
                 const d = await r.json();
                 newStats.approvedPurchase = d.total || (d.data || []).length;
               },
             ),
-            // No. of Voucher Approvals (approved vouchers by Chief Accountant)
             fetch("/api/vouchers/approvals/chiefAccountant").then(async (r) => {
               const d = await r.json();
               newStats.voucherApprovals = d.total || (d.data || []).length;
@@ -109,7 +101,6 @@ export default function DashboardPage() {
           );
         }
 
-        // ─── CHIEF ADMINISTRATOR MANAGER ───────────────────────────
         if (role === "Chief Administrator Manager") {
           fetches.push(
             fetch("/api/vouchers").then(async (r) => {
@@ -118,13 +109,11 @@ export default function DashboardPage() {
               newStats.totalVouchers = d.total || vouchers.length;
               setRecentVouchers(vouchers.slice(0, 5));
             }),
-            // No. of Submitted Purchase (already approved by Admin)
             fetch("/api/purchase/Approvals/AdminApproval").then(async (r) => {
               const d = await r.json();
               newStats.submittedPurchase = d.total || (d.data || []).length;
               setRecentPurchase((d.data || []).slice(0, 5));
             }),
-            // No. of Vouchers (approved by Chief Accountant)
             fetch("/api/vouchers/approvals/chiefAccountant").then(async (r) => {
               const d = await r.json();
               newStats.chiefAccountantVouchers =
@@ -133,7 +122,6 @@ export default function DashboardPage() {
           );
         }
 
-        // ─── PROJECT DIRECTOR ──────────────────────────────────────
         if (role === "Project Director") {
           fetches.push(
             fetch("/api/purchase").then(async (r) => {
@@ -142,7 +130,6 @@ export default function DashboardPage() {
               newStats.totalPurchase = d.total || purchases.length;
               setRecentPurchase(purchases.slice(0, 5));
             }),
-            // No. of Approved Purchase (already approved by Chief Accountant)
             fetch("/api/purchase/Approvals/ChiefApproval").then(async (r) => {
               const d = await r.json();
               newStats.approvedPurchase = d.total || (d.data || []).length;
@@ -150,7 +137,6 @@ export default function DashboardPage() {
           );
         }
 
-        // ─── SUPERADMIN ────────────────────────────────────────────
         if (role === "SuperAdmin") {
           fetches.push(
             fetch("/api/users").then(async (r) => {
@@ -166,7 +152,6 @@ export default function DashboardPage() {
           );
         }
 
-        // ─── REGULAR EMPLOYEE ──────────────────────────────────────
         if (role === "Regular Employee") {
           fetches.push(
             fetch("/api/purchase").then(async (r) => {
@@ -174,7 +159,7 @@ export default function DashboardPage() {
               const all = d.data || [];
               const mine = all.filter(
                 (p) =>
-                  p.user?.userID === userData.userID ||
+                  p.User?.UserID === userData.userID ||
                   p.UserID === userData.userID,
               );
               newStats.myPurchase = mine.length;
@@ -194,390 +179,713 @@ export default function DashboardPage() {
     fetchAll();
   }, []);
 
-  const statusColor = (status) => {
-    if (!status) return "bg-gray-100 text-gray-600";
+  const statusBadge = (status) => {
+    if (!status) return "badge badge-gray";
     const s = status.toLowerCase();
-    if (s === "approved" || s === "active")
-      return "bg-green-100 text-green-700";
-    if (s === "pending") return "bg-yellow-100 text-yellow-700";
-    if (s === "rejected" || s === "inactive") return "bg-red-100 text-red-700";
-    return "bg-blue-100 text-blue-700";
+    if (s.includes("approved") || s === "active") return "badge badge-green";
+    if (s.includes("pending") || s.includes("confirmation"))
+      return "badge badge-amber";
+    if (s.includes("rejected") || s === "inactive") return "badge badge-red";
+    if (
+      s.includes("submission") ||
+      s.includes("approval") ||
+      s.includes("review")
+    )
+      return "badge badge-blue";
+    return "badge badge-gray";
   };
 
   const getRoleCards = (role) => {
     switch (role) {
       case "Admin":
         return [
- 
           {
-            label: "Purchase Requests",
-            value: stats.totalPurchase ?? 0,
-            icon: "🛒",
-            color: "bg-amber-50 border-amber-100",
-            text: "text-amber-600",
+            label: "Total users",
+            value: stats.totalUsers ?? 0,
+            theme: "blue",
+            icon: "👥",
           },
           {
-            label: "No. of Submitted Purchase",
+            label: "Purchase requests",
+            value: stats.totalPurchase ?? 0,
+            theme: "amber",
+            icon: "🛒",
+          },
+          {
+            label: "Submitted purchases",
             value: stats.submittedPurchase ?? 0,
+            theme: "orange",
             icon: "📋",
-            color: "bg-orange-50 border-orange-100",
-            text: "text-orange-600",
           },
         ];
       case "Accounting":
         return [
           {
-            label: "Total Vouchers",
+            label: "Total vouchers",
             value: stats.totalVouchers ?? 0,
+            theme: "violet",
             icon: "🧾",
-            color: "bg-purple-50 border-purple-100",
-            text: "text-purple-600",
           },
           {
-            label: "No. of Submitted Purchase",
+            label: "Submitted purchases",
             value: stats.submittedPurchase ?? 0,
+            theme: "amber",
             icon: "🛒",
-            color: "bg-amber-50 border-amber-100",
-            text: "text-amber-600",
           },
           {
-            label: "No. of Approved Purchase",
+            label: "Approved purchases",
             value: stats.approvedPurchase ?? 0,
+            theme: "green",
             icon: "✅",
-            color: "bg-green-50 border-green-100",
-            text: "text-green-600",
           },
         ];
       case "Chief Accountant":
         return [
           {
-            label: "Total Vouchers",
+            label: "Total vouchers",
             value: stats.totalVouchers ?? 0,
+            theme: "violet",
             icon: "🧾",
-            color: "bg-purple-50 border-purple-100",
-            text: "text-purple-600",
           },
           {
-            label: "No. of Approved Purchase",
+            label: "Approved purchases",
             value: stats.approvedPurchase ?? 0,
+            theme: "green",
             icon: "✅",
-            color: "bg-green-50 border-green-100",
-            text: "text-green-600",
           },
           {
-            label: "No. of Voucher Approvals",
+            label: "Voucher approvals",
             value: stats.voucherApprovals ?? 0,
-            icon: "📝",
-            color: "bg-blue-50 border-blue-100",
-            text: "text-blue-600",
+            theme: "blue",
+            icon: "✍️",
+          },
+          {
+            label: "Budget projects",
+            value: stats.totalBudget ?? 0,
+            theme: "teal",
+            icon: "📊",
           },
         ];
       case "Chief Administrator Manager":
         return [
           {
-            label: "No. of Submitted Purchase (by Admin)",
+            label: "Submitted purchases (by Admin)",
             value: stats.submittedPurchase ?? 0,
+            theme: "amber",
             icon: "🛒",
-            color: "bg-amber-50 border-amber-100",
-            text: "text-amber-600",
           },
           {
-            label: "No. of Vouchers (by Chief Accountant)",
+            label: "Vouchers (by Chief Accountant)",
             value: stats.chiefAccountantVouchers ?? 0,
+            theme: "violet",
             icon: "🧾",
-            color: "bg-purple-50 border-purple-100",
-            text: "text-purple-600",
           },
           {
-            label: "Total Vouchers",
+            label: "Total vouchers",
             value: stats.totalVouchers ?? 0,
-            icon: "📋",
-            color: "bg-blue-50 border-blue-100",
-            text: "text-blue-600",
+            theme: "blue",
+            icon: "📄",
           },
         ];
       case "Project Director":
         return [
           {
-            label: "Purchase Requests",
+            label: "Purchase requests",
             value: stats.totalPurchase ?? 0,
+            theme: "amber",
             icon: "🛒",
-            color: "bg-amber-50 border-amber-100",
-            text: "text-amber-600",
           },
           {
-            label: "No. of Approved Purchase (by Chief Accountant)",
+            label: "Approved purchases (by Chief Accountant)",
             value: stats.approvedPurchase ?? 0,
+            theme: "green",
             icon: "✅",
-            color: "bg-green-50 border-green-100",
-            text: "text-green-600",
           },
         ];
       case "SuperAdmin":
         return [
           {
-            label: "Total Users",
+            label: "Total users",
             value: stats.totalUsers ?? 0,
-            icon: "👤",
-            color: "bg-blue-50 border-blue-100",
-            text: "text-blue-600",
+            theme: "blue",
+            icon: "👥",
           },
           {
-            label: "Purchase Requests",
+            label: "Purchase requests",
             value: stats.totalPurchase ?? 0,
+            theme: "amber",
             icon: "🛒",
-            color: "bg-amber-50 border-amber-100",
-            text: "text-amber-600",
           },
         ];
       case "Regular Employee":
       default:
         return [
           {
-            label: "My Purchase Requests",
+            label: "My purchase requests",
             value: stats.myPurchase ?? 0,
+            theme: "amber",
             icon: "🛒",
-            color: "bg-amber-50 border-amber-100",
-            text: "text-amber-600",
           },
         ];
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
-        Loading dashboard...
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "16rem",
+          gap: "0.75rem",
+        }}
+      >
+        <div
+          style={{
+            width: "2rem",
+            height: "2rem",
+            border: "2px solid var(--border)",
+            borderTop: "2px solid var(--text-accent)",
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+          }}
+        />
+        <p style={{ fontSize: "14px", color: "var(--text-muted)" }}>
+          Loading dashboard...
+        </p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
+  }
 
   const cards = getRoleCards(user?.role);
+  const firstName =
+    user?.name?.split(",")[1]?.trim() ||
+    user?.name?.split(" ")[0] ||
+    user?.name;
+
+  const themeMap = {
+    violet: {
+      bar: "#7F77DD",
+      iconBg: "#EEEDFE",
+      iconColor: "#534AB7",
+      valueColor: "#534AB7",
+    },
+    amber: {
+      bar: "#BA7517",
+      iconBg: "#FAEEDA",
+      iconColor: "#854F0B",
+      valueColor: "#854F0B",
+    },
+    orange: {
+      bar: "#C2591A",
+      iconBg: "#FDE8D8",
+      iconColor: "#9A3D0E",
+      valueColor: "#9A3D0E",
+    },
+    green: {
+      bar: "#3B6D11",
+      iconBg: "#EAF3DE",
+      iconColor: "#3B6D11",
+      valueColor: "#3B6D11",
+    },
+    blue: {
+      bar: "#185FA5",
+      iconBg: "#E6F1FB",
+      iconColor: "#185FA5",
+      valueColor: "#185FA5",
+    },
+    teal: {
+      bar: "#0F6E56",
+      iconBg: "#E1F5EE",
+      iconColor: "#0F6E56",
+      valueColor: "#0F6E56",
+    },
+  };
+
+  const TableCard = ({ title, children, fullWidth = false }) => (
+    <div
+      style={{
+        background: "white",
+        border: "0.5px solid #d1d5db",
+        borderRadius: "12px",
+        overflow: "hidden",
+        gridColumn: fullWidth ? "1 / -1" : undefined,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "14px 20px",
+          borderBottom: "0.5px solid #e5e7eb",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "13px",
+            fontWeight: 500,
+            color: "var(--text-primary)",
+          }}
+        >
+          {title}
+        </h3>
+        <span
+          style={{
+            fontSize: "10px",
+            color: "var(--text-muted)",
+            fontWeight: 600,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+          }}
+        >
+          Latest 5
+        </span>
+      </div>
+      <div style={{ overflowX: "auto" }}>{children}</div>
+    </div>
+  );
+
+  const Th = ({ children }) => (
+    <th
+      style={{
+        padding: "8px 16px",
+        textAlign: "left",
+        fontSize: "10px",
+        fontWeight: 600,
+        color: "var(--text-muted)",
+        textTransform: "uppercase",
+        letterSpacing: "0.07em",
+        background: "#f9fafb",
+        borderBottom: "0.5px solid #e5e7eb",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {children}
+    </th>
+  );
+
+  const tblStyle = {
+    width: "100%",
+    borderCollapse: "collapse",
+    fontSize: "13px",
+  };
+  const tdBase = {
+    padding: "10px 16px",
+    borderBottom: "0.5px solid #e5e7eb",
+    color: "var(--text-primary)",
+    whiteSpace: "nowrap",
+  };
+  const tdMono = {
+    ...tdBase,
+    fontFamily: "monospace",
+    fontSize: "11px",
+    color: "var(--text-muted)",
+  };
+  const tdMuted = { ...tdBase, color: "var(--text-muted)", fontSize: "12px" };
+
+  const Badge = ({ status }) => (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        padding: "2px 8px",
+        borderRadius: "999px",
+        fontSize: "11px",
+        fontWeight: 500,
+        border: "0.5px solid",
+        ...(() => {
+          if (!status)
+            return {
+              background: "#f9fafb",
+              color: "var(--text-muted)",
+              borderColor: "var(--border)",
+            };
+          const s = status.toLowerCase();
+          if (s.includes("approved") || s === "active")
+            return {
+              background: "#EAF3DE",
+              color: "#3B6D11",
+              borderColor: "#C0DD97",
+            };
+          if (s.includes("pending") || s.includes("confirmation"))
+            return {
+              background: "#FAEEDA",
+              color: "#854F0B",
+              borderColor: "#FAC775",
+            };
+          if (s.includes("rejected") || s === "inactive")
+            return {
+              background: "#FCEBEB",
+              color: "#A32D2D",
+              borderColor: "#F7C1C1",
+            };
+          if (
+            s.includes("submission") ||
+            s.includes("approval") ||
+            s.includes("review")
+          )
+            return {
+              background: "#E6F1FB",
+              color: "#185FA5",
+              borderColor: "#B5D4F4",
+            };
+          return {
+            background: "#f9fafb",
+            color: "var(--text-muted)",
+            borderColor: "var(--border)",
+          };
+        })(),
+      }}
+    >
+      {status || "—"}
+    </span>
+  );
 
   return (
-    <div className="max-w-7xl mx-auto py-10 px-6 space-y-8">
+    <div
+      style={{
+        padding: "2rem 1.5rem",
+        background: "#f3f4f6",
+        minHeight: "100vh",
+      }}
+    >
       {/* HEADER */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-base text-gray-400 mt-1">
-          Welcome back, {user?.name?.split(",")[1]?.trim() || user?.name}!
-        </p>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          marginBottom: "2rem",
+        }}
+      >
+        <div>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "var(--text-muted)",
+              marginTop: "2px",
+            }}
+          >
+            Good day,{" "}
+            <span style={{ color: "var(--text-secondary)", fontWeight: 500 }}>
+              {firstName}
+            </span>
+          </p>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <p style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+            {new Date().toLocaleDateString("en-PH", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+          <span
+            style={{
+              display: "inline-block",
+              marginTop: "6px",
+              padding: "2px 10px",
+              borderRadius: "999px",
+              fontSize: "12px",
+              fontWeight: 500,
+              background: "var(--bg-accent)",
+              color: "var(--text-accent)",
+              border: "0.5px solid var(--border-accent)",
+            }}
+          >
+            {user?.role}
+          </span>
+        </div>
       </div>
 
-      {/* SUMMARY CARDS */}
+      {/* SECTION LABEL */}
       {cards.length > 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-          {cards.map(({ label, value, icon, color, text }) => (
-            <div
-              key={label}
-              className={`rounded-2xl border p-6 ${color} flex items-center gap-5 shadow-sm`}
-            >
-              <span className="text-5xl">{icon}</span>
-              <div>
-                <p className="text-sm text-gray-500">{label}</p>
-                <p className={`text-4xl font-bold ${text}`}>{value}</p>
+        <p
+          style={{
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "var(--text-muted)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            marginBottom: "0.75rem",
+          }}
+        >
+          Summary
+        </p>
+      )}
+
+      {/* STAT CARDS */}
+      {cards.length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${Math.min(cards.length, 4)}, 1fr)`,
+            gap: "12px",
+            marginBottom: "2rem",
+          }}
+        >
+          {cards.map(({ label, value, theme, icon }) => {
+            const t = themeMap[theme] || themeMap.blue;
+            return (
+              <div
+                key={label}
+                style={{
+                  background: "white",
+                  border: "0.5px solid #d1d5db",
+                  borderRadius: "12px",
+                  padding: "1.1rem 1.25rem",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: "3px",
+                    background: t.bar,
+                    borderRadius: "12px 12px 0 0",
+                  }}
+                />
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: "0.9rem",
+                    fontSize: "18px",
+                    background: t.iconBg,
+                    color: t.iconColor,
+                  }}
+                >
+                  {icon}
+                </div>
+                <p
+                  style={{
+                    fontSize: "28px",
+                    fontWeight: 500,
+                    lineHeight: 1,
+                    marginBottom: "4px",
+                    color: t.valueColor,
+                  }}
+                >
+                  {value.toLocaleString()}
+                </p>
+                <p
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--text-muted)",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {label}
+                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* RECENT TABLES */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* SECTION LABEL */}
+      <p
+        style={{
+          fontSize: "11px",
+          fontWeight: 600,
+          color: "var(--text-muted)",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          marginBottom: "0.75rem",
+        }}
+      >
+        Recent activity
+      </p>
+
+      {/* TABLES */}
+      <div
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}
+      >
         {/* RECENT VOUCHERS */}
         {recentVouchers.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-700">
-                Recent Vouchers
-              </h2>
-            </div>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+          <TableCard title="Recent vouchers" fullWidth>
+            <table style={tblStyle}>
+              <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                    ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                    Payee
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                    Status
-                  </th>
+                  <Th>ID</Th>
+                  <Th>Payee</Th>
+                  <Th>Amount</Th>
                 </tr>
               </thead>
               <tbody>
                 {recentVouchers.map((v, i) => (
                   <tr
                     key={i}
-                    className="border-t border-gray-50 hover:bg-gray-50"
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "#f9fafb")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "")
+                    }
                   >
-                    <td className="px-6 py-3 text-gray-600 font-mono text-xs">
-                      {v.checkId || v.id || "—"}
+                    <td style={tdMono}>{v.checkId || v.id || "—"}</td>
+                    <td style={{ ...tdBase, fontWeight: 500 }}>
+                      {v.payee || v.Payee || v.checkId || "—"}
                     </td>
-                    <td className="px-6 py-3 text-gray-700">
-                      {v.payee || v.Payee || "—"}
-                    </td>
-                    <td className="px-6 py-3 text-gray-700">
-                      ₱{(v.totalAmount || v.amount || 0).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(v.status || v.Status)}`}
-                      >
-                        {v.status || v.Status || "—"}
-                      </span>
+                    <td style={tdBase}>
+                      ₱
+                      {(
+                        v.checkAmount ||
+                        v.totalAmount ||
+                        v.amount ||
+                        0
+                      ).toLocaleString()}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableCard>
         )}
 
         {/* RECENT PURCHASE REQUESTS */}
         {recentPurchase.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-700">
-                Recent Purchase Requests
-              </h2>
-            </div>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
+          <TableCard title="Recent purchase requests">
+            <table style={tblStyle}>
+              <thead>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                    PR Code
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                    Department
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                    Total
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                    Status
-                  </th>
+                  <Th>PR Code</Th>
+                  <Th>Department</Th>
+                  <Th>Total</Th>
+                  <Th>Status</Th>
                 </tr>
               </thead>
               <tbody>
                 {recentPurchase.map((p, i) => (
                   <tr
                     key={i}
-                    className="border-t border-gray-50 hover:bg-gray-50"
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "#f9fafb")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "")
+                    }
                   >
-                    <td className="px-6 py-3 text-gray-600 font-mono text-xs">
-                      {p.PRCode || "—"}
-                    </td>
-                    <td className="px-6 py-3 text-gray-700">
-                      {p.RequestorDepartment || "—"}
-                    </td>
-                    <td className="px-6 py-3 text-gray-700">
+                    <td style={tdMono}>{p.PRCode || "—"}</td>
+                    <td style={tdBase}>{p.RequestorDepartment || "—"}</td>
+                    <td style={{ ...tdBase, fontWeight: 500 }}>
                       ₱{(p.Total || 0).toLocaleString()}
                     </td>
-                    <td className="px-6 py-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(p.Status)}`}
-                      >
-                        {p.Status || "—"}
-                      </span>
+                    <td style={tdBase}>
+                      <Badge status={p.Status} />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableCard>
         )}
 
-        {/* MY RECENT REQUISITIONS — lahat ng roles */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden lg:col-span-2">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-base font-semibold text-gray-700">
-              My Recent Requisitions
-            </h2>
-          </div>
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
+        {/* MY RECENT REQUISITIONS */}
+        <TableCard title="My recent requisitions" fullWidth>
+          <table style={{ ...tblStyle, minWidth: "700px" }}>
+            <thead>
               <tr>
-                <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                  Purchase ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                  PR Code
-                </th>
-                <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                  Department
-                </th>
-                <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                  Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                  Mode
-                </th>
-                <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs text-gray-400 font-medium">
-                  Status
-                </th>
+                <Th>Purchase ID</Th>
+                <Th>PR Code</Th>
+                <Th>Department</Th>
+                <Th>Total</Th>
+                <Th>Mode</Th>
+                <Th>Date</Th>
+                <Th>Status</Th>
               </tr>
             </thead>
             <tbody>
-              {myRequisitions.length === 0 ?
+              {myRequisitions.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
-                    className="px-6 py-8 text-center text-gray-400 text-sm"
+                    style={{
+                      padding: "3rem 1rem",
+                      textAlign: "center",
+                      color: "var(--text-muted)",
+                      fontSize: "14px",
+                    }}
                   >
                     No requisitions submitted yet
                   </td>
                 </tr>
-              : myRequisitions.map((p, i) => (
+              ) : (
+                myRequisitions.map((p, i) => (
                   <tr
                     key={i}
-                    className="border-t border-gray-50 hover:bg-gray-50"
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = "#f9fafb")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "")
+                    }
                   >
-                    <td className="px-6 py-3 text-gray-600 font-mono text-xs">
-                      {p.PurchaseID || "—"}
-                    </td>
-                    <td className="px-6 py-3 text-gray-600 font-mono text-xs">
-                      {p.PRCode || "—"}
-                    </td>
-                    <td className="px-6 py-3 text-gray-700">
-                      {p.RequestorDepartment || "—"}
-                    </td>
-                    <td className="px-6 py-3 text-gray-700">
+                    <td style={tdMono}>{p.PurchaseID || "—"}</td>
+                    <td style={tdMono}>{p.PRCode || "—"}</td>
+                    <td style={tdBase}>{p.RequestorDepartment || "—"}</td>
+                    <td style={{ ...tdBase, fontWeight: 500 }}>
                       ₱{(p.Total || 0).toLocaleString()}
                     </td>
-                    <td className="px-6 py-3 text-gray-700">{p.mode || "—"}</td>
-                    <td className="px-6 py-3 text-gray-500 text-xs">
-                      {p.timeStamp ?
-                        new Date(p.timeStamp).toLocaleDateString("en-PH")
-                      : "—"}
+                    <td style={tdMuted}>{p.mode || "—"}</td>
+                    <td style={tdMuted}>
+                      {p.timeStamp
+                        ? new Date(p.timeStamp).toLocaleDateString("en-PH", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })
+                        : "—"}
                     </td>
-                    <td className="px-6 py-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${statusColor(p.Status)}`}
-                      >
-                        {p.Status || "—"}
-                      </span>
+                    <td style={tdBase}>
+                      <Badge status={p.Status} />
                     </td>
                   </tr>
                 ))
-              }
+              )}
             </tbody>
           </table>
-          <div className="px-6 py-4 border-t border-gray-100 text-right">
+          <div
+            style={{
+              padding: "10px 16px",
+              borderTop: "0.5px solid #e5e7eb",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+              Showing {myRequisitions.length} most recent
+            </span>
             <Link
               href="/Main/Purchase/MyRequisition"
-              className="text-sm text-blue-500 hover:text-blue-700 font-medium"
+              style={{
+                fontSize: "12px",
+                fontWeight: 500,
+                color: "var(--text-accent)",
+                textDecoration: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
             >
-              View more →
+              View all →
             </Link>
           </div>
-        </div>
+        </TableCard>
       </div>
     </div>
   );

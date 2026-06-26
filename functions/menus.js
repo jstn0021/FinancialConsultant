@@ -68,11 +68,6 @@ export default function Menus(role) {
           icon: "□",
           path: "/Main/Purchase/PurchaseRecommendingApproval",
         },
-        {
-          label: "Requisition History",
-          icon: "□",
-          path: "/Main/Purchase/RequisitionHistory",
-        },
       ],
     },
 
@@ -125,7 +120,6 @@ export default function Menus(role) {
       "Dashboard",
       "Purchase Requisition Form",
       "Requisition List",
-      "Vouchers",
       "My Requisition",
       "BIR 2307",
       //  "Profile",

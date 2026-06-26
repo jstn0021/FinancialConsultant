@@ -40,11 +40,11 @@ export default function ApprovePurchaseDetails() {
           response.data.purchase.purchaseItems[0].EndingInventoryDate,
         ),
       );
-        setTotal(
-          response.data.purchase.purchaseItems
-            .reduce((total, item) => total + Number(item.Total || 0), 0)
-            .toFixed(2),
-        );
+      setTotal(
+        response.data.purchase.purchaseItems
+          .reduce((total, item) => total + Number(item.Total || 0), 0)
+          .toFixed(2),
+      );
       //   console.log(response.data?.purchase?.purchaseItems[0].EndingInventoryDate);
     } catch (error) {
       if (error.response && error.response.status === 404) {
@@ -58,6 +58,19 @@ export default function ApprovePurchaseDetails() {
   useEffect(() => {
     fetchPurchaseDetails();
   }, [fetchPurchaseDetails]);
+
+  const handleDownload = async () => {
+    const res = await axios.get(`/api/purchase/${id}/export`, {
+      responseType: "blob",
+    });
+
+    const url = URL.createObjectURL(new Blob([res.data]));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `summary-${id}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     if (!items || items.length === 0) return;
@@ -152,31 +165,31 @@ export default function ApprovePurchaseDetails() {
         <BudgetConfirmationTable
           approve={true}
           tableHeader={
-            purchaseDetails?.purchase?.user?.role !== "Admin" ?
-              [
-                "NO.",
-                "ITEM DESCRIPTION",
-                "QUANTITY",
-                "UNIT",
-                "UNIT PRICE",
-                "CLAIMABLE",
-                "TYPE OF EXPENSES",
-                "REMARKS",
-                "TOTAL",
-              ]
-            : [
-                "NO.",
-                "ITEM DESCRIPTION",
-                "REQUIRED BALANCE",
-                "ENDING INVENTORY",
-                "QUANTITY",
-                "UNIT",
-                "UNIT PRICE",
-                "CLAIMABLE",
-                "TYPE OF EXPENSES",
-                "REMARKS",
-                "TOTAL",
-              ]
+            purchaseDetails?.purchase?.user?.role !== "Admin"
+              ? [
+                  "NO.",
+                  "ITEM DESCRIPTION",
+                  "QUANTITY",
+                  "UNIT",
+                  "UNIT PRICE",
+                  "CLAIMABLE",
+                  "TYPE OF EXPENSES",
+                  "REMARKS",
+                  "TOTAL",
+                ]
+              : [
+                  "NO.",
+                  "ITEM DESCRIPTION",
+                  "REQUIRED BALANCE",
+                  "ENDING INVENTORY",
+                  "QUANTITY",
+                  "UNIT",
+                  "UNIT PRICE",
+                  "CLAIMABLE",
+                  "TYPE OF EXPENSES",
+                  "REMARKS",
+                  "TOTAL",
+                ]
           }
           data={purchaseDetails || isfetching === false ? purchaseDetails : []}
           Ending={formattedEnding}
@@ -237,9 +250,9 @@ export default function ApprovePurchaseDetails() {
                   src={`${purchaseDetails?.purchase?.AdminSign || null}`}
                   alt="Signature"
                   className={`absolute left-1/2 -translate-x-1/2 ${
-                    purchaseDetails?.purchase?.AdminSign ?
-                      "-top-15 h-25"
-                    : "-top-8 h-12"
+                    purchaseDetails?.purchase?.AdminSign
+                      ? "-top-15 h-25"
+                      : "-top-8 h-12"
                   } object-contain pointer-events-none`}
                 />
               )}
@@ -252,9 +265,9 @@ export default function ApprovePurchaseDetails() {
                   src={`${purchaseDetails?.purchase?.ChiefAdminManageSign || null}`}
                   alt="Signature"
                   className={`absolute left-1/2 -translate-x-1/2 ${
-                    purchaseDetails?.purchase?.ChiefAdminManageSign ?
-                      "-top-15 h-25"
-                    : "-top-8 h-12"
+                    purchaseDetails?.purchase?.ChiefAdminManageSign
+                      ? "-top-15 h-25"
+                      : "-top-8 h-12"
                   } object-contain pointer-events-none`}
                 />
               )}
@@ -271,9 +284,9 @@ export default function ApprovePurchaseDetails() {
                   src={`${purchaseDetails?.purchase?.ProjectDirectorSign || null}`}
                   alt="Signature"
                   className={`absolute left-1/2 -translate-x-1/2 ${
-                    purchaseDetails?.purchase?.ProjectDirectorSign ?
-                      "-top-15 h-25"
-                    : "-top-8 h-12"
+                    purchaseDetails?.purchase?.ProjectDirectorSign
+                      ? "-top-15 h-25"
+                      : "-top-8 h-12"
                   } object-contain pointer-events-none`}
                 />
               )}
@@ -288,14 +301,17 @@ export default function ApprovePurchaseDetails() {
             <td className="text-white bg-black py-2 w-1/3">Employee Name</td>
             <td className="text-white bg-black py-2 w-1/3">Admin</td>
             <td>
-              {purchaseDetails?.purchase?.isAdminForChiefSign ?
-                "Admin"
-              : "Chief Administrator Manager"}
+              {purchaseDetails?.purchase?.isAdminForChiefSign
+                ? "Admin"
+                : "Chief Administrator Manager"}
             </td>
             <td className="text-white bg-black py-2 w-1/3">Project Director</td>
           </tr>
         </tbody>
       </table>
+      <button onClick={handleDownload} className="bg-green-600 text-white">
+        Download Summary
+      </button>
       {/* accounting part claimable or non claimable  */}
       {/* <table className="border border-gray-300 w-full">
              <thead className = "bg-black text-white border-3 border-darkRed sticky top-0 z-10 font-thin" >

@@ -44,11 +44,12 @@ export default function PurchaseDetails() {
           response.data.purchase.purchaseItems[0].EndingInventoryDate,
         ),
       );
-      setTotal(
-        response.data.purchase.purchaseItems
-          .reduce((total, item) => total + item.Total, 0)
-          .toFixed(2),
+      const grandTotal = response.data.purchase.purchaseItems.reduce(
+        (total, item) => total + Number(item.Total),
+        0,
       );
+
+      setTotal(grandTotal.toFixed(2));
       //   console.log(response.data?.purchase?.purchaseItems[0].EndingInventoryDate);
     } catch (error) {
       if (error.response && error.response.status === 404) {
@@ -99,25 +100,25 @@ export default function PurchaseDetails() {
       <div className="scrollbar-custom overflow-y-auto">
         <Table
           tableHeader={
-            purchaseDetails?.purchase?.user?.role !== "Admin" ?
-              [
-                "NO.",
-                "ITEM DESCRIPTION",
-                "QUANTITY",
-                "UNIT",
-                "UNIT PRICE",
-                "TOTAL",
-              ]
-            : [
-                "NO.",
-                "ITEM DESCRIPTION",
-                "REQUIRED BALANCE",
-                "ENDING INVENTORY",
-                "QUANTITY",
-                "UNIT",
-                "UNIT PRICE",
-                "TOTAL",
-              ]
+            purchaseDetails?.purchase?.user?.role !== "Admin"
+              ? [
+                  "NO.",
+                  "ITEM DESCRIPTION",
+                  "QUANTITY",
+                  "UNIT",
+                  "UNIT PRICE",
+                  "TOTAL",
+                ]
+              : [
+                  "NO.",
+                  "ITEM DESCRIPTION",
+                  "REQUIRED BALANCE",
+                  "ENDING INVENTORY",
+                  "QUANTITY",
+                  "UNIT",
+                  "UNIT PRICE",
+                  "TOTAL",
+                ]
           }
           data={purchaseDetails || isfetching === false ? purchaseDetails : []}
           Ending={formattedEnding}
@@ -164,8 +165,7 @@ export default function PurchaseDetails() {
               </td>
 
               <td className="p-2 relative w-1/3">
-                {(purchaseDetails?.purchase?.AdminSign !== null ||
-                  userRole === "Admin") && (
+                {purchaseDetails?.purchase?.AdminSign !== null || (
                   <img
                     src={`${purchaseDetails?.purchase?.AdminSign || null}`}
                     alt="Signature"
@@ -177,8 +177,7 @@ export default function PurchaseDetails() {
                 <span>{purchaseDetails?.purchase?.AdminName || "Admin"}</span>
               </td>
               <td className="p-2 relative w-1/3">
-                {(purchaseDetails?.purchase?.ChiefAdminManageSign !== null ||
-                  userRole === "Chief Administrator Manager") && (
+                {purchaseDetails?.purchase?.ChiefAdminManageSign !== null || (
                   <img
                     src={`${purchaseDetails?.purchase?.ChiefAdminManageSign || null}`}
                     alt="Signature"
@@ -194,8 +193,7 @@ export default function PurchaseDetails() {
               </td>
 
               <td className="p-2 relative w-1/3">
-                {(purchaseDetails?.purchase?.ProjectDirectorSign !== null ||
-                  userRole === "Project Director") && (
+                {purchaseDetails?.purchase?.ProjectDirectorSign !== null || (
                   <img
                     src={`${purchaseDetails?.purchase?.ProjectDirectorSign || null}`}
                     alt="Signature"
@@ -214,9 +212,11 @@ export default function PurchaseDetails() {
             <tr className="text-center">
               <td className="text-white bg-black py-2 w-1/3">Employee Name</td>
               <td className="text-white bg-black py-2 w-1/3">Admin</td>
-              {purchaseDetails?.purchase?.isAdminForChiefSign ?
-                "Admin"
-              : "Chief Administrator Manager"}
+              <td className="text-white bg-black py-2 w-1/3">
+                {purchaseDetails?.purchase?.isAdminForChiefSign
+                  ? "Admin"
+                  : "Chief Administrator Manager"}
+              </td>
               <td className="text-white bg-black py-2 w-1/3">
                 Project Director
               </td>

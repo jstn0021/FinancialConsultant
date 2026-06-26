@@ -32,9 +32,9 @@ export default function PurchaseDetails() {
   const [formattedEnding, setFormattedEnding] = useState();
   const { showError, showSuccess } = useBanner();
   const userRole =
-    user?.role === "Admin" && purchaseDetails?.purchase?.AdminSign != null ?
-      "Chief Administrator Manager"
-    : user?.role;
+    user?.role === "Admin" && purchaseDetails?.purchase?.AdminSign != null
+      ? "Chief Administrator Manager"
+      : user?.role;
   const fetchPurchaseDetails = useCallback(async () => {
     try {
       const response = await axios.get(`/api/purchase/${params.purchaseID}`);
@@ -188,8 +188,28 @@ export default function PurchaseDetails() {
           });
           if (notifySytstem.status === 200 || notifySytstem.status === 201) {
             // email send
-            const res = await sendPurchaseApprovedEmail({
+            let res = await sendPurchaseApprovedEmail({
               toEmail: acc.email,
+              requestNo: params.purchaseID,
+              approvedBy: user.name,
+              approvedByRole: user.role,
+              appUrl: "",
+              // url link host
+            });
+
+            // system // the owner
+            const notifySytstem = await axios.post("/api/notification", {
+              userId: purchaseDetails?.purchase?.user?.userID,
+              title: "Purchase Requisition Approval",
+              message:
+                "Project Director Approve Purchase Requisition id: " +
+                params.purchaseID,
+              type: "Info",
+              link: "",
+              // link host
+            });
+            res = await sendPurchaseApprovedEmail({
+              toEmail: purchaseDetails?.purchase?.user?.email,
               requestNo: params.purchaseID,
               approvedBy: user.name,
               approvedByRole: user.role,
@@ -244,6 +264,12 @@ export default function PurchaseDetails() {
               appUrl: "",
               // url link host
             });
+            response = await axios.post(
+              `/api/purchase/Approvals/AdminApproval?PRID=${params.purchaseID}`,
+              {
+                e_sign: user?.e_sign,
+              },
+            );
           } else {
             return;
           }
@@ -345,25 +371,25 @@ export default function PurchaseDetails() {
       <div className="scrollbar-custom overflow-y-auto">
         <Table
           tableHeader={
-            purchaseDetails?.purchase?.user?.role !== "Admin" ?
-              [
-                "NO.",
-                "ITEM DESCRIPTION",
-                "QUANTITY",
-                "UNIT",
-                "UNIT PRICE",
-                "TOTAL",
-              ]
-            : [
-                "NO.",
-                "ITEM DESCRIPTION",
-                "REQUIRED BALANCE",
-                "ENDING INVENTORY",
-                "QUANTITY",
-                "UNIT",
-                "UNIT PRICE",
-                "TOTAL",
-              ]
+            purchaseDetails?.purchase?.user?.role !== "Admin"
+              ? [
+                  "NO.",
+                  "ITEM DESCRIPTION",
+                  "QUANTITY",
+                  "UNIT",
+                  "UNIT PRICE",
+                  "TOTAL",
+                ]
+              : [
+                  "NO.",
+                  "ITEM DESCRIPTION",
+                  "REQUIRED BALANCE",
+                  "ENDING INVENTORY",
+                  "QUANTITY",
+                  "UNIT",
+                  "UNIT PRICE",
+                  "TOTAL",
+                ]
           }
           data={purchaseDetails || isfetching === false ? purchaseDetails : []}
           Ending={formattedEnding}
@@ -433,9 +459,9 @@ export default function PurchaseDetails() {
                 />
               )}
               <span>
-                {purchaseDetails?.purchase?.AdminName != null ?
-                  purchaseDetails?.purchase?.ChiefAdminManagerName
-                : `${user?.name}`}
+                {purchaseDetails?.purchase?.AdminName != null
+                  ? purchaseDetails?.purchase?.ChiefAdminManagerName
+                  : `${user?.name}`}
               </span>
             </td>
 
@@ -461,9 +487,9 @@ export default function PurchaseDetails() {
             <td className="text-white bg-black py-2 w-1/3">Employee Name</td>
             <td className="text-white bg-black py-2 w-1/3">Admin</td>
             <td className="text-white bg-black py-2 w-1/3">
-              {purchaseDetails?.purchase?.isAdminForChiefSign ?
-                "Admin"
-              : "Chief Administrator Manager"}
+              {purchaseDetails?.purchase?.isAdminForChiefSign
+                ? "Admin"
+                : "Chief Administrator Manager"}
             </td>
             <td className="text-white bg-black py-2 w-1/3">Project Director</td>
           </tr>
@@ -544,7 +570,7 @@ export default function PurchaseDetails() {
                    </div>
             </div>         
          </div> */}
-      {approving ?
+      {approving ? (
         <>
           <div className="flex justify-end gap-4 mt-10 mb-10">
             <button
@@ -566,7 +592,8 @@ export default function PurchaseDetails() {
             </button>
           </div>
         </>
-      : <>
+      ) : (
+        <>
           <div className="flex justify-end gap-4 mt-10 mb-10">
             {/* <button className="px-6 py-2 bg-darkRed border  border-darkRed text-white font-bold rounded hover:bg-red-700 transition">
               Reject
@@ -582,7 +609,7 @@ export default function PurchaseDetails() {
             </button>
           </div>
         </>
-      }
+      )}
     </>
   );
 }

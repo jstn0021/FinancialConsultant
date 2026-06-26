@@ -318,18 +318,18 @@ const PaymentVouchers = () => {
       pm: voucher.pm || "",
 
       children:
-        voucher.children?.length > 0 ?
-          voucher.children.map((child) => ({
-            id: child.id,
-            title: child.title,
-            amount: child.amount,
-          }))
-        : [
-            {
-              title: "",
-              amount: "",
-            },
-          ],
+        voucher.children?.length > 0
+          ? voucher.children.map((child) => ({
+              id: child.id,
+              title: child.title,
+              amount: child.amount,
+            }))
+          : [
+              {
+                title: "",
+                amount: "",
+              },
+            ],
     });
     setOpenModal(true);
   };
@@ -521,6 +521,21 @@ const PaymentVouchers = () => {
       ) || []
     );
   }, [checks]);
+  const handleDownload = async () => {
+    const res = await axios.get(
+      `/api/voucher-export?checkId=${params.voucherId}`,
+      {
+        responseType: "blob",
+      },
+    );
+
+    const url = URL.createObjectURL(new Blob([res.data]));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `voucher-${params.voucherId}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleCalculationConfirm = () => {
     const selectedItem = calculationOptions.find(
@@ -625,10 +640,9 @@ const PaymentVouchers = () => {
             {/* HEADER */}
             <div className="flex justify-between items-center mb-5">
               <h2 className="text-2xl font-bold">
-                {isEdit ?
-                  `Edit ${formData.receiptOrPayment === "payment" ? "Payment" : "Receipt"} Voucher`
-                : `Create ${formData.receiptOrPayment === "payment" ? "Payment" : "Receipt"} Voucher`
-                }
+                {isEdit
+                  ? `Edit ${formData.receiptOrPayment === "payment" ? "Payment" : "Receipt"} Voucher`
+                  : `Create ${formData.receiptOrPayment === "payment" ? "Payment" : "Receipt"} Voucher`}
               </h2>
 
               <button
@@ -861,7 +875,7 @@ const PaymentVouchers = () => {
           // file attachment
           <>
             {checks?.cheque_attachment &&
-              (checks?.cheque_attachment.toLowerCase().includes(".pdf") ?
+              (checks?.cheque_attachment.toLowerCase().includes(".pdf") ? (
                 <div className="flex justify-center items-center">
                   <iframe
                     src={checks?.cheque_attachment || ""}
@@ -869,13 +883,15 @@ const PaymentVouchers = () => {
                     title="Attachment preview"
                   />
                 </div>
-              : <div className="flex justify-center items-center">
+              ) : (
+                <div className="flex justify-center items-center">
                   <img
                     src={checks?.cheque_attachment || ""}
                     alt="Attachment Preview"
                     className="w-full max-h-96 border rounded m-5"
                   />
-                </div>)}
+                </div>
+              ))}
             <div className="flex justify-end ">
               <input
                 type="file"
@@ -883,6 +899,14 @@ const PaymentVouchers = () => {
                 className="bg-btnRed text-white font-bold my-2 hover:bg-black px-2 py-2"
                 onChange={handleChange}
               />
+            </div>
+            <div className="flex justify-end items-end">
+              <button
+                onClick={handleDownload}
+                className="bg-green-800 text-white p-2 rounded-md"
+              >
+                Export Voucher
+              </button>
             </div>
           </>
         )}
@@ -977,7 +1001,7 @@ const PaymentVouchers = () => {
 
       {(userRole === "Chief Accountant" ||
         userRole === "Chief Administrator Manager") &&
-        (isApproving ?
+        (isApproving ? (
           <div className="flex justify-end gap-4 mt-10 mb-10">
             <button
               onClick={(e) => {
@@ -997,7 +1021,8 @@ const PaymentVouchers = () => {
               Confirm
             </button>
           </div>
-        : <div className="flex justify-end gap-4 mt-10 mb-10">
+        ) : (
+          <div className="flex justify-end gap-4 mt-10 mb-10">
             <button
               onClick={(e) => {
                 handleApprove();
@@ -1006,7 +1031,8 @@ const PaymentVouchers = () => {
             >
               Accept
             </button>
-          </div>)}
+          </div>
+        ))}
 
       {/* buttons  */}
       {userRole !== "Chief Accountant" &&

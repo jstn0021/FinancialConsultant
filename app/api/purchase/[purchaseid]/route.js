@@ -50,42 +50,43 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   const { purchaseid } = await params;
   const body = await request.json();
+
   try {
     const pr = await Purchase.findOne({
-      where: {
-        PurchaseID: purchaseid,
-      },
+      where: { PurchaseID: purchaseid },
     });
 
     if (!pr) {
-      return NextResponse.json(
-        {
-          message: "Not Found",
-        },
-        { status: 404 },
-      );
+      return NextResponse.json({ message: "Not Found" }, { status: 404 });
     }
 
     pr.isOnTheBudget = true;
     pr.PRCode = body.prcode;
-    // call function
+
+    // Update each purchase item's Claimable, TypeOfExpenses, and Remarks
+    if (body.items && Array.isArray(body.items)) {
+      for (const item of body.items) {
+        await PurchaseItem.update(
+          {
+            Claimable: item.Claimable,
+            TypeOfExpenses: item.TypeOfExpenses,
+            Remarks: item.Remarks,
+          },
+          {
+            where: { id: item.id }, // use whatever your PK field is
+          },
+        );
+      }
+    }
+
     const statusResult = await updateStatus("PR Approval", purchaseid);
 
-    
     await pr.save();
 
-    return NextResponse.json(
-      {
-        message: "Budget Confirm",
-      },
-      { status: 200 },
-    );
+    return NextResponse.json({ message: "Budget Confirm" }, { status: 200 });
   } catch (err) {
     return NextResponse.json(
-      {
-        message: "Error Find",
-        error: err.message,
-      },
+      { message: "Error Find", error: err.message },
       { status: 500 },
     );
   }

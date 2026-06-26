@@ -185,16 +185,12 @@ const Table = (props) => {
                   {new Date(purchase.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-4 py-3">
-                  <select
-                    onChange={(e) => {
-                      handleChangeAction(purchase.PurchaseID, e.target.value);
-                    }}
-                    className="px-1 py-1 w-auto my-1 border border-darkRed bg-btnRed rounded-xl text-darkRed hover:bg-white text-sm"
+                  <Link
+                    href={`/Main/Purchase/MyRequisition/${purchase.PurchaseID}`}
+                    className="bg-btnRed text-white hover:bg-black p-3 rounded-md"
                   >
-                    <option value="">Action</option>
-                    <option value="View">View</option>
-                    <option value="Cancel">Cancel</option>
-                  </select>
+                    View
+                  </Link>
                 </td>
               </tr>
             ))}

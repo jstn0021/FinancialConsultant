@@ -60,7 +60,7 @@ const MyRequisitionList = () => {
     fetchPurchaseDetails();
   }, [user?.userID]);
 
-  const filteredPurchases = purchaseDetails.filter((purchase) => {
+  const filteredPurchases = purchaseDetails?.filter((purchase) => {
     if (activeTab === "All") {
       return true;
     }
@@ -169,8 +169,8 @@ const MyRequisitionList = () => {
           onClick={() => setActiveTab("All")}
           className={`px-4 py-2 border ${
             activeTab === "All"
-              ? "bg-darkRed text-white"
-              : "bg-white text-black"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
           }`}
         >
           All
@@ -180,8 +180,8 @@ const MyRequisitionList = () => {
           onClick={() => setActiveTab("Pending")}
           className={`px-4 py-2 border ${
             activeTab === "Pending"
-              ? "bg-darkRed text-white"
-              : "bg-white text-black"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
           }`}
         >
           Pending
@@ -191,8 +191,8 @@ const MyRequisitionList = () => {
           onClick={() => setActiveTab("Approved")}
           className={`px-4 py-2 border ${
             activeTab === "Approved"
-              ? "bg-darkRed text-white"
-              : "bg-white text-black"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
           }`}
         >
           Approved
