@@ -130,7 +130,14 @@ const Table = (props) => {
             {props.list?.map((purchase, index) => (
               <tr key={index} className="border-b border-gray-300">
                 <td className="px-1 py-3">{purchase.PurchaseID}</td>
-                <td className="px-4 py-3">{username || "NAME"}</td>
+                <td className="px-4 py-3">
+                  {" "}
+                  {purchase.user?.middle || purchase.user?.middle !== "N/A" ?
+                    `${purchase.user?.firstname} ${purchase.user?.middle} ${purchase.user?.lastname}`
+                  : `${purchase.user?.firstname} ${purchase.user?.lastname}` ||
+                    "NAME"
+                  }
+                </td>
                 <td className="px-4 py-3">{purchase.RequestorDepartment}</td>
                 <td className="px-4 py-3">{purchase.purchaseItems.length}</td>
                 <td className="px-4 py-3">

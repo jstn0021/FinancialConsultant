@@ -131,6 +131,7 @@ export {
   PH_Cash_Bank,
   Creditor,
   AccountCode,
+  Departments, 
   GLcode,
   ExpensesDescription,
   Summary,

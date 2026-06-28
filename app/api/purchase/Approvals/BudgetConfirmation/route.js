@@ -8,7 +8,10 @@ export async function GET(request) {
   const searchParams = url.searchParams;
   const page = parseInt(searchParams.get("page")) || 1;
   const limit = parseInt(searchParams.get("limit")) || 10;
-  const offset = (page - 1) * limit; // skip page
+  const offset = (page - 1) * limit;
+  const tab = searchParams.get("tab") || "pending"; // "pending" | "approved"
+  const searchId = searchParams.get("searchId"); // PurchaseID search
+
   try {
     const dates = await Purchase.findOne({
       attributes: [
@@ -22,45 +25,35 @@ export async function GET(request) {
         ],
       ],
     });
+
     const startParam = searchParams.get("dateStart");
     const endParam = searchParams.get("dateEnd");
-    const rangeStart = startParam
-      ? `${startParam} 00:00:00`
-      : dates.dataValues.earliestDate;
-    const rangeEnd = endParam
-      ? `${endParam} 23:59:59`
-      : dates.dataValues.latestDate;
+    const rangeStart =
+      startParam ? `${startParam} 00:00:00` : dates.dataValues.earliestDate;
+    const rangeEnd =
+      endParam ? `${endParam} 23:59:59` : dates.dataValues.latestDate;
+
+    // build where clause base on active tab
+    const tabWhere =
+      tab === "approved" ?
+        { Status: "PR Approval", isOnTheBudget: true }
+      : { Status: "Budget Confirmation", isOnTheBudget: false };
+
+    const where = {
+      createdAt: { [Op.between]: [rangeStart, rangeEnd] },
+      ...tabWhere,
+      ...(searchId ? { PurchaseID: searchId } : {}),
+    };
 
     const { rows, count } = await Purchase.findAndCountAll({
-      offset: offset,
-      limit: limit,
+      offset,
+      limit,
       distinct: true,
       order: [["PurchaseID", "DESC"]],
-      where: {
-        createdAt: {
-          [Op.between]: [rangeStart, rangeEnd],
-        },
-      
-      },
-      include: [
-        { model: User },
-        {
-          model: PurchaseItems,
-        },
-      ],
+      where,
+      include: [{ model: User }, { model: PurchaseItems }],
     });
 
-    //  const purchases = await Purchase.findAll({
-    //     include: [{
-    //      model: User
-    //     }],
-    //     include: [{
-    //         model: PurchaseItems,
-    //         include: [{
-    //             model: ItemsLists,
-    //         }]
-    //     }]
-    //  });
     return NextResponse.json(
       {
         data: rows,

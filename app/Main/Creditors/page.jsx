@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import * as XLSX from "xlsx";
 
 const API_BASE = "/api/creditors";
 const PAGE_SIZE = 20;
@@ -468,10 +469,43 @@ export default function CreditorsPage() {
       setFormLoading(false);
     }
   };
+  const handleDownloadTemplate = () => {
+    const headers = [
+      "code",
+      "creditorsName",
+      "address1",
+      "address2",
+      "city",
+      "country",
+      "tin1",
+      "tin2",
+      "tin3",
+    ];
+    const sampleRow = [
+      "1005",
+      "Juan Dela Cruz Trading",
+      "123 Rizal Street",
+      "Brgy. San Jose",
+      "Makati",
+      "PH",
+      "000-000-000",
+      "000-000-000",
+      "000-000-000",
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, sampleRow]);
+    ws["!cols"] = headers.map(() => ({ wch: 20 }));
+    XLSX.utils.book_append_sheet(wb, ws, "Creditors");
+    XLSX.writeFile(wb, "NSTREN_Creditors_Import_Template.xlsx");
+  };
 
   return (
     <>
       <style>{`
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #f9fafb; }
+
         .page { padding: 32px 24px; max-width: 1200px; margin: 0 auto; }
         .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
         .page-title { font-size: 1.5rem; font-weight: 700; color: #111827; letter-spacing: -0.02em; }
@@ -595,6 +629,12 @@ export default function CreditorsPage() {
               onChange={(e) => setSearch(e.target.value)}
             />
             <button
+              className="btn btn-secondary"
+              onClick={handleDownloadTemplate}
+            >
+              ⬇ Template
+            </button>
+            <button
               className="btn btn-success"
               onClick={() => setModal("import")}
             >
@@ -620,7 +660,7 @@ export default function CreditorsPage() {
               </tr>
             </thead>
             <tbody>
-              {loading ?
+              {loading ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -633,7 +673,7 @@ export default function CreditorsPage() {
                     Loading...
                   </td>
                 </tr>
-              : creditors.length === 0 ?
+              ) : creditors.length === 0 ? (
                 <tr>
                   <td colSpan={7}>
                     <div className="empty-state">
@@ -642,7 +682,8 @@ export default function CreditorsPage() {
                     </div>
                   </td>
                 </tr>
-              : creditors.map((c) => (
+              ) : (
+                creditors.map((c) => (
                   <tr key={c.code}>
                     <td>
                       <span className="code-badge">{c.code}</span>
@@ -691,7 +732,7 @@ export default function CreditorsPage() {
                     </td>
                   </tr>
                 ))
-              }
+              )}
             </tbody>
           </table>
 

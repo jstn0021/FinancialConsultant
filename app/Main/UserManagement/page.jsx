@@ -16,14 +16,20 @@ export default function UsersPage() {
   const [deptDropdownOpen, setDeptDropdownOpen] = useState(false);
   const deptDropdownRef = useRef(null);
 
-  // ── Roles & Departments (dynamic) ───────────────────────────
-  const [roles, setRoles] = useState([]);
+  // ── Roles (static) & Departments (dynamic) ──────────────────
+  const [roles] = useState([
+    "SuperAdmin",
+    "Admin",
+    "Accounting",
+    "Chief Accountant",
+    "Chief Administrator Manager",
+    "Project Director",
+    "Regular Employee",
+  ]);
   const [departments, setDepartments] = useState([]);
 
-  // ── Manage Modal state ───────────────────────────────────────
+  // ── Manage Modal state (departments only) ───────────────────
   const [showManageModal, setShowManageModal] = useState(false);
-  const [manageTab, setManageTab] = useState("roles");
-  const [newRoleName, setNewRoleName] = useState("");
   const [newDeptName, setNewDeptName] = useState("");
   const [manageSaving, setManageSaving] = useState(false);
 
@@ -53,12 +59,6 @@ export default function UsersPage() {
     setUsers(data.users || []);
   };
 
-  const fetchRoles = async () => {
-    const res = await fetch("/api/roles");
-    const data = await res.json();
-    setRoles((data.roles || []).map((r) => r.name));
-  };
-
   const fetchDepartments = async () => {
     const res = await fetch("/api/departments");
     const data = await res.json();
@@ -67,43 +67,10 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers();
-    fetchRoles();
     fetchDepartments();
   }, []);
 
-  // ── Manage Modal actions ─────────────────────────────────────
-  const handleAddRole = async () => {
-    if (!newRoleName.trim()) return;
-    setManageSaving(true);
-    try {
-      const res = await fetch("/api/roles", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newRoleName.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Failed to add role.");
-        return;
-      }
-      setNewRoleName("");
-      await fetchRoles();
-    } finally {
-      setManageSaving(false);
-    }
-  };
-
-  const handleDeleteRole = async (name) => {
-    if (
-      !confirm(`Delete role "${name}"? Users with this role won't be affected.`)
-    )
-      return;
-    await fetch(`/api/roles?name=${encodeURIComponent(name)}`, {
-      method: "DELETE",
-    });
-    await fetchRoles();
-  };
-
+  // ── Manage Modal actions (departments only) ──────────────────
   const handleAddDept = async () => {
     if (!newDeptName.trim()) return;
     setManageSaving(true);
@@ -369,15 +336,12 @@ export default function UsersPage() {
         </div>
 
         <div className="flex gap-2 flex-wrap">
-          {/* Manage Roles & Departments */}
+          {/* Manage Departments */}
           <button
-            onClick={() => {
-              setShowManageModal(true);
-              setManageTab("roles");
-            }}
+            onClick={() => setShowManageModal(true)}
             className="bg-purple-100 hover:bg-purple-200 text-purple-700 border border-purple-300 px-4 py-2 rounded text-sm flex items-center gap-1"
           >
-            ⚙ Roles & Depts
+            ⚙ Departments
           </button>
 
           <button
@@ -537,7 +501,7 @@ export default function UsersPage() {
         </table>
       </div>
 
-      {/* ── MANAGE ROLES & DEPARTMENTS MODAL ────────────────────── */}
+      {/* ── MANAGE DEPARTMENTS MODAL ─────────────────────────────── */}
       {showManageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
@@ -547,7 +511,7 @@ export default function UsersPage() {
           <div className="relative bg-white rounded-xl shadow-xl w-[480px] max-h-[85vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b">
               <h2 className="text-base font-semibold text-gray-800">
-                Manage Roles & Departments
+                Manage Departments
               </h2>
               <button
                 onClick={() => setShowManageModal(false)}
@@ -557,113 +521,52 @@ export default function UsersPage() {
               </button>
             </div>
 
-            <div className="flex border-b">
-              <button
-                onClick={() => setManageTab("roles")}
-                className={`flex-1 py-3 text-sm font-medium transition-colors ${manageTab === "roles" ? "border-b-2 border-purple-500 text-purple-600" : "text-gray-500 hover:text-gray-700"}`}
-              >
-                Roles ({roles.length})
-              </button>
-              <button
-                onClick={() => setManageTab("departments")}
-                className={`flex-1 py-3 text-sm font-medium transition-colors ${manageTab === "departments" ? "border-b-2 border-purple-500 text-purple-600" : "text-gray-500 hover:text-gray-700"}`}
-              >
-                Departments ({departments.length})
-              </button>
-            </div>
-
             <div className="flex-1 overflow-y-auto p-5">
-              {manageTab === "roles" ?
-                <div>
-                  <div className="flex gap-2 mb-4">
-                    <input
-                      value={newRoleName}
-                      onChange={(e) => setNewRoleName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddRole()}
-                      placeholder="New role name..."
-                      className="flex-1 p-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-                    />
-                    <button
-                      onClick={handleAddRole}
-                      disabled={manageSaving || !newRoleName.trim()}
-                      className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
+              <div className="flex gap-2 mb-4">
+                <input
+                  value={newDeptName}
+                  onChange={(e) => setNewDeptName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddDept()}
+                  placeholder="New department name..."
+                  className="flex-1 p-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                />
+                <button
+                  onClick={handleAddDept}
+                  disabled={manageSaving || !newDeptName.trim()}
+                  className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
+                >
+                  + Add
+                </button>
+              </div>
+              {departments.length === 0 ?
+                <p className="text-sm text-gray-400 text-center py-6">
+                  No departments yet. Add one above.
+                </p>
+              : <ul className="space-y-2">
+                  {departments.map((d) => (
+                    <li
+                      key={d}
+                      className="flex items-center justify-between bg-gray-50 border rounded-lg px-4 py-2.5"
                     >
-                      + Add
-                    </button>
-                  </div>
-                  {roles.length === 0 ?
-                    <p className="text-sm text-gray-400 text-center py-6">
-                      No roles yet. Add one above.
-                    </p>
-                  : <ul className="space-y-2">
-                      {roles.map((r) => (
-                        <li
-                          key={r}
-                          className="flex items-center justify-between bg-gray-50 border rounded-lg px-4 py-2.5"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-purple-400 inline-block" />
-                            <span className="text-sm text-gray-700">{r}</span>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteRole(r)}
-                            className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  }
-                </div>
-              : <div>
-                  <div className="flex gap-2 mb-4">
-                    <input
-                      value={newDeptName}
-                      onChange={(e) => setNewDeptName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAddDept()}
-                      placeholder="New department name..."
-                      className="flex-1 p-2 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-                    />
-                    <button
-                      onClick={handleAddDept}
-                      disabled={manageSaving || !newDeptName.trim()}
-                      className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm disabled:opacity-50"
-                    >
-                      + Add
-                    </button>
-                  </div>
-                  {departments.length === 0 ?
-                    <p className="text-sm text-gray-400 text-center py-6">
-                      No departments yet. Add one above.
-                    </p>
-                  : <ul className="space-y-2">
-                      {departments.map((d) => (
-                        <li
-                          key={d}
-                          className="flex items-center justify-between bg-gray-50 border rounded-lg px-4 py-2.5"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
-                            <span className="text-sm text-gray-700">{d}</span>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteDept(d)}
-                            className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  }
-                </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
+                        <span className="text-sm text-gray-700">{d}</span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteDept(d)}
+                        className="text-xs text-red-400 hover:text-red-600 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               }
             </div>
 
             <div className="px-5 py-3 border-t bg-gray-50">
               <p className="text-xs text-gray-400">
-                ⚠ Deleting a role or department won't affect existing users.
+                ⚠ Deleting a department won't affect existing users.
               </p>
             </div>
           </div>
@@ -715,6 +618,7 @@ export default function UsersPage() {
                 className="p-2 border rounded"
                 placeholder="Email Address (required)"
               />
+
               {/* ── ROLE & DEPARTMENT TABS SELECTION ────────────────── */}
               <div className="border rounded-lg p-2.5 bg-gray-50/50 space-y-2">
                 {/* Tab Headers */}
@@ -752,42 +656,30 @@ export default function UsersPage() {
                 {/* Tab Content: ROLE */}
                 {(form._activeTab || "role") === "role" && (
                   <div className="relative">
-                    <div className="flex gap-1.5">
-                      <input
-                        type="text"
-                        placeholder="Type to search role..."
-                        value={form.role || ""}
-                        onChange={(e) =>
-                          setForm({ ...form, role: e.target.value })
-                        }
-                        onFocus={() =>
-                          setForm({ ...form, _showRoleSuggestions: true })
-                        }
-                        onBlur={() => {
-                          setTimeout(
-                            () =>
-                              setForm((f) => ({
-                                ...f,
-                                _showRoleSuggestions: false,
-                              })),
-                            200,
-                          );
-                        }}
-                        className="p-1.5 border rounded flex-1 text-xs focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowManageModal(true);
-                          setManageTab("roles");
-                        }}
-                        className="text-[11px] bg-purple-50 border border-purple-200 text-purple-600 px-2 rounded font-medium whitespace-nowrap hover:bg-purple-100"
-                      >
-                        + Manage
-                      </button>
-                    </div>
+                    <input
+                      type="text"
+                      placeholder="Type to search role..."
+                      value={form.role || ""}
+                      onChange={(e) =>
+                        setForm({ ...form, role: e.target.value })
+                      }
+                      onFocus={() =>
+                        setForm({ ...form, _showRoleSuggestions: true })
+                      }
+                      onBlur={() => {
+                        setTimeout(
+                          () =>
+                            setForm((f) => ({
+                              ...f,
+                              _showRoleSuggestions: false,
+                            })),
+                          200,
+                        );
+                      }}
+                      className="p-1.5 border rounded w-full text-xs focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
+                    />
                     {form._showRoleSuggestions && form.role && (
-                      <ul className="absolute left-0 right-[75px] mt-1 z-50 bg-white border rounded shadow-md max-h-24 overflow-y-auto">
+                      <ul className="absolute left-0 right-0 mt-1 z-50 bg-white border rounded shadow-md max-h-24 overflow-y-auto">
                         {roles
                           .filter((r) =>
                             r.toLowerCase().includes(form.role.toLowerCase()),
@@ -855,10 +747,7 @@ export default function UsersPage() {
                       />
                       <button
                         type="button"
-                        onClick={() => {
-                          setShowManageModal(true);
-                          setManageTab("departments");
-                        }}
+                        onClick={() => setShowManageModal(true)}
                         className="text-[11px] bg-purple-50 border border-purple-200 text-purple-600 px-2 rounded font-medium whitespace-nowrap hover:bg-purple-100"
                       >
                         + Manage

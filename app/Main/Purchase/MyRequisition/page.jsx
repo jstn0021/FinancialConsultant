@@ -1,5 +1,5 @@
 "use client";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Table from "@/app/components/table";
 import axios from "axios";
@@ -8,15 +8,12 @@ import { formDates, getUser } from "@/functions/formattDate";
 
 import useUserContext from "@/hooks/Context/UserContext";
 import { GetPurchaseWithUserId } from "@/functions/purchase";
+
 const MyRequisitionList = () => {
   const [purchaseDetails, setPurchaseDetails] = useState([]);
-  const [fomatted, setFormatted] = useState();
-  //  const [currentPage, setCurrentPage] = useState(1);
-  //  const [itemsPerPage] = useState(15); //10
-  const [purchaseID, setPurchaseId] = useState();
+  const [purchaseID, setPurchaseId] = useState("");
   const [limit] = useState(15);
   const { user } = useUserContext();
-  const [search, setSearch] = useState(false);
   const [page, setPage] = useState(1);
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
@@ -24,22 +21,20 @@ const MyRequisitionList = () => {
   const [dateEndDefault, setDateEndDefault] = useState();
   const [totalPages, setTotalPages] = useState();
   const [activeTab, setActiveTab] = useState("All");
+
   const fetchPurchaseDetails = async () => {
     try {
-      let response;
-
       const data = await GetPurchaseWithUserId(
         user?.userID,
         dateStart,
         dateEnd,
         page,
         limit,
+        activeTab,
+        // wala nang searchId dito — client-side na yung search
       );
-
-      // response = await axios.get(`/api/purchase?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`);
       setPurchaseDetails(data.data);
       setTotalPages(data.totalPages);
-      console.log(data.rangeStart);
       setDateStartDefault(data.rangeStart?.split("T")[0]);
       setDateEndDefault(data.rangeEnd?.split("T")[0]);
     } catch (error) {
@@ -52,51 +47,39 @@ const MyRequisitionList = () => {
   };
 
   useEffect(() => {
-    console.log("request :", purchaseDetails?.length || 0);
-  }, [purchaseDetails]);
-  useEffect(() => {
     if (!user?.userID) return;
-
     fetchPurchaseDetails();
   }, [user?.userID]);
 
-  const filteredPurchases = purchaseDetails?.filter((purchase) => {
-    if (activeTab === "All") {
-      return true;
-    }
-
-    if (activeTab === "Pending") {
-      return purchase.Status && purchase.Status !== "Accounting Submission";
-    }
-
-    if (activeTab === "Approved") {
-      return purchase.Status === "Accounting Submission";
-    }
-
-    return true;
-  });
   useEffect(() => {
     fetchPurchaseDetails();
-  }, [page]);
+  }, [page, activeTab]);
+
   useEffect(() => {
     if (dateStart || dateEnd) {
       fetchPurchaseDetails();
     }
   }, [dateStart, dateEnd]);
-  // search button by id
-  const handleChangeId = useCallback(
-    (e) => {
-      setPurchaseId(e.target.value);
-    },
-    [purchaseID, purchaseDetails],
-  );
-  //search button
+
   useEffect(() => {
-    if (purchaseID === "") {
-      setSearch(false);
-      //  fetchPurchaseDetails();
+    setPage(1);
+  }, [activeTab]);
+
+  // LIVE SEARCH — client-side, real-time as you type
+  const handleChangeId = useCallback((e) => {
+    setPurchaseId(e.target.value);
+  }, []);
+
+  const displayedList = useMemo(() => {
+    if (!purchaseID || purchaseID.trim() === "") {
+      return purchaseDetails || [];
     }
-  });
+    return (purchaseDetails || []).filter((e) =>
+      String(e.PurchaseID)
+        .toLowerCase()
+        .includes(purchaseID.trim().toLowerCase()),
+    );
+  }, [purchaseID, purchaseDetails]);
 
   if (!user) {
     return (
@@ -105,7 +88,7 @@ const MyRequisitionList = () => {
       </>
     );
   }
-  //handle date range
+
   const handleChangeDate = (e) => {
     switch (e.target.name) {
       case "dateStart":
@@ -130,10 +113,11 @@ const MyRequisitionList = () => {
             <input
               type="text"
               className="bg-gray-100 ml-4 text-black outline-2 outline-gray-300 text-lg"
-              onChange={(e) => handleChangeId(e)}
+              value={purchaseID}
+              onChange={handleChangeId}
               placeholder="Enter Purchase ID"
             />
-            <button onClick={(e) => setSearch(true)}>
+            <button>
               <FiSearch
                 size={28}
                 className="ml-2 text-white hover:text-black hover:bg-btnRed cursor-pointer font-extrabold outline outline-darkRed 
@@ -164,13 +148,14 @@ const MyRequisitionList = () => {
         </div>
         <hr className="border-t border-gray-300" />
       </div>
+
       <div className="flex gap-2 mb-4">
         <button
           onClick={() => setActiveTab("All")}
           className={`px-4 py-2 border ${
-            activeTab === "All"
-              ? "bg-white text-black"
-              : "bg-darkRed text-white"
+            activeTab === "All" ?
+              "bg-white text-black"
+            : "bg-darkRed text-white"
           }`}
         >
           All
@@ -179,9 +164,9 @@ const MyRequisitionList = () => {
         <button
           onClick={() => setActiveTab("Pending")}
           className={`px-4 py-2 border ${
-            activeTab === "Pending"
-              ? "bg-white text-black"
-              : "bg-darkRed text-white"
+            activeTab === "Pending" ?
+              "bg-white text-black"
+            : "bg-darkRed text-white"
           }`}
         >
           Pending
@@ -190,9 +175,9 @@ const MyRequisitionList = () => {
         <button
           onClick={() => setActiveTab("Approved")}
           className={`px-4 py-2 border ${
-            activeTab === "Approved"
-              ? "bg-white text-black"
-              : "bg-darkRed text-white"
+            activeTab === "Approved" ?
+              "bg-white text-black"
+            : "bg-darkRed text-white"
           }`}
         >
           Approved
@@ -210,13 +195,7 @@ const MyRequisitionList = () => {
             "ACTION",
           ]}
           list={[]}
-          ownList={
-            search
-              ? filteredPurchases.filter(
-                  (e) => String(e.PurchaseID) === String(purchaseID),
-                )
-              : filteredPurchases
-          }
+          ownList={displayedList}
         />
       </div>
       {/* paginations */}
@@ -233,9 +212,9 @@ const MyRequisitionList = () => {
             key={index}
             onClick={() => setPage(index + 1)}
             className={`px-4 py-1 border-r-2 border-gray-500 ${
-              page === index + 1
-                ? "bg-darkRed text-white"
-                : "bg-gray-200 hover:bg-darkRed hover:text-white"
+              page === index + 1 ?
+                "bg-darkRed text-white"
+              : "bg-gray-200 hover:bg-darkRed hover:text-white"
             }`}
           >
             {index + 1}

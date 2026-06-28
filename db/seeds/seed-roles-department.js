@@ -1,5 +1,5 @@
-import sequelize from "../../connection.js";
-import { Role, Departments } from "../index.js";
+import sequelize from "../connection.js";
+import { Departments } from "../models/index.js";
 
 const DEFAULT_ROLES = [
   "Regular Employee",
@@ -45,16 +45,6 @@ async function seed() {
     // ── Roles ─────────────────────────────────────────────────
     let rolesAdded = 0;
     let rolesSkipped = 0;
-
-    for (const name of DEFAULT_ROLES) {
-      const [, created] = await Role.findOrCreate({ where: { name } });
-      if (created) {
-        console.log(`  ➕ Role: ${name}`);
-        rolesAdded++;
-      } else {
-        rolesSkipped++;
-      }
-    }
 
     // ── Departments ───────────────────────────────────────────
     let deptsAdded = 0;

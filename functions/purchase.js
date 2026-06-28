@@ -8,7 +8,7 @@ import {
 } from "@/db/models";
 import { Sequelize } from "sequelize";
 import { NextResponse } from "next/server";
-
+import { Op } from "sequelize";
 export async function getItemInfo(item_id, items) {
   const requiredBalance =
     items.find((item) => item.ItemsID === item_id)?.RequiredBalance || 0;
@@ -242,6 +242,8 @@ export async function GetPurchaseWithUserId(
   endParam,
   page = 1,
   limit = 10,
+  activeTab = "All",
+  searchId = "",
 ) {
   try {
     page = Number(page);
@@ -273,11 +275,29 @@ export async function GetPurchaseWithUserId(
     const rangeEnd =
       endParam ? new Date(`${endParam}T23:59:59.999Z`) : latestDate;
 
+    // build tab-based condition
+    let tabWhere = {};
+    if (activeTab === "Pending") {
+      tabWhere = {
+        Status: {
+          [Sequelize.Op.and]: [
+            { [Sequelize.Op.ne]: null },
+            { [Sequelize.Op.ne]: "Accounting Submission" },
+          ],
+        },
+      };
+    } else if (activeTab === "Approved") {
+      tabWhere = { Status: "Accounting Submission" };
+    }
+    // "All" -> walang Status filter
+
     const whereClause = {
       UserID: userID,
       createdAt: {
         [Sequelize.Op.between]: [rangeStart, rangeEnd],
       },
+      ...tabWhere,
+      ...(searchId ? { PurchaseID: searchId } : {}),
     };
 
     const { rows, count } = await Purchase.findAndCountAll({

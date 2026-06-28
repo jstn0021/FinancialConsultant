@@ -1,5 +1,5 @@
 "use client";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { FiSearch, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import useUserContext from "@/hooks/Context/UserContext";
@@ -7,12 +7,9 @@ import BudgetConfirmationTable from "@/app/components/Tables/budgetConfirmationT
 export default function BudgetConfirmation() {
   const [purchaseDetails, setPurchaseDetails] = useState();
   const [fomatted, setFormatted] = useState();
-  //  const [currentPage, setCurrentPage] = useState(1);
-  //  const [itemsPerPage] = useState(15); //10
-  const [purchaseID, setPurchaseId] = useState();
+  const [purchaseID, setPurchaseId] = useState("");
   const [limit] = useState(15);
   const { user } = useUserContext();
-  const [search, setSearch] = useState(false);
   const [page, setPage] = useState(1);
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
@@ -22,32 +19,15 @@ export default function BudgetConfirmation() {
   const [totalPages, setTotalPages] = useState();
   const [approvalType, setApprovalType] = useState("Admin");
 
-  //  const indexOfLastItem = currentPage * itemsPerPage; // 1 * 10  = 10  ,  2 * 10  = 20
-  //   const indexOfFirstItem = indexOfLastItem - itemsPerPage; // 10 - 10 = 0 , 20 - 10 = 10
-  //  const currentItems = purchaseDetails?.purchases?.slice(
-  //  indexOfFirstItem,
-  //  indexOfLastItem
-  //  ) || [];
-
-  //  const totalPages = Math.ceil(
-  //   (purchaseDetails?.purchases?.length || 0) / itemsPerPage
-  //  );
-
   const fetchPurchaseDetails = async () => {
     try {
-      let response;
-
-      // swith role to fetch data
-
-      response = await axios.get(
-        `/api/purchase/Approvals/BudgetConfirmation?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`,
+      const response = await axios.get(
+        `/api/purchase/Approvals/BudgetConfirmation?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}&tab=${activeTab}`,
       );
       setPurchaseDetails(response.data.data);
       setTotalPages(response.data.totalPages);
       setDateStartDefault(response.data.rangeStart.split("T")[0]);
       setDateEndDefault(response.data.rangeEnd.split("T")[0]);
-      console.log(response.data);
-      //  setFormatted(formatDates(response.data.purchases[0].createdAt));
     } catch (error) {
       if (error.response && error.response.status === 404) {
         setIs404(true);
@@ -56,31 +36,26 @@ export default function BudgetConfirmation() {
       }
     }
   };
-  useEffect(() => {
-    console.log("request :", purchaseDetails?.length || 0);
-  }, [purchaseDetails]);
+
   useEffect(() => {
     fetchPurchaseDetails();
-  }, [page, approvalType]);
+  }, [page, approvalType, activeTab]);
+
   useEffect(() => {
     if (dateStart || dateEnd) {
       fetchPurchaseDetails();
     }
   }, [dateStart, dateEnd]);
-  // search button by id
-  const handleChangeId = useCallback(
-    (e) => {
-      setPurchaseId(e.target.value);
-    },
-    [purchaseID, purchaseDetails],
-  );
-  //search button
+
+  // i-reset pabalik sa page 1 kapag nagpalit ng tab para hindi maiwan sa stale page number
   useEffect(() => {
-    if (purchaseID === "") {
-      setSearch(false);
-      //  fetchPurchaseDetails();
-    }
-  });
+    setPage(1);
+  }, [activeTab]);
+
+  // LIVE SEARCH — client-side, real-time as you type
+  const handleChangeId = useCallback((e) => {
+    setPurchaseId(e.target.value);
+  }, []);
 
   //handle date range
   const handleChangeDate = (e) => {
@@ -95,16 +70,19 @@ export default function BudgetConfirmation() {
         break;
     }
   };
-  const tabFilteredList = (purchaseDetails || []).filter((e) =>
-    activeTab === "pending" ?
-      e.Status === "Budget Confirmation" && e.isOnTheBudget === false
-    : e.Status === "PR Approval" && e.isOnTheBudget === true,
-  );
 
-  const finalList =
-    search ?
-      tabFilteredList.filter((e) => e.PurchaseID === purchaseID)
-    : tabFilteredList;
+  const displayedList = useMemo(() => {
+    const list = purchaseDetails || [];
+    if (!purchaseID || purchaseID.trim() === "") {
+      return list;
+    }
+    return list.filter((e) =>
+      String(e.PurchaseID)
+        .toLowerCase()
+        .includes(purchaseID.trim().toLowerCase()),
+    );
+  }, [purchaseID, purchaseDetails]);
+
   return (
     <>
       <div className="flex relative mb-5 w-auto"></div>
@@ -116,10 +94,11 @@ export default function BudgetConfirmation() {
             <input
               type="text"
               className="bg-gray-100 ml-4 text-black outline-2 outline-gray-300 text-lg"
-              onChange={(e) => handleChangeId(e)}
+              value={purchaseID}
+              onChange={handleChangeId}
               placeholder="Enter Purchase ID"
             />
-            <button onClick={(e) => setSearch(true)}>
+            <button>
               <FiSearch
                 size={28}
                 className="ml-2 text-white hover:text-black hover:bg-btnRed cursor-pointer font-extrabold outline outline-darkRed 
@@ -186,7 +165,7 @@ export default function BudgetConfirmation() {
             "REQUISITION DATE",
             "ACTION",
           ]}
-          list={finalList}
+          list={displayedList}
         />
       </div>
       {/* paginations */}

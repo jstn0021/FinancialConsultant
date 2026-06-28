@@ -20,7 +20,7 @@ export async function POST(request) {
   ];
 
   const body = await request.json();
-  console.log(JSON.stringify(body));
+
   if (!body.purchaseItem) {
     return NextResponse.json({ message: "Data is required" }, { status: 400 });
   }
@@ -38,7 +38,7 @@ export async function POST(request) {
         missing;
     }
   }
-  console.log(missingFields);
+  // console.log(missingFields);
   if (Object.keys(missingFields).length > 0) {
     return NextResponse.json(
       { message: "Validation failed", errors: missingFields },
@@ -83,13 +83,13 @@ export async function POST(request) {
     //get admin chiefAdminName , ProjectDirector
 
     // get name of purchase items
-    const codeID = generatePurchaseId();
+    const codeID = await generatePurchaseId();
     const purchase = await Purchase.create({
       PurchaseID: codeID,
       UserID: body?.purchaseItem[0]?.UserID,
       RequestorDepartment: userDprt?.department || "",
       timeStamp: new Date(),
-      status: "Budget Confirmation",
+      Status: "Budget Confirmation",
       EmployeeSign: body?.EmployeeSign,
       Total: body.TotalItem,
       mode: body.mode,

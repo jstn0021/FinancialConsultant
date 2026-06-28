@@ -52,7 +52,7 @@ export async function POST(request) {
         ) ?
           ""
         : userAccount.middle
-      }. ${userAccount.lastname} `,
+      } ${userAccount.lastname} `,
     });
 
     // store in cookie

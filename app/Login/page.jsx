@@ -115,7 +115,7 @@ const Login = () => {
                   <input
                     type="text"
                     name="userID"
-                    className={`border-black border rounded-md w-full h-10 ${
+                    className={`border-black border rounded-md w-full h-10  p-2 ${
                       fieldError.userID ? "border-red-500 text-red-500" : ""
                     }`}
                     ref={idRef}
@@ -123,11 +123,11 @@ const Login = () => {
                   />
                 </div>
                 <div>
-                  <h1 className="font-semibold text-xl mb-2">Password: </h1>
+                  <h1 className="font-semibold text-xl mb-2 ">Password: </h1>
                   <input
                     type="password"
                     name="password"
-                    className={`border-black border rounded-md w-full h-10 ${
+                    className={`border-black border rounded-md w-full h-10 p-2${
                       fieldError.password ? "border-red-500 text-red-500" : ""
                     }`}
                     ref={passRef}
