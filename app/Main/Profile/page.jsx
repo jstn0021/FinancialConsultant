@@ -102,7 +102,7 @@ export default function Profile() {
     );
 
   return (
-    <div className="max-w-2xl mx-auto py-10 px-4">
+    <div className="w-full mx-auto py-10 px-4">
       {/* TOAST */}
       {toast && (
         <div
@@ -208,9 +208,9 @@ export default function Profile() {
                   <p
                     className={`text-xs ${newPassword === confirmPassword ? "text-green-500" : "text-red-400"}`}
                   >
-                    {newPassword === confirmPassword
-                      ? "✓ Passwords match"
-                      : "✗ Passwords do not match"}
+                    {newPassword === confirmPassword ?
+                      "✓ Passwords match"
+                    : "✗ Passwords do not match"}
                   </p>
                 )}
               </div>
@@ -260,9 +260,9 @@ export default function Profile() {
               </span>
               <div>
                 <p className="text-sm font-medium text-gray-700">
-                  {signatureFile
-                    ? signatureFile.name
-                    : "Click to upload signature"}
+                  {signatureFile ?
+                    signatureFile.name
+                  : "Click to upload signature"}
                 </p>
                 <p className="text-xs text-gray-400">PNG, JPG up to 5MB</p>
               </div>
@@ -279,11 +279,11 @@ export default function Profile() {
               disabled={saving || !signatureFile}
               className="mt-4 w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-medium py-2.5 rounded-xl transition-colors text-sm"
             >
-              {saving
-                ? "Saving..."
-                : isSetup
-                  ? "Activate Account"
-                  : "Save E-Signature"}
+              {saving ?
+                "Saving..."
+              : isSetup ?
+                "Activate Account"
+              : "Save E-Signature"}
             </button>
           </div>
         </div>

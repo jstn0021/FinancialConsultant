@@ -20,7 +20,7 @@ export async function POST(request) {
   ];
 
   const body = await request.json();
-  console.log(JSON.stringify(body));
+
   if (!body.purchaseItem) {
     return NextResponse.json({ message: "Data is required" }, { status: 400 });
   }
@@ -38,7 +38,7 @@ export async function POST(request) {
         missing;
     }
   }
-  console.log(missingFields);
+  // console.log(missingFields);
   if (Object.keys(missingFields).length > 0) {
     return NextResponse.json(
       { message: "Validation failed", errors: missingFields },
@@ -80,14 +80,16 @@ export async function POST(request) {
         { status: 500 },
       );
     }
+    //get admin chiefAdminName , ProjectDirector
 
     // get name of purchase items
-    const codeID = generatePurchaseId();
+    const codeID = await generatePurchaseId();
     const purchase = await Purchase.create({
       PurchaseID: codeID,
       UserID: body?.purchaseItem[0]?.UserID,
       RequestorDepartment: userDprt?.department || "",
       timeStamp: new Date(),
+      Status: "Budget Confirmation",
       EmployeeSign: body?.EmployeeSign,
       Total: body.TotalItem,
       mode: body.mode,
@@ -117,29 +119,6 @@ export async function POST(request) {
       );
     }
     //find users
-
-    //notification parts
-    const notify = await accountingNofication(
-      "Budget Confirmation",
-      purchase.PurchaseID,
-      `${userDprt.lastname}, ${userDprt.firstname}`,
-    );
-    const status = await updateStatus(
-      "Budget Confirmation",
-      purchase.PurchaseID,
-    );
-    if (notify === false || status === false) {
-      await purchase.destroy({
-        where: { PurchaseID: purchase.PurchaseID },
-      });
-      return NextResponse.json(
-        {
-          message: "Failed to create purchase items, purchase rolled back",
-        },
-        { status: 500 },
-      );
-    }
-
     return NextResponse.json(
       {
         message: "Purchase created successfully",
@@ -149,7 +128,7 @@ export async function POST(request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("Error inserting data:", error);
+    console.error("Error inserting data:", error.message);
     return NextResponse.json(
       { message: "Internal Server Error" },
       { status: 500 },
@@ -180,12 +159,10 @@ export async function GET(request) {
     });
     const startParam = searchParams.get("dateStart");
     const endParam = searchParams.get("dateEnd");
-    const rangeStart = startParam
-      ? `${startParam} 00:00:00`
-      : dates.dataValues.earliestDate;
-    const rangeEnd = endParam
-      ? `${endParam} 23:59:59`
-      : dates.dataValues.latestDate;
+    const rangeStart =
+      startParam ? `${startParam} 00:00:00` : dates.dataValues.earliestDate;
+    const rangeEnd =
+      endParam ? `${endParam} 23:59:59` : dates.dataValues.latestDate;
 
     const { rows, count } = await Purchase.findAndCountAll({
       offset: offset,

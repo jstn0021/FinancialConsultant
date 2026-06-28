@@ -12,11 +12,12 @@ export async function POST(request) {
     if (!userID || !password) {
       return NextResponse.json(
         { error_message: "Missing credentials" },
+        { error_message: "Missing credentials" },
         { status: 400 },
       );
     }
 
-    // find account in db
+    //  find account in db
     const userAccount = await User.findByPk(userID);
 
     if (!userAccount) {
@@ -31,6 +32,7 @@ export async function POST(request) {
     if (!isMatch) {
       return NextResponse.json(
         { error_message: "Invalid credential" },
+        { error_message: "Invalid credential" },
         { status: 401 },
       );
     }
@@ -44,13 +46,14 @@ export async function POST(request) {
       department: userAccount.department,
       e_sign: userAccount.e_signature,
       mustChangePassword: userAccount.mustChangePassword ?? false,
-      name: `${userAccount.lastname}, ${userAccount.firstname} ${
+      mustChangePassword: userAccount.mustChangePassword ?? false,
+      name: `${userAccount.firstname} ${
         !userAccount.middle ||
         userAccount.middle === "N/A" ||
         userAccount.middle === null
           ? ""
           : userAccount.middle
-      }`,
+      } ${userAccount.lastname} `,
     });
 
     // store in cookie

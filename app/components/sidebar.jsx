@@ -15,12 +15,10 @@ export default function Sidebar() {
   const [name, setName] = useState();
   const pathname = usePathname(); // get current path
   const menu = user ? Menus(user.role).filter((i) => i.section === "menu") : [];
-  const others = user
-    ? Menus(user.role).filter((i) => i.section === "others")
-    : [];
-  const logout = user
-    ? Menus(user.role).filter((i) => i.section === "footer")
-    : [];
+  const others =
+    user ? Menus(user.role).filter((i) => i.section === "others") : [];
+  const logout =
+    user ? Menus(user.role).filter((i) => i.section === "footer") : [];
 
   const [openMenus, setOpenMenus] = useState({});
 
@@ -75,19 +73,17 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleMenu(item.label)}
                   className={`text-left w-full p-2 rounded flex justify-between items-center hover:bg-red-300 ${
-                    item.subItem?.some((sub) => pathname.startsWith(sub.path))
-                      ? "bg-white text-black font-semibold hover:bg-white"
-                      : ""
+                    item.subItem?.some((sub) => pathname.startsWith(sub.path)) ?
+                      "bg-white text-black font-semibold hover:bg-white"
+                    : ""
                   }`}
                 >
                   <span>{item.label}</span>
 
                   <span>
-                    {openMenus[item.label] ? (
+                    {openMenus[item.label] ?
                       <FiChevronUp size={21} />
-                    ) : (
-                      <FiChevronDown size={21} />
-                    )}
+                    : <FiChevronDown size={21} />}
                   </span>
                 </button>
 
@@ -98,9 +94,9 @@ export default function Sidebar() {
                         key={i}
                         href={sub.path}
                         className={`p-2 rounded hover:bg-red-300 ${
-                          pathname.startsWith(sub.path)
-                            ? "bg-white text-black font-semibold hover:bg-white"
-                            : ""
+                          pathname.startsWith(sub.path) ?
+                            "bg-white text-black font-semibold hover:bg-white"
+                          : ""
                         }`}
                       >
                         {sub.label}
@@ -118,9 +114,9 @@ export default function Sidebar() {
               key={index}
               href={item.path}
               className={`p-2 rounded hover:bg-red-300 ${
-                pathname.startsWith(item.path)
-                  ? "bg-white text-black font-semibold hover:bg-white"
-                  : ""
+                pathname.startsWith(item.path) ?
+                  "bg-white text-black font-semibold hover:bg-white"
+                : ""
               }`}
             >
               {item.label}
@@ -130,7 +126,11 @@ export default function Sidebar() {
         {/* others */}
 
         <h3 className="text-red-100 text-sm ml-2 mt-5 opacity-70">
-          {others.length === 0 ? "" : others.length > 1 ? "Others" : "Other"}
+          {others.length === 0 ?
+            ""
+          : others.length > 1 ?
+            "Others"
+          : "Other"}
         </h3>
         <div className=" flex flex-col gap-2">
           {others?.map((item, index) => (

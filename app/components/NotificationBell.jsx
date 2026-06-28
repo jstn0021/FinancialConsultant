@@ -109,16 +109,15 @@ export default function NotificationBell() {
             </div>
 
             <div className="max-h-96 overflow-y-auto divide-y divide-gray-50">
-              {loading ? (
+              {loading ?
                 <div className="p-6 text-center text-gray-400 text-sm">
                   Loading...
                 </div>
-              ) : notifications.length === 0 ? (
+              : notifications.length === 0 ?
                 <div className="p-6 text-center text-gray-400 text-sm">
                   No notifications
                 </div>
-              ) : (
-                notifications.map((notif) => (
+              : notifications.map((notif) => (
                   <div
                     key={notif.id}
                     onClick={() => handleClick(notif)}
@@ -146,7 +145,7 @@ export default function NotificationBell() {
                     )}
                   </div>
                 ))
-              )}
+              }
             </div>
           </div>
         )}

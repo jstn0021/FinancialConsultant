@@ -1,6 +1,7 @@
 "use server";
 import { Notification, User } from "../db/models/index.js";
-
+require("dotenv").config();
+import nodemailer from "nodemailer";
 // notification all accounting
 export async function accountingNofication(status, PRCODE, requestor) {
   let notification = "";
@@ -25,6 +26,7 @@ export async function accountingNofication(status, PRCODE, requestor) {
         department: "Accounting",
       },
     });
+
     if (accountant.length > 0) {
       for (const account of accountant) {
         const createApprove = await createNotification(
@@ -41,6 +43,15 @@ export async function accountingNofication(status, PRCODE, requestor) {
     return false;
   }
 }
+
+// transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 // create notification  function next Approval Stage
 export async function createNextApprovalNotification(
@@ -74,17 +85,63 @@ export async function createNextApprovalNotification(
     return false;
   }
 }
-export async function createNotification(receiver, notification) {
+
+export async function createNotification(receiver, notification, email) {
   // await
   const payload = {
     notification: notification,
+    message: notification,
+    title: "Purchase Requisition",
     userID: receiver,
   };
+  // find user email
+  const userEmail = await User.findOne({
+    where: {
+      userID: receiver,
+    },
+    attributes: ["email"],
+  });
 
+  //send
   try {
     const notify = await Notification.create(payload);
+    await transporter.sendMail({
+      from: `"FINANCIAL CONSULTANT SYSTEM" <${process.env.EMAIL_USER}`,
+      to: userEmail.email,
+      subject: "New Notification - FINANCIAL CONSULTANT SYSTEM",
+      html: `
+       <div>
+         <p>${notification}</p>
+        <div/>
+      `,
+    });
     return true;
   } catch (err) {
+    console.log(err.message);
     return false;
   }
 }
+
+// find all userRole
+export async function findSpecificRole(role) {
+  const user = await User.findAll({
+    where: { role: role },
+  });
+
+  return {
+    data: user.map((item) => item.toJSON()),
+  };
+}
+// department
+export async function findDepartment(department) {
+  const user = await User.findAll({
+    where: { department: department },
+  });
+  console.log("dprt", department);
+  console.log(JSON.stringify(user));
+  return {
+    data: user.map((item) => item.toJSON()),
+  };
+}
+
+// {endpoint parameter (userId , title , message , type , link ) }

@@ -26,20 +26,53 @@ const CashBooks = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    project_code: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     balance_brought_forward_from_previous_month: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.DECIMAL(18, 2),
       allowNull: false,
       defaultValue: 0,
     },
+    receipt_brought_forward_from_previous_month: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    payment_brought_forward_from_previous_month: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+
     balance_carried_forward_to_next_month: {
-      type: DataTypes.FLOAT,
+      type: DataTypes.DECIMAL(18, 2),
       allowNull: false,
       defaultValue: 0,
     },
-    balance: {
-      type: DataTypes.FLOAT,
-      allowNull: 0,
+    receipt_carried_forward_to_next_month: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: false,
       defaultValue: 0,
+    },
+    payment_carried_forward_to_next_month: {
+      type: DataTypes.DECIMAL(18, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+
+    is_already_have_subdata: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    dateRangeStart: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    dateRangeEnd: {
+      type: DataTypes.DATE,
+      allowNull: true,
     },
   },
   {},

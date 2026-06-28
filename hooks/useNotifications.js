@@ -8,7 +8,7 @@ export function useNotifications(intervalMs = 30000) {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const res = await fetch("/api/notifications");
+      const res = await fetch("/api/notification");
       if (!res.ok) return;
       const data = await res.json();
       setNotifications(data.notifications);
@@ -21,7 +21,7 @@ export function useNotifications(intervalMs = 30000) {
   }, []);
 
   const markAsRead = async (id) => {
-    await fetch(`/api/notifications/${id}`, { method: "PATCH" });
+    await fetch(`/api/notification/${id}`, { method: "PATCH" });
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
     );
@@ -29,7 +29,7 @@ export function useNotifications(intervalMs = 30000) {
   };
 
   const markAllRead = async () => {
-    await fetch("/api/notifications/read-all", { method: "PATCH" });
+    await fetch("/api/notification/read-all", { method: "PATCH" });
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
   };

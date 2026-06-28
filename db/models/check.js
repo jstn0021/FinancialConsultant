@@ -12,7 +12,7 @@ const Check = sequelize.define("check", {
     allowNull: false,
   },
   checkAmount: {
-    type: DataTypes.FLOAT,
+    type: DataTypes.DECIMAL(18, 2),
     defaultValue: 0,
   },
 
@@ -31,6 +31,9 @@ const Check = sequelize.define("check", {
   forApproval: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
+  },
+  cheque_attachment: {
+    type: DataTypes.STRING,
   },
 });
 module.exports = Check;

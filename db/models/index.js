@@ -11,8 +11,14 @@ import Notification from "./notification.js";
 import CashBooks from "./cashbooks.js";
 import US_Cash_Bank from "./cashbook_us.js";
 import PH_Cash_Bank from "./cashbook_ph.js";
-import Supplier from "./Supplier.js";
+import Supplier from "./supplier.js";
 import Creditor from "./Creditor.js";
+import AccountCode from "./accountcode.js";
+import GLcode from "./glcode.js";
+import Summary from "./summary.js";
+import SummaryDetailed from "./summary_detailed.js";
+
+import ExpensesDescription from "./expenses_descriptions.js";
 
 Purchase.hasMany(PurchaseItems, {
   foreignKey: "PurchaseID",
@@ -99,6 +105,16 @@ PH_Cash_Bank.belongsTo(CashBooks, {
   targetKey: "cashbook_id",
 });
 
+// summary to summary_detailed
+Summary.hasMany(SummaryDetailed, {
+  foreignKey: "summary_id",
+  sourceKey: "summary_id",
+});
+SummaryDetailed.belongsTo(Summary, {
+  foreignKey: "summary_id",
+  targetKey: "summary_id",
+});
+
 export {
   Purchase,
   PurchaseItems,
@@ -110,9 +126,7 @@ export {
   BudgetValue,
   Notification,
   CashBooks,
+  Supplier,
   US_Cash_Bank,
   PH_Cash_Bank,
-  Supplier,
-  Creditor,
-  Departments,
 };

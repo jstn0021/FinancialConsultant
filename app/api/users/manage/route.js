@@ -101,11 +101,13 @@ export async function PATCH(req) {
       e_sign: updatedUser.e_signature,
       mustChangePassword: updatedUser.mustChangePassword ?? false,
       name: `${updatedUser.lastname}, ${updatedUser.firstname} ${
-        !updatedUser.middle ||
-        updatedUser.middle === "N/A" ||
-        updatedUser.middle === null
-          ? ""
-          : updatedUser.middle
+        (
+          !updatedUser.middle ||
+          updatedUser.middle === "N/A" ||
+          updatedUser.middle === null
+        ) ?
+          ""
+        : updatedUser.middle
       }`,
     });
 

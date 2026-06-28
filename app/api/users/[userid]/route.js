@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+import { changePassword } from "@/functions/userfunctions";
 export async function PATCH(req, { params }) {
   try {
     const { userid } = await params;
@@ -43,6 +45,27 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ message: "Updated OK" }, { status: 200 });
   } catch (error) {
     console.error("PATCH error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+// change password endpoint
+export async function POST(req, { params }) {
+  try {
+    const { userid } = await params;
+    const body = await req.json();
+    if (!body.newpassword || body.newpassword.trim() === "") {
+      return NextResponse.json(
+        { error_message: "New password is required" },
+        { status: 400 },
+      );
+    }
+    // call the changePassword function from userfunctions.js
+    await changePassword(userid, body.newpassword);
+    return NextResponse.json(
+      { message: "Password updated successfully" },
+      { status: 200 },
+    );
+  } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

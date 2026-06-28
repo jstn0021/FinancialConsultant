@@ -1,6 +1,8 @@
 import { Purchase } from "@/db/models";
 import { GetSpecificRequest } from "@/functions/purchase";
 import { updateStatus } from "@/functions/status";
+import { verifyToken } from "@/lib/auth";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 export async function GET(request) {
   const url = new URL(request.url);
@@ -22,7 +24,9 @@ export async function POST(request) {
     const searchParams = url.searchParams;
     const body = await request.json();
     const id = searchParams.get("PRID");
-
+    const token = (await cookies()).get("token")?.value;
+    const decoded = await verifyToken(token);
+    const username = decoded.name;
     const purchase = await Purchase.findByPk(id);
     if (!purchase) {
       return NextResponse.json(
@@ -32,7 +36,10 @@ export async function POST(request) {
     }
 
     // UPDATE
-    await purchase.update({ ProjectDirectorSign: body.e_sign });
+    await purchase.update({
+      ProjectDirectorSign: body.e_sign,
+      ProjectDirectorName: username,
+    });
     // update Status
     await updateStatus("Accounting Submission", id);
     return NextResponse.json(

@@ -11,6 +11,8 @@ import useUserContext from "@/hooks/Context/UserContext";
 import { useRouter } from "next/navigation";
 import { useBanner } from "@/hooks/Context/banner";
 import ConfirmBox from "@/app/components/modals/confirmbox";
+import { findDepartment, findSpecificRole } from "@/functions/notification";
+import { sendPurchaseApprovedEmail } from "@/lib/sendWelcomeEmail";
 export default function PurchaseDetails() {
   const pathname = usePathname();
   const params = useParams();
@@ -30,9 +32,9 @@ export default function PurchaseDetails() {
   const [formattedEnding, setFormattedEnding] = useState();
   const { showError, showSuccess } = useBanner();
   const userRole =
-    user?.role === "Admin" && purchaseDetails?.purchase?.AdminSign != null
-      ? "Chief Administrator Manager"
-      : user?.role;
+    user?.role === "Admin" && purchaseDetails?.purchase?.AdminSign != null ?
+      "Chief Administrator Manager"
+    : user?.role;
   const fetchPurchaseDetails = useCallback(async () => {
     try {
       const response = await axios.get(`/api/purchase/${params.purchaseID}`);
@@ -48,7 +50,7 @@ export default function PurchaseDetails() {
       );
       setTotal(
         response.data.purchase.purchaseItems
-          .reduce((total, item) => total + item.Total, 0)
+          .reduce((total, item) => total + Number(item.Total || 0), 0)
           .toFixed(2),
       );
       //   console.log(response.data?.purchase?.purchaseItems[0].EndingInventoryDate);
@@ -114,6 +116,7 @@ export default function PurchaseDetails() {
   const handleConfirm = async () => {
     let response;
     // userRole
+
     switch (userRole) {
       case "Chief Administrator Manager":
         // axios
@@ -123,6 +126,35 @@ export default function PurchaseDetails() {
             e_sign: user?.e_sign,
           },
         );
+        // pd notification
+        const projectDirector = await findSpecificRole("Project Director");
+
+        for (const pd of projectDirector?.data || []) {
+          const notifySytstem = await axios.post("/api/notification", {
+            userId: pd.userID,
+            title: "Purchase Requisition Approval",
+            message:
+              userRole +
+              " Approve Purchase Requisition id: " +
+              params.purchaseID,
+            type: "Info",
+            link: "",
+            // link host
+          });
+          if (notifySytstem.status === 200 || notifySytstem.status === 201) {
+            // email send
+            const res = await sendPurchaseApprovedEmail({
+              toEmail: pd.email,
+              requestNo: params.purchaseID,
+              approvedBy: user.name,
+              approvedByRole: user.role,
+              appUrl: "",
+              // url link host
+            });
+          } else {
+            return;
+          }
+        }
         if (response.status === 200 || response.status === 201) {
           showSuccess(response.data?.message);
         } else {
@@ -140,6 +172,55 @@ export default function PurchaseDetails() {
             e_sign: user?.e_sign,
           },
         );
+        // accountant :
+        const accountant = await findDepartment("Accounting");
+        for (const acc of accountant?.data || []) {
+          // system
+          const notifySytstem = await axios.post("/api/notification", {
+            userId: acc.userID,
+            title: "Purchase Requisition Approval",
+            message:
+              "Project Director Approve Purchase Requisition id: " +
+              params.purchaseID,
+            type: "Info",
+            link: "",
+            // link host
+          });
+          if (notifySytstem.status === 200 || notifySytstem.status === 201) {
+            // email send
+            let res = await sendPurchaseApprovedEmail({
+              toEmail: acc.email,
+              requestNo: params.purchaseID,
+              approvedBy: user.name,
+              approvedByRole: user.role,
+              appUrl: "",
+              // url link host
+            });
+
+            // system // the owner
+            const notifySytstem = await axios.post("/api/notification", {
+              userId: purchaseDetails?.purchase?.user?.userID,
+              title: "Purchase Requisition Approval",
+              message:
+                "Project Director Approve Purchase Requisition id: " +
+                params.purchaseID,
+              type: "Info",
+              link: "",
+              // link host
+            });
+            res = await sendPurchaseApprovedEmail({
+              toEmail: purchaseDetails?.purchase?.user?.email,
+              requestNo: params.purchaseID,
+              approvedBy: user.name,
+              approvedByRole: user.role,
+              appUrl: "",
+              // url link host
+            });
+          } else {
+            return;
+          }
+          // email
+        }
         if (response.status === 200 || response.status === 201) {
           showSuccess(response.data?.message);
         } else {
@@ -157,7 +238,43 @@ export default function PurchaseDetails() {
             e_sign: user?.e_sign,
           },
         );
-
+        // pd notification
+        // accountant :
+        const ChiefAdmin = await findSpecificRole(
+          "Chief Administrator Manager",
+        );
+        for (const chief of ChiefAdmin?.data || []) {
+          // system
+          const notifySytstem = await axios.post("/api/notification", {
+            userId: chief.userID,
+            title: "Purchase Requisition Approval",
+            message:
+              "Admin Approve Purchase Requisition id: " + params.purchaseID,
+            type: "Info",
+            link: "",
+            // link host
+          });
+          if (notifySytstem.status === 200 || notifySytstem.status === 201) {
+            // email send
+            const res = await sendPurchaseApprovedEmail({
+              toEmail: chief.email,
+              requestNo: params.purchaseID,
+              approvedBy: user.name,
+              approvedByRole: user.role,
+              appUrl: "",
+              // url link host
+            });
+            response = await axios.post(
+              `/api/purchase/Approvals/AdminApproval?PRID=${params.purchaseID}`,
+              {
+                e_sign: user?.e_sign,
+              },
+            );
+          } else {
+            return;
+          }
+          // email
+        }
         if (response.status === 200 || response.status === 201) {
           showSuccess(response.data?.message);
         } else {
@@ -170,6 +287,9 @@ export default function PurchaseDetails() {
       default:
         break;
     }
+    // notification
+
+    // accountant
     setTimeout(() => {
       router.push("/Main/Purchase/PurchaseRecommendingApproval");
     }, 1800);
@@ -251,25 +371,26 @@ export default function PurchaseDetails() {
       <div className="scrollbar-custom overflow-y-auto">
         <Table
           tableHeader={
-            purchaseDetails?.purchase?.user?.role !== "Admin"
-              ? [
-                  "NO.",
-                  "ITEM DESCRIPTION",
-                  "QUANTITY",
-                  "UNIT",
-                  "UNIT PRICE",
-                  "TOTAL",
-                ]
-              : [
-                  "NO.",
-                  "ITEM DESCRIPTION",
-                  "REQUIRED BALANCE",
-                  "ENDING INVENTORY",
-                  "QUANTITY",
-                  "UNIT",
-                  "UNIT PRICE",
-                  "TOTAL",
-                ]
+            purchaseDetails?.purchase?.user?.role !== "Admin" ?
+              [
+                "NO.",
+                "ITEM DESCRIPTION",
+                "QUANTITY",
+                "UNIT",
+                "UNIT PRICE",
+                "TOTAL",
+                "Claimable",
+              ]
+            : [
+                "NO.",
+                "ITEM DESCRIPTION",
+                "REQUIRED BALANCE",
+                "ENDING INVENTORY",
+                "QUANTITY",
+                "UNIT",
+                "UNIT PRICE",
+                "TOTAL",
+              ]
           }
           data={purchaseDetails || isfetching === false ? purchaseDetails : []}
           Ending={formattedEnding}
@@ -325,7 +446,7 @@ export default function PurchaseDetails() {
                   } object-contain pointer-events-none`}
                 />
               )}
-              <span>Admin</span>
+              <span>{purchaseDetails?.purchase?.AdminName || "Admin"}</span>
             </td>
             <td className="p-2 relative w-1/3">
               {(purchaseDetails?.purchase?.ChiefAdminManageSign !== null ||
@@ -339,9 +460,9 @@ export default function PurchaseDetails() {
                 />
               )}
               <span>
-                {purchaseDetails?.purchase?.AdminSign != null
-                  ? `${user?.name}`
-                  : "Kai Sumitomo"}
+                {purchaseDetails?.purchase?.AdminName != null ?
+                  purchaseDetails?.purchase?.ChiefAdminManagerName
+                : `${user?.name}`}
               </span>
             </td>
 
@@ -356,7 +477,10 @@ export default function PurchaseDetails() {
                   } object-contain pointer-events-none`}
                 />
               )}
-              <span>Jorge Müller</span>
+              <span>
+                {purchaseDetails?.purchase?.ProjectDirectorName ||
+                  "Jorge Müller"}
+              </span>
             </td>
           </tr>
 
@@ -364,9 +488,9 @@ export default function PurchaseDetails() {
             <td className="text-white bg-black py-2 w-1/3">Employee Name</td>
             <td className="text-white bg-black py-2 w-1/3">Admin</td>
             <td className="text-white bg-black py-2 w-1/3">
-              {purchaseDetails?.purchase?.AdminSign != null
-                ? "Admin"
-                : "Chief Administrator Manager"}
+              {purchaseDetails?.purchase?.isAdminForChiefSign ?
+                "Admin"
+              : "Chief Administrator Manager"}
             </td>
             <td className="text-white bg-black py-2 w-1/3">Project Director</td>
           </tr>
@@ -447,7 +571,7 @@ export default function PurchaseDetails() {
                    </div>
             </div>         
          </div> */}
-      {approving ? (
+      {approving ?
         <>
           <div className="flex justify-end gap-4 mt-10 mb-10">
             <button
@@ -469,12 +593,11 @@ export default function PurchaseDetails() {
             </button>
           </div>
         </>
-      ) : (
-        <>
+      : <>
           <div className="flex justify-end gap-4 mt-10 mb-10">
-            <button className="px-6 py-2 bg-darkRed border  border-darkRed text-white font-bold rounded hover:bg-red-700 transition">
+            {/* <button className="px-6 py-2 bg-darkRed border  border-darkRed text-white font-bold rounded hover:bg-red-700 transition">
               Reject
-            </button>
+            </button> */}
 
             <button
               onClick={(e) => {
@@ -486,7 +609,7 @@ export default function PurchaseDetails() {
             </button>
           </div>
         </>
-      )}
+      }
     </>
   );
 }

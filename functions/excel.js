@@ -530,10 +530,17 @@ export async function ExportExcelBudgetFile(items, name) {
           bold: item.level === 1,
         };
 
+
         cell.alignment = {
           vertical: "middle",
           horizontal:
+<<<<<<< HEAD
             colNumber === 1 ? "center" : colNumber >= 3 ? "center" : "left",
+=======
+            colNumber === 1 ? "center"
+            : colNumber >= 3 ? "center"
+            : "left",
+>>>>>>> c45cce7fa8b8fbcdfb2dbcc6cd344e7fc89b11ba
         };
 
         // DESCRIPTION INDENT
@@ -563,6 +570,7 @@ export async function ExportExcelBudgetFile(items, name) {
         }
       });
       // NUMBER FORMAT
+      [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].forEach((col) => {
       [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].forEach((col) => {
         const cell = row.getCell(col);
 
@@ -660,6 +668,14 @@ export async function ExportExcelBudgetFile(items, name) {
       },
     });
   } catch (err) {
+    return NextResponse.json(
+      {
+        error_message: err.message,
+      },
+      {
+        status: 500,
+      },
+    );
     return NextResponse.json(
       {
         error_message: err.message,

@@ -4,7 +4,13 @@ import React from "react";
 
 const VourcherComponent = (props) => {
   const { voucher, index, checkAmount } = props;
-
+  if (!voucher) {
+    return (
+      <>
+        <h4>Loading</h4>
+      </>
+    );
+  }
   return (
     <div className="mt-10">
       <div className="mb-3 flex justify-end">
@@ -12,7 +18,7 @@ const VourcherComponent = (props) => {
       </div>
       <div className="flex flex-row">
         <div className="flex flex-2 flex-col">
-          <h4 className="text-xl font-semibold">PAYMENT VOUCHER</h4>
+          <h4 className="text-xl font-semibold">{`${voucher.receiptOrPayment === "payment" ? "PAYMENT" : "RECEIPT"} VOUCHER`}</h4>
           <h4 className="text-lg font-bold">Date</h4>
           <h4>
             {voucher.payment_voucher_formatted_date ||
@@ -50,7 +56,7 @@ const VourcherComponent = (props) => {
           <div className="border-x-2 p-2 px-5.5  border-black">
             {/* <h4>{voucher.payment_item}</h4> */}
             <h4>
-              {`${voucher.accountCode || ""} ${voucher.glCode || ""}`.trim()}
+              {`${voucher.accountCode || ""} ${voucher.glCode?.split("-")[0] || ""}`.trim()}
             </h4>
           </div>
           <div className=" p-2 border-l-0 border-r-0">
@@ -114,7 +120,7 @@ const VourcherComponent = (props) => {
           {voucher?.children?.map((item, i) => (
             <div
               key={i}
-              className="flex-1 border-b-2  p-3.5 flex justify-center items-center"
+              className="flex-1 border-b-2  p-3.5 flex justify-center items-center "
             >
               <h4 className="italic">{item.title || ""}</h4>
               {/* <input
@@ -245,15 +251,16 @@ const VourcherComponent = (props) => {
               <h4 className="text-lg">
                 {voucher.voucherType.includes("PHP")
                   ? formatMoney(
-                      voucher?.children?.reduce(
-                        (store, current) => store + current.amount,
+                      (voucher?.children ?? []).reduce(
+                        (total, child) => total + Number(child.amount || 0),
                         0,
-                      ) || 0,
+                      ),
                     )
                   : formatMoney(
-                      voucher?.children.reduce(
-                        (store, current) => store + current.amount,
-                      ) || 0,
+                      (voucher?.children ?? []).reduce(
+                        (total, child) => total + Number(child.amount || 0),
+                        0,
+                      ),
                     )}
               </h4>
               {/* <input

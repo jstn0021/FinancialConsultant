@@ -1,9 +1,14 @@
 "use server";
 import sequelize from "@/db/connection";
-import { Purchase, PurchaseItems, User } from "@/db/models";
+import {
+  ExpensesDescription,
+  Purchase,
+  PurchaseItems,
+  User,
+} from "@/db/models";
 import { Sequelize } from "sequelize";
 import { NextResponse } from "next/server";
-
+import { Op } from "sequelize";
 export async function getItemInfo(item_id, items) {
   const requiredBalance =
     items.find((item) => item.ItemsID === item_id)?.RequiredBalance || 0;
@@ -230,4 +235,107 @@ export async function GetSpecificRequest(
       { status: 500 },
     );
   }
+}
+export async function GetPurchaseWithUserId(
+  userID,
+  startParam,
+  endParam,
+  page = 1,
+  limit = 10,
+  activeTab = "All",
+  searchId = "",
+) {
+  try {
+    page = Number(page);
+    limit = Number(limit);
+
+    if (Number.isNaN(page) || page < 1) page = 1;
+    if (Number.isNaN(limit) || limit < 1) limit = 10;
+
+    const offset = (page - 1) * limit;
+
+    // Get date range from database
+    const dateRange = await Purchase.findOne({
+      attributes: [
+        [Sequelize.fn("MIN", Sequelize.col("createdAt")), "earliestDate"],
+        [Sequelize.fn("MAX", Sequelize.col("createdAt")), "latestDate"],
+      ],
+      raw: true,
+    });
+
+    const earliestDate =
+      dateRange?.earliestDate ? new Date(dateRange.earliestDate) : new Date();
+
+    const latestDate =
+      dateRange?.latestDate ? new Date(dateRange.latestDate) : new Date();
+
+    const rangeStart =
+      startParam ? new Date(`${startParam}T00:00:00.000Z`) : earliestDate;
+
+    const rangeEnd =
+      endParam ? new Date(`${endParam}T23:59:59.999Z`) : latestDate;
+
+    // build tab-based condition
+    let tabWhere = {};
+    if (activeTab === "Pending") {
+      tabWhere = {
+        Status: {
+          [Sequelize.Op.and]: [
+            { [Sequelize.Op.ne]: null },
+            { [Sequelize.Op.ne]: "Accounting Submission" },
+          ],
+        },
+      };
+    } else if (activeTab === "Approved") {
+      tabWhere = { Status: "Accounting Submission" };
+    }
+    // "All" -> walang Status filter
+
+    const whereClause = {
+      UserID: userID,
+      createdAt: {
+        [Sequelize.Op.between]: [rangeStart, rangeEnd],
+      },
+      ...tabWhere,
+      ...(searchId ? { PurchaseID: searchId } : {}),
+    };
+
+    const { rows, count } = await Purchase.findAndCountAll({
+      where: whereClause,
+      include: [{ model: User }, { model: PurchaseItems }],
+      order: [["PurchaseID", "DESC"]],
+      offset,
+      limit,
+      distinct: true,
+    });
+
+    const data = rows.map((row) => row.get({ plain: true }));
+
+    return {
+      success: true,
+      data,
+      total: count,
+      page,
+      limit,
+      totalPages: Math.ceil(count / limit),
+      rangeStart: rangeStart.toISOString(),
+      rangeEnd: rangeEnd.toISOString(),
+      message: "Purchase request fetched successfully",
+    };
+  } catch (error) {
+    console.error("GetPurchaseWithUserId Error:", error);
+
+    return {
+      success: false,
+      error_message: error.message || "Internal Server Error",
+    };
+  }
+}
+
+export async function GetTypeOfExpenses() {
+  const data = await ExpensesDescription.findAll();
+
+  return {
+    datalist: data.map((item) => item.toJSON()),
+  };
 }

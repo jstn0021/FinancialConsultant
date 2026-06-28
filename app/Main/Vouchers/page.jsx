@@ -2,6 +2,7 @@
 import VoucherTable from "@/app/components/Tables/voucher-table";
 import { validateRequiredFields } from "@/functions/validations";
 import { useBanner } from "@/hooks/Context/banner";
+import useUserContext from "@/hooks/Context/UserContext";
 
 import axios from "axios";
 import { type } from "node:os";
@@ -10,8 +11,11 @@ import { FiChevronLeft, FiChevronRight, FiSearch } from "react-icons/fi";
 
 const VouchersList = () => {
   const [vouchers, setVourchers] = useState();
+  const [activeTab, setActiveTab] = useState("pending"); // active tab
+
   const [page, setPage] = useState(1);
   const [limit] = useState(15);
+  const { user } = useUserContext();
   const [totalPages, setTotalPages] = useState();
   const [voucherId, setVoucherId] = useState();
   const [dateStart, setDateStart] = useState("");
@@ -25,28 +29,49 @@ const VouchersList = () => {
     VoucherID: "",
     NoPayments: "",
   });
+
+  const userRole = user?.role || "";
+
   const fetchVouchers = async () => {
+    if (!userRole && userRole === "") return;
     try {
+      let endpoint;
+      if (userRole === "Chief Accountant") {
+        endpoint = "/api/vouchers/approvals/chiefAccountant";
+      } else if (userRole === "Chief Administrator Manager") {
+        endpoint = "/api/vouchers/approvals/chiefAdmin";
+      } else if (
+        userRole !== "Chief Accountant" &&
+        userRole !== "Chief Administrator Manager"
+      ) {
+        endpoint = "/api/vouchers/";
+      }
+
       const response = await axios.get(
-        `/api/vouchers?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`,
+        `${endpoint}?page=${page}&limit=${limit}&dateStart=${dateStart}&dateEnd=${dateEnd}`,
       );
+
       setVourchers(response.data?.data || []);
       setTotalPages(response.data.totalPages);
       setDateStartDefault(response.data.rangeStart.split("T")[0]);
       setDateEndDefault(response.data.rangeEnd.split("T")[0]);
     } catch (err) {
-      console.error("Error Fetch Vourchers", err);
+      console.error("Error Fetch Vouchers", err);
     }
   };
   useEffect(() => {
     fetchVouchers();
   }, [page]);
+
   useEffect(() => {
     if (dateStart || dateEnd) {
       fetchVouchers();
     }
   }, [dateStart, dateEnd]);
 
+  useEffect(() => {
+    fetchVouchers();
+  }, [userRole]);
   // search button
   useEffect(() => {
     if (voucherId === "") {
@@ -119,6 +144,17 @@ const VouchersList = () => {
       showError(message);
     }
   };
+
+  //signature Fields
+  const signatureField =
+    userRole === "Chief Accountant" ?
+      "ChiefAccountSignature"
+    : "ChiefAdminSignature";
+
+  const pendingVouchers = vouchers?.filter((v) => !v[signatureField]);
+
+  const approvedVouchers = vouchers?.filter((v) => !!v[signatureField]);
+
   return (
     <div className="relative mb-5 w-auto">
       <div className="grid grid-row-3 mb-10">
@@ -165,22 +201,51 @@ const VouchersList = () => {
       </div>
 
       {/* handle add  */}
+      {user?.role !== "Chief Accountant" && (
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-btnRed text-white px-4 py-2 rounded hover:bg-black"
+          >
+            + Add Voucher
+          </button>
+        </div>
+      )}
 
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-btnRed text-white px-4 py-2 rounded hover:bg-black"
-        >
-          + Add Voucher
-        </button>
+      <div className="flex justify-end items-end mb-3">
+        <div className="border-t w-60 border-gray-300 grid grid-cols-[auto_auto]">
+          <button
+            onClick={() => setActiveTab("pending")}
+            className={`border border-darkRed  ${
+              activeTab === "pending" ?
+                "bg-white text-black"
+              : "bg-darkRed text-white"
+            }`}
+          >
+            Pending
+          </button>
+
+          <button
+            onClick={() => setActiveTab("approved")}
+            className={`border border-darkRed  ${
+              activeTab === "approved" ?
+                "bg-white text-black"
+              : "bg-darkRed text-white"
+            }`}
+          >
+            Approved
+          </button>
+        </div>
       </div>
-
       <div>
         <VoucherTable
           data={
-            search
-              ? vouchers.filter((e) => e.checkId === voucherId)
-              : vouchers || []
+            search ?
+              (activeTab === "pending" ? pendingVouchers : approvedVouchers
+              )?.filter((e) => e.checkId === voucherId)
+            : activeTab === "pending" ?
+              pendingVouchers
+            : approvedVouchers
           }
           header={[
             "Vouchers ID",
@@ -223,7 +288,7 @@ const VouchersList = () => {
       {/* modal  */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-[350px] p-6">
+          <div className="bg-white rounded-lg shadow-lg w-87.5 p-6">
             <h2 className="text-xl font-bold mb-4 text-black">
               Add New Voucher
             </h2>
@@ -246,7 +311,7 @@ const VouchersList = () => {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Numbert Payment Vouchers
+                  Number Payment Vouchers
                 </label>
                 <input
                   type="number"

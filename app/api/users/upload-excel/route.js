@@ -44,7 +44,7 @@ export async function POST(request) {
     const salt = 10;
     const user = await Promise.all(
       jsonData.map(async (row) => ({
-        userID: `${row.lastname} - ${idNum++}`,
+        userID: row.userID,
         lastname: row.lastname,
         firstname: row.firstname,
         middle: row.middle || "N/A",

@@ -730,13 +730,15 @@ export default function DashboardPage() {
               </div>
             );
 
-            return href ? (
-              <Link key={label} href={href} style={{ textDecoration: "none" }}>
-                {cardContent}
-              </Link>
-            ) : (
-              <div key={label}>{cardContent}</div>
-            );
+            return href ?
+                <Link
+                  key={label}
+                  href={href}
+                  style={{ textDecoration: "none" }}
+                >
+                  {cardContent}
+                </Link>
+              : <div key={label}>{cardContent}</div>;
           })}
         </div>
       )}
@@ -858,7 +860,7 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {myRequisitions.length === 0 ? (
+              {myRequisitions.length === 0 ?
                 <tr>
                   <td
                     colSpan={7}
@@ -872,8 +874,7 @@ export default function DashboardPage() {
                     No requisitions submitted yet
                   </td>
                 </tr>
-              ) : (
-                myRequisitions.map((p, i) => (
+              : myRequisitions.map((p, i) => (
                   <tr
                     key={i}
                     onMouseEnter={(e) =>
@@ -891,20 +892,20 @@ export default function DashboardPage() {
                     </td>
                     <td style={tdMuted}>{p.mode || "—"}</td>
                     <td style={tdMuted}>
-                      {p.timeStamp
-                        ? new Date(p.timeStamp).toLocaleDateString("en-PH", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : "—"}
+                      {p.timeStamp ?
+                        new Date(p.timeStamp).toLocaleDateString("en-PH", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "—"}
                     </td>
                     <td style={tdBase}>
                       <Badge status={p.Status} />
                     </td>
                   </tr>
                 ))
-              )}
+              }
             </tbody>
           </table>
           <div
