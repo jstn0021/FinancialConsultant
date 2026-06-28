@@ -1,8 +1,95 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import UpdateUserModal from "../../components/modals/usermanagement/update";
 import * as XLSX from "xlsx";
 
+// ── Toast System ─────────────────────────────────────────────
+function useToast() {
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((type, title, message = "") => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => [...prev, { id, type, title, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3500);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  return { toasts, showToast, removeToast };
+}
+
+function ToastContainer({ toasts, removeToast }) {
+  const icons = { success: "✓", error: "✕", info: "ℹ" };
+  const styles = {
+    success: {
+      bg: "bg-green-50",
+      border: "border-green-200",
+      text: "text-green-800",
+      icon: "text-green-500",
+    },
+    error: {
+      bg: "bg-red-50",
+      border: "border-red-200",
+      text: "text-red-800",
+      icon: "text-red-500",
+    },
+    info: {
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      text: "text-blue-800",
+      icon: "text-blue-500",
+    },
+  };
+
+  return (
+    <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none">
+      {toasts.map((t) => {
+        const s = styles[t.type] || styles.info;
+        return (
+          <div
+            key={t.id}
+            className={`flex items-start gap-3 px-4 py-3 rounded-xl border shadow-md min-w-[280px] max-w-[360px] pointer-events-auto animate-slide-in ${s.bg} ${s.border}`}
+            style={{ animation: "toastSlideIn 0.25s ease" }}
+          >
+            <span
+              className={`text-base mt-0.5 font-semibold flex-shrink-0 ${s.icon}`}
+            >
+              {icons[t.type]}
+            </span>
+            <div className="flex-1">
+              <p className={`text-sm font-medium leading-tight ${s.text}`}>
+                {t.title}
+              </p>
+              {t.message && (
+                <p className={`text-xs mt-0.5 opacity-80 ${s.text}`}>
+                  {t.message}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => removeToast(t.id)}
+              className={`text-xs opacity-40 hover:opacity-80 transition-opacity ${s.text} leading-none mt-0.5`}
+            >
+              ✕
+            </button>
+          </div>
+        );
+      })}
+      <style>{`
+        @keyframes toastSlideIn {
+          from { transform: translateX(40px); opacity: 0; }
+          to   { transform: translateX(0);   opacity: 1; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ── Main Page ────────────────────────────────────────────────
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
@@ -15,6 +102,8 @@ export default function UsersPage() {
   const [togglingId, setTogglingId] = useState(null);
   const [deptDropdownOpen, setDeptDropdownOpen] = useState(false);
   const deptDropdownRef = useRef(null);
+
+  const { toasts, showToast, removeToast } = useToast();
 
   // ── Roles (static) & Departments (dynamic) ──────────────────
   const [roles] = useState([
@@ -82,11 +171,20 @@ export default function UsersPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || "Failed to add department.");
+        showToast(
+          "error",
+          "Failed to add department",
+          data.error || "Something went wrong.",
+        );
         return;
       }
       setNewDeptName("");
       await fetchDepartments();
+      showToast(
+        "success",
+        "Department added",
+        `"${newDeptName.trim()}" has been added.`,
+      );
     } finally {
       setManageSaving(false);
     }
@@ -99,9 +197,17 @@ export default function UsersPage() {
       )
     )
       return;
-    await fetch(`/api/departments?name=${encodeURIComponent(name)}`, {
-      method: "DELETE",
-    });
+    const res = await fetch(
+      `/api/departments?name=${encodeURIComponent(name)}`,
+      {
+        method: "DELETE",
+      },
+    );
+    if (res.ok) {
+      showToast("success", "Department deleted", `"${name}" has been removed.`);
+    } else {
+      showToast("error", "Failed to delete department", "Please try again.");
+    }
     await fetchDepartments();
   };
 
@@ -143,12 +249,25 @@ export default function UsersPage() {
       );
       if (res.ok) {
         await fetchUsers();
+        showToast(
+          "success",
+          `User ${newStatus === "Active" ? "enabled" : "disabled"}`,
+          `${user.firstname} ${user.lastname} is now ${newStatus}.`,
+        );
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to update status.");
+        showToast(
+          "error",
+          "Failed to update status",
+          data.error || "Please try again.",
+        );
       }
     } catch {
-      alert("Something went wrong.");
+      showToast(
+        "error",
+        "Something went wrong",
+        "Could not update user status.",
+      );
     } finally {
       setTogglingId(null);
     }
@@ -162,26 +281,39 @@ export default function UsersPage() {
     const res = await fetch("/api/users", { method: "POST", body: formData });
     if (!res.ok) {
       const data = await res.json();
-      alert(
-        data.error_message ?
-          typeof data.error_message === "object" ?
-            JSON.stringify(data.error_message, null, 2)
+      const msg = data.error_message
+        ? typeof data.error_message === "object"
+          ? JSON.stringify(data.error_message, null, 2)
           : data.error_message
-        : "Failed to add user.",
-      );
+        : "Failed to add user.";
+      showToast("error", "Failed to add user", msg);
       return;
     }
     setShowModal(false);
     setForm({});
     await fetchUsers();
+    showToast(
+      "success",
+      "User added",
+      "A welcome email has been sent to the new user.",
+    );
   };
 
   const handleDelete = async (id) => {
     if (!confirm("Are you sure you want to permanently delete this user?"))
       return;
-    await fetch(`/api/users/manage?id=${encodeURIComponent(id)}`, {
+    const res = await fetch(`/api/users/manage?id=${encodeURIComponent(id)}`, {
       method: "DELETE",
     });
+    if (res.ok) {
+      showToast(
+        "success",
+        "User deleted",
+        "The user has been permanently removed.",
+      );
+    } else {
+      showToast("error", "Failed to delete user", "Please try again.");
+    }
     fetchUsers();
   };
 
@@ -215,6 +347,11 @@ export default function UsersPage() {
     ws["!cols"] = headers.map(() => ({ wch: 20 }));
     XLSX.utils.book_append_sheet(wb, ws, "Users");
     XLSX.writeFile(wb, "NSTREN_User_Import_Template.xlsx");
+    showToast(
+      "info",
+      "Template downloaded",
+      "NSTREN_User_Import_Template.xlsx",
+    );
   };
 
   const handleImportExcel = async (e) => {
@@ -238,7 +375,7 @@ export default function UsersPage() {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
         if (jsonData.length === 0) {
-          alert("Excel file is empty.");
+          showToast("error", "Empty file", "The Excel file has no data rows.");
           e.target.value = "";
           return;
         }
@@ -247,13 +384,16 @@ export default function UsersPage() {
           (col) => !fileColumns.includes(col),
         );
         if (missingColumns.length > 0) {
-          alert(
-            `Missing required columns:\n${missingColumns.map((c) => `• ${c}`).join("\n")}`,
+          showToast(
+            "error",
+            "Missing columns",
+            `Required columns not found: ${missingColumns.join(", ")}`,
           );
           e.target.value = "";
           return;
         }
         setImporting(true);
+        showToast("info", "Importing users", "Processing your Excel file...");
         const formData = new FormData();
         formData.append("file", file);
         try {
@@ -263,27 +403,36 @@ export default function UsersPage() {
           });
           const data = await res.json();
           if (res.ok) {
-            alert(
-              `Users imported successfully! (${data.count ?? "multiple"} users added)`,
+            showToast(
+              "success",
+              "Import complete",
+              `${data.count ?? "Multiple"} users added successfully.`,
             );
             await fetchUsers();
           } else {
-            alert(
-              data.error_message ?
-                typeof data.error_message === "object" ?
-                  JSON.stringify(data.error_message, null, 2)
+            const msg = data.error_message
+              ? typeof data.error_message === "object"
+                ? JSON.stringify(data.error_message, null, 2)
                 : data.error_message
-              : "Import failed",
-            );
+              : "Import failed.";
+            showToast("error", "Import failed", msg);
           }
         } catch {
-          alert("Something went wrong while importing.");
+          showToast(
+            "error",
+            "Import failed",
+            "Something went wrong while importing.",
+          );
         } finally {
           setImporting(false);
           e.target.value = "";
         }
       } catch {
-        alert("Failed to read Excel file. Make sure it's a valid .xlsx file.");
+        showToast(
+          "error",
+          "Invalid file",
+          "Failed to read Excel file. Make sure it's a valid .xlsx file.",
+        );
         e.target.value = "";
       }
     };
@@ -300,6 +449,9 @@ export default function UsersPage() {
 
   return (
     <div>
+      {/* TOAST NOTIFICATIONS */}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+
       {/* TOP ACTION */}
       <div className="flex justify-between mb-4 gap-2 flex-wrap">
         <input
@@ -481,11 +633,11 @@ export default function UsersPage() {
                       disabled={togglingId === u.userID}
                       className={`px-3 py-1 rounded text-xs text-white ${u.status === "Active" ? "bg-orange-400 hover:bg-orange-500" : "bg-green-500 hover:bg-green-600"} disabled:opacity-50`}
                     >
-                      {togglingId === u.userID ?
-                        "..."
-                      : u.status === "Active" ?
-                        "Disable"
-                      : "Enable"}
+                      {togglingId === u.userID
+                        ? "..."
+                        : u.status === "Active"
+                          ? "Disable"
+                          : "Enable"}
                     </button>
                     <button
                       onClick={() => handleDelete(u.userID)}
@@ -538,11 +690,12 @@ export default function UsersPage() {
                   + Add
                 </button>
               </div>
-              {departments.length === 0 ?
+              {departments.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-6">
                   No departments yet. Add one above.
                 </p>
-              : <ul className="space-y-2">
+              ) : (
+                <ul className="space-y-2">
                   {departments.map((d) => (
                     <li
                       key={d}
@@ -561,7 +714,7 @@ export default function UsersPage() {
                     </li>
                   ))}
                 </ul>
-              }
+              )}
             </div>
 
             <div className="px-5 py-3 border-t bg-gray-50">
@@ -591,7 +744,13 @@ export default function UsersPage() {
                     `/api/users/check-id?userID=${encodeURIComponent(val)}`,
                   );
                   const data = await res.json();
-                  if (data.taken) alert(`User ID "${val}" is already taken.`);
+                  if (data.taken) {
+                    showToast(
+                      "error",
+                      "User ID already taken",
+                      `"${val}" is already in use. Try a different ID.`,
+                    );
+                  }
                 }}
                 className="p-2 border rounded w-full"
                 placeholder="User ID (e.g. EMP-2024-001)"
@@ -627,9 +786,9 @@ export default function UsersPage() {
                     type="button"
                     onClick={() => setForm({ ...form, _activeTab: "role" })}
                     className={`flex-1 pb-1 font-medium text-center transition-colors ${
-                      (form._activeTab || "role") === "role" ?
-                        "border-b-2 border-purple-500 text-purple-600"
-                      : "text-gray-400 hover:text-gray-600"
+                      (form._activeTab || "role") === "role"
+                        ? "border-b-2 border-purple-500 text-purple-600"
+                        : "text-gray-400 hover:text-gray-600"
                     }`}
                   >
                     Assign Role{" "}
@@ -641,9 +800,9 @@ export default function UsersPage() {
                       setForm({ ...form, _activeTab: "department" })
                     }
                     className={`flex-1 pb-1 font-medium text-center transition-colors ${
-                      form._activeTab === "department" ?
-                        "border-b-2 border-purple-500 text-purple-600"
-                      : "text-gray-400 hover:text-gray-600"
+                      form._activeTab === "department"
+                        ? "border-b-2 border-purple-500 text-purple-600"
+                        : "text-gray-400 hover:text-gray-600"
                     }`}
                   >
                     Assign Dept{" "}
@@ -862,7 +1021,10 @@ export default function UsersPage() {
             setShowEditModal(false);
             setSelectedUser(null);
           }}
-          onSaved={fetchUsers}
+          onSaved={() => {
+            fetchUsers();
+            showToast("success", "User updated", "Changes have been saved.");
+          }}
         />
       )}
     </div>

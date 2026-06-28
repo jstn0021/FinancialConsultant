@@ -129,4 +129,11 @@ export {
   Supplier,
   US_Cash_Bank,
   PH_Cash_Bank,
+  Departments,
+  Creditor,
+  AccountCode,
+  GLcode,
+  Summary,
+  SummaryDetailed,
+  ExpensesDescription,
 };

@@ -58,10 +58,10 @@ export default function Menus(role) {
       path: "/Main/bir2307",
     },
     {
-      label: "BIR 2307",
+      label: "User Management",
       icon: "□",
       section: "menu",
-      path: "/Main/bir2307",
+      path: "/Main/UserManagement",
     },
     {
       label: "Creditors",
@@ -123,10 +123,12 @@ export default function Menus(role) {
     SuperAdmin: [
       "Dashboard",
       "Purchase Requisition Form",
-      "My Requisition",
-      //  "My Requisition",
-      //  "User Management",
-      //  "Profile"
+      "Vouchers",
+      "Submitted Requisition",
+      "Summaries",
+      "BIR 2307",
+      "Creditors",
+      "User Management",
     ],
   };
   //find specific Role
@@ -136,4 +138,51 @@ export default function Menus(role) {
   return allMenu.filter(
     (item) => allowedMenus.includes(item.label) || item.label === "Logout",
   );
+}
+export function getAllowedPaths(role) {
+  const rolePathMap = {
+    "Regular Employee": [
+      "/Main/Home",
+      "/Main/Purchase/Requisition",
+      "/Main/Purchase/MyRequisition",
+    ],
+    Admin: [
+      "/Main/Home",
+      "/Main/Purchase/Requisition",
+      "/Main/Purchase/MyRequisition",
+      "/Main/Vouchers",
+    ],
+    "Chief Accountant": [
+      "/Main/Home",
+      "/Main/Purchase/Requisition",
+      "/Main/SubmittedRequisition",
+      "/Main/Vouchers",
+    ],
+    "Chief Administrator Manager": [
+      "/Main/Home",
+      "/Main/Purchase/Requisition",
+      "/Main/Purchase/MyRequisition",
+      "/Main/Vouchers",
+      "/Main/bir2307",
+      "/Main/Creditors",
+    ],
+    "Project Director": [
+      "/Main/Home",
+      "/Main/Purchase/Requisition",
+      "/Main/Purchase/MyRequisition",
+    ],
+    SuperAdmin: [
+      "/Main/Home",
+      "/Main/Purchase/Requisition",
+      "/Main/Purchase/MyRequisition",
+      "/Main/Vouchers",
+      "/Main/bir2307",
+      "/Main/Creditors",
+      "/Main/Summaries",
+      "/Main/SubmittedRequisition",
+      "/Main/UserManagement",
+    ],
+  };
+
+  return rolePathMap[role] || ["/Main/Home"];
 }
