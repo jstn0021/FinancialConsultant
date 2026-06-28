@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import * as XLSX from "xlsx";
 
 const API_BASE = "/api/creditors";
 const PAGE_SIZE = 20;
@@ -468,6 +469,36 @@ export default function CreditorsPage() {
       setFormLoading(false);
     }
   };
+  const handleDownloadTemplate = () => {
+    const headers = [
+      "code",
+      "creditorsName",
+      "address1",
+      "address2",
+      "city",
+      "country",
+      "tin1",
+      "tin2",
+      "tin3",
+    ];
+    const sampleRow = [
+      "1005",
+      "Juan Dela Cruz Trading",
+      "123 Rizal Street",
+      "Brgy. San Jose",
+      "Makati",
+      "PH",
+      "000-000-000",
+      "000-000-000",
+      "000-000-000",
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, sampleRow]);
+    ws["!cols"] = headers.map(() => ({ wch: 20 }));
+    XLSX.utils.book_append_sheet(wb, ws, "Creditors");
+    XLSX.writeFile(wb, "NSTREN_Creditors_Import_Template.xlsx");
+  };
 
   return (
     <>
@@ -597,6 +628,12 @@ export default function CreditorsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <button
+              className="btn btn-secondary"
+              onClick={handleDownloadTemplate}
+            >
+              ⬇ Template
+            </button>
             <button
               className="btn btn-success"
               onClick={() => setModal("import")}
