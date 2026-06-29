@@ -19,6 +19,19 @@ export default function Menus(role) {
       section: "menu",
       path: "/Main/Vouchers",
     },
+
+    {
+      label: "Cashbooks",
+      icon: "□",
+      section: "menu",
+      path: "/Main/Cashbooks",
+    },
+    {
+      label: "Creditors",
+      icon: "□",
+      section: "menu",
+      path: "/Main/Creditors",
+    },
     {
       label: "Budget Confirmation",
       icon: "□",
@@ -44,6 +57,35 @@ export default function Menus(role) {
         },
       ],
     },
+    {
+      label: "Requisition List",
+      icon: "□",
+      section: "menu",
+      hasDropdown: true,
+      subItem: [
+        {
+          label: "Recommending Approval",
+          icon: "□",
+          path: "/Main/Purchase/PurchaseRecommendingApproval",
+        },
+      ],
+    },
+
+    //my requisition list
+
+    {
+      label: "My Requisition",
+      icon: "□",
+      section: "menu",
+      path: "/Main/Purchase/MyRequisition",
+    },
+    {
+      label: "User Management",
+      icon: "□",
+      section: "menu",
+      path: "/Main/UserManagement",
+    },
+
     //  Reimbursable
     {
       label: "Summaries",
@@ -57,18 +99,6 @@ export default function Menus(role) {
       section: "menu",
       path: "/Main/bir2307",
     },
-    {
-      label: "User Management",
-      icon: "□",
-      section: "menu",
-      path: "/Main/UserManagement",
-    },
-    {
-      label: "Creditors",
-      icon: "□",
-      section: "menu",
-      path: "/Main/Creditors",
-    },
 
     {
       label: "Logout",
@@ -81,25 +111,40 @@ export default function Menus(role) {
   //
   const roleMenuMap = {
     "Regular Employee": [
-      "Dashboard",
       "Purchase Requisition Form",
-      // "My Requisition",
+      "My Requisition",
+
       // "Profile"
     ],
     Admin: [
       "Dashboard",
       "Purchase Requisition Form",
       "Requisition List",
-      "Vouchers",
-      //  "My Requisition",
+      "My Requisition",
+      "BIR 2307",
       //  "Profile",
     ],
     "Chief Accountant": [
       "Dashboard",
       "Purchase Requisition Form",
+      "My Requisition",
       "Submitted Requisition",
       "Vouchers",
-      "Reimbursable",
+      "Summaries",
+      "Cashbooks",
+      "BIR 2307",
+      "Creditors",
+    ],
+    Accounting: [
+      "Dashboard",
+      "Purchase Requisition Form",
+      "My Requisition",
+      "Submitted Requisition",
+      "Vouchers",
+      "Summaries",
+      "Cashbooks",
+      "BIR 2307",
+      "Creditors",
     ],
     "Chief Administrator Manager": [
       "Dashboard",
@@ -117,18 +162,18 @@ export default function Menus(role) {
       "Purchase Requisition Form",
       "My Requisition",
       "Requisition List",
+      "BIR 2307",
       //  "My Requisition",
       //  "Profile",
     ],
     SuperAdmin: [
       "Dashboard",
       "Purchase Requisition Form",
-      "Vouchers",
-      "Submitted Requisition",
-      "Summaries",
-      "BIR 2307",
-      "Creditors",
+      "My Requisition",
+      //  "My Requisition",
       "User Management",
+      "BIR 2307",
+      //  "Profile"
     ],
   };
   //find specific Role
@@ -140,49 +185,106 @@ export default function Menus(role) {
   );
 }
 export function getAllowedPaths(role) {
-  const rolePathMap = {
+  const allMenu = [
+    { label: "Dashboard", path: "/Main/Home" },
+    { label: "Purchase Requisition Form", path: "/Main/Purchase/Requisition" },
+    { label: "Vouchers", path: "/Main/Vouchers" },
+    { label: "Cashbooks", path: "/Main/Cashbooks" },
+    { label: "Budget Confirmation", path: "/Main/BudgetConfirmation" },
+    {
+      label: "Submitted Requisition",
+      paths: [
+        "/Main/SubmittedRequisition/BudgetConfirmation",
+        "/Main/SubmittedRequisition/ApprovedPurchaseRequisition",
+      ],
+    },
+    {
+      label: "Requisition List",
+      paths: [
+        "/Main/Purchase/PurchaseRecommendingApproval",
+        "/Main/Purchase/RequisitionHistory",
+      ],
+    },
+    { label: "My Requisition", path: "/Main/Purchase/MyRequisition" },
+    { label: "User Management", path: "/Main/UserManagement" },
+    { label: "Summaries", path: "/Main/Summaries" },
+    { label: "BIR 2307", path: "/Main/bir2307" },
+    { label: "Creditors", path: "/Main/Creditors" },
+  ];
+
+  const roleMenuMap = {
     "Regular Employee": [
-      "/Main/Home",
-      "/Main/Purchase/Requisition",
-      "/Main/Purchase/MyRequisition",
+      "Dashboard",
+      "Purchase Requisition Form",
+      "My Requisition",
+      "Creditors",
     ],
     Admin: [
-      "/Main/Home",
-      "/Main/Purchase/Requisition",
-      "/Main/Purchase/MyRequisition",
-      "/Main/Vouchers",
+      "Dashboard",
+      "Purchase Requisition Form",
+      "Requisition List",
+      "My Requisition",
+      "BIR 2307",
+      "Creditors",
     ],
     "Chief Accountant": [
-      "/Main/Home",
-      "/Main/Purchase/Requisition",
-      "/Main/SubmittedRequisition",
-      "/Main/Vouchers",
+      "Dashboard",
+      "Purchase Requisition Form",
+      "My Requisition",
+      "Submitted Requisition",
+      "Vouchers",
+      "Summaries",
+      "Cashbooks",
+      "BIR 2307",
+      "Creditors",
+    ],
+    Accounting: [
+      "Dashboard",
+      "Purchase Requisition Form",
+      "My Requisition",
+      "Submitted Requisition",
+      "Vouchers",
+      "Summaries",
+      "Cashbooks",
+      "BIR 2307",
+      "Creditors",
     ],
     "Chief Administrator Manager": [
-      "/Main/Home",
-      "/Main/Purchase/Requisition",
-      "/Main/Purchase/MyRequisition",
-      "/Main/Vouchers",
-      "/Main/bir2307",
-      "/Main/Creditors",
+      "Dashboard",
+      "Purchase Requisition Form",
+      "My Requisition",
+      "Requisition List",
+      "Vouchers",
+      "BIR 2307",
+      "Creditors",
     ],
     "Project Director": [
-      "/Main/Home",
-      "/Main/Purchase/Requisition",
-      "/Main/Purchase/MyRequisition",
+      "Dashboard",
+      "Purchase Requisition Form",
+      "My Requisition",
+      "Requisition List",
+      "BIR 2307",
+      "Creditors",
     ],
     SuperAdmin: [
-      "/Main/Home",
-      "/Main/Purchase/Requisition",
-      "/Main/Purchase/MyRequisition",
-      "/Main/Vouchers",
-      "/Main/bir2307",
-      "/Main/Creditors",
-      "/Main/Summaries",
-      "/Main/SubmittedRequisition",
-      "/Main/UserManagement",
+      "Dashboard",
+      "Purchase Requisition Form",
+      "My Requisition",
+      "User Management",
+      "BIR 2307",
+      "Creditors",
     ],
   };
 
-  return rolePathMap[role] || ["/Main/Home"];
+  const allowedLabels = roleMenuMap[role] || [];
+
+  let paths = [];
+  allMenu.forEach((item) => {
+    if (allowedLabels.includes(item.label)) {
+      if (item.path) paths.push(item.path);
+      if (item.paths) paths.push(...item.paths);
+    }
+  });
+
+  return paths;
 }

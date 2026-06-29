@@ -639,12 +639,12 @@ export default function UsersPage() {
                           ? "Disable"
                           : "Enable"}
                     </button>
-                    <button
+                    {/* <button
                       onClick={() => handleDelete(u.userID)}
                       className="bg-red-500 text-white px-3 py-1 rounded text-xs"
                     >
                       Delete
-                    </button>
+                    </button> */}
                   </div>
                 </td>
               </tr>
@@ -814,67 +814,21 @@ export default function UsersPage() {
 
                 {/* Tab Content: ROLE */}
                 {(form._activeTab || "role") === "role" && (
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Type to search role..."
-                      value={form.role || ""}
-                      onChange={(e) =>
-                        setForm({ ...form, role: e.target.value })
-                      }
-                      onFocus={() =>
-                        setForm({ ...form, _showRoleSuggestions: true })
-                      }
-                      onBlur={() => {
-                        setTimeout(
-                          () =>
-                            setForm((f) => ({
-                              ...f,
-                              _showRoleSuggestions: false,
-                            })),
-                          200,
-                        );
-                      }}
-                      className="p-1.5 border rounded w-full text-xs focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
-                    />
-                    {form._showRoleSuggestions && form.role && (
-                      <ul className="absolute left-0 right-0 mt-1 z-50 bg-white border rounded shadow-md max-h-24 overflow-y-auto">
-                        {roles
-                          .filter((r) =>
-                            r.toLowerCase().includes(form.role.toLowerCase()),
-                          )
-                          .map((r) => (
-                            <li
-                              key={r}
-                              onMouseDown={() =>
-                                setForm({
-                                  ...form,
-                                  role: r,
-                                  _showRoleSuggestions: false,
-                                })
-                              }
-                              className="px-2 py-1 text-xs cursor-pointer hover:bg-purple-50 text-gray-700"
-                            >
-                              {r}
-                            </li>
-                          ))}
-                        {roles.filter((r) =>
-                          r.toLowerCase().includes(form.role.toLowerCase()),
-                        ).length === 0 && (
-                          <li className="px-2 py-1 text-xs text-gray-400 italic">
-                            No matches
-                          </li>
-                        )}
-                      </ul>
-                    )}
-                    {form.role && (
-                      <div className="text-[11px] text-gray-500 mt-1 pl-1">
-                        Selected:{" "}
-                        <span className="font-semibold text-purple-600">
-                          {form.role}
-                        </span>
-                      </div>
-                    )}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {roles.map((r) => (
+                      <button
+                        type="button"
+                        key={r}
+                        onClick={() => setForm({ ...form, role: r })}
+                        className={`text-xs px-2 py-1.5 rounded border text-left transition-colors ${
+                          form.role === r
+                            ? "bg-purple-500 text-white border-purple-500"
+                            : "bg-white text-gray-600 border-gray-200 hover:bg-purple-50"
+                        }`}
+                      >
+                        {r}
+                      </button>
+                    ))}
                   </div>
                 )}
 
