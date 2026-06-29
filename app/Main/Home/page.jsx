@@ -183,7 +183,7 @@ export default function DashboardPage() {
                 d.total || (d.data || []).length;
             }),
             // Recommending Approval — count = d.total, table = d.data.slice(0,5)
-            fetch("/api/purchase/Approvals/AdminApproval").then(async (r) => {
+            fetch("/api/purchase/Approvals/ChiefApproval").then(async (r) => {
               const d = await r.json();
               newStats.submittedPurchase = d.total || (d.data || []).length;
               setRecommendingApproval((d.data || []).slice(0, 5));
