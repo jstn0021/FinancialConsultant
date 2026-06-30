@@ -103,7 +103,7 @@ const PaymentVouchers = () => {
     try {
       const response = await axios.get(`/api/vouchers/${params.voucherId}`);
       setChecks(response.data?.specificCheck || []);
-      console.log("response", response.data);
+      //  console.log("response", response.data);
       setClaimableStatus({
         claimable: response.data?.specificCheck?.claimable === true,
         nonClaimable: response.data?.specificCheck?.claimable === false,
@@ -111,7 +111,7 @@ const PaymentVouchers = () => {
       setAttachment(response.data?.cheque_attachment);
       // supplier name
       const payeeName = await getSuppliers();
-      console.log("payeeName", payeeName.data);
+      //    console.log("payeeName", payeeName.data);
       // account codes
       const codes = await GetAccountCode();
       //GL CODEs
@@ -154,7 +154,7 @@ const PaymentVouchers = () => {
         items: prev.items.filter((v) => v.id !== id),
       }));
 
-      showSuccess(`Voucher ${id} deleted successfully`);
+      showSuccess(`Voucher deleted successfully`);
       fetchVouchers(); // Refresh the list after deletion
     } catch (error) {
       showError("Failed to delete voucher");
@@ -578,6 +578,32 @@ const PaymentVouchers = () => {
 
     setShowCalculationModal(false);
   };
+
+  const handleExportCheque = async () => {
+    try {
+      const res = await axios.get(`/api/vouchers/${params.voucherId}/export`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], {
+        type: "application/vnd.ms-excel.sheet.macroEnabled.12",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Check-Preparation-${params.voucherId}.xlsm`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error(error);
+      showError("Failed to export cheque");
+    }
+  };
   return (
     <div className="p-5">
       {/* {JSON.stringify(checks)} */}
@@ -892,24 +918,26 @@ const PaymentVouchers = () => {
                   />
                 </div>
               ))}
-            <div className="flex justify-end ">
-              <input
-                type="file"
-                accept=".pdf,image/*"
-                className="bg-btnRed text-white font-bold my-2 hover:bg-black px-2 py-2"
-                onChange={handleChange}
-              />
-            </div>
-            <div className="flex justify-end items-end">
-              <button
-                onClick={handleDownload}
-                className="bg-green-800 text-white p-2 rounded-md"
-              >
-                Export Voucher
-              </button>
-            </div>
           </>
         )}
+      <div className="flex justify-end mt-4">
+        <div className="flex justify-end">
+          <button
+            onClick={handleExportCheque}
+            className="bg-green-700 text-white font-bold my-2 hover:bg-green-900 px-4 py-2 rounded"
+          >
+            Export Cheque
+          </button>
+        </div>
+      </div>
+      <div className="flex justify-end items-end mt-4">
+        <button
+          onClick={handleDownload}
+          className="bg-green-800 text-white p-2 rounded-md"
+        >
+          Export Voucher
+        </button>
+      </div>
       {/* add checkbox claimable and not
        */}
       <div className="flex justify-center mt-6 gap-6">

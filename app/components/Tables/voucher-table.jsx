@@ -23,7 +23,7 @@ const VoucherTable = (props) => {
         <tbody>
           {data?.map((item, index) => (
             <tr key={index} className="border-b border-gray-300 text-center">
-              <td className="px-4 py2">{item.checkId}</td>
+              <td className="px-4 py2">{item.id}</td>
               <td className="px-4 py2">{item.items.length}</td>
               <td className="px-4 py2">{item.checkAmount}</td>
               <td className="px-4 py2">

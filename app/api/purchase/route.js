@@ -159,10 +159,12 @@ export async function GET(request) {
     });
     const startParam = searchParams.get("dateStart");
     const endParam = searchParams.get("dateEnd");
-    const rangeStart =
-      startParam ? `${startParam} 00:00:00` : dates.dataValues.earliestDate;
-    const rangeEnd =
-      endParam ? `${endParam} 23:59:59` : dates.dataValues.latestDate;
+    const rangeStart = startParam
+      ? `${startParam} 00:00:00`
+      : dates.dataValues.earliestDate;
+    const rangeEnd = endParam
+      ? `${endParam} 23:59:59`
+      : dates.dataValues.latestDate;
 
     const { rows, count } = await Purchase.findAndCountAll({
       offset: offset,

@@ -88,12 +88,12 @@ const CashbooksTable = (props) => {
                 </td>
                 <td>
                   <h3 className="px-4 py-3">
-                    {data.dateRangeStart.split("T")[0]}
+                    {data.dateRangeStart?.split("T")[0]}
                   </h3>
                 </td>
                 <td>
                   <h3 className="px-4 py-3">
-                    {data.dateRangeEnd.split("T")[0]}
+                    {data.dateRangeEnd?.split("T")[0]}
                   </h3>
                 </td>
                 <td>
@@ -112,31 +112,31 @@ const CashbooksTable = (props) => {
                     >
                       Edit
                     </button> */}
-
                     {/* VIEW / SYNC */}
-                    {data.hasChildren ? (
-                      <Link
-                        className="px-4 py-1 bg-btnRed text-white font-bold rounded-lg"
-                        href={`/Main/Cashbooks/${data.cashbook_id}`}
-                      >
-                        View
-                      </Link>
-                    ) : (
-                      <button
-                        className="px-4 py-1 bg-green-600 text-white font-bold rounded-lg"
-                        onClick={async () => {
-                          const res = await axios.post(
-                            `/api/cashbooks/${data.cashbook_id}/sync`,
-                          );
+                    {/* {data.hasChildren ? (
+                      
+                    )} */}
+                    <Link
+                      className="px-4 py-1 bg-btnRed text-white font-bold rounded-lg"
+                      href={`/Main/Cashbooks/${data.cashbook_id}`}
+                    >
+                      View
+                    </Link>
 
-                          showSuccess(`${res.data.inserted} entries synced`);
+                    <button
+                      className="px-4 py-1 bg-green-600 text-white font-bold rounded-lg"
+                      onClick={async () => {
+                        const res = await axios.post(
+                          `/api/cashbooks/${data.cashbook_id}/sync`,
+                        );
 
-                          fetchCashbooks();
-                        }}
-                      >
-                        Sync
-                      </button>
-                    )}
+                        showSuccess(`${res.data.inserted} entries synced`);
+
+                        fetchCashbooks();
+                      }}
+                    >
+                      Sync
+                    </button>
                   </div>
                 </td>
               </tr>

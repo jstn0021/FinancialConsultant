@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation"; // ← fixed, single import
+import useUserContext from "@/hooks/Context/UserContext";
 
 export default function Profile() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const isSetup = searchParams.get("setup") === "true";
-
+  const { fetchUser } = useUserContext();
   const [user, setUser] = useState(null);
   const [signatureFile, setSignatureFile] = useState(null);
   const [signaturePreview, setSignaturePreview] = useState(null);
@@ -80,10 +81,11 @@ export default function Profile() {
     });
 
     setSaving(false);
-
+    await fetchUser();
     if (res.ok) {
       if (isSetup) {
         showToast("Account setup complete! Redirecting...");
+
         setTimeout(() => router.push("/Main/Home"), 2000);
       } else {
         showToast("E-signature saved! Please re-login to continue.");
@@ -208,9 +210,9 @@ export default function Profile() {
                   <p
                     className={`text-xs ${newPassword === confirmPassword ? "text-green-500" : "text-red-400"}`}
                   >
-                    {newPassword === confirmPassword ?
-                      "✓ Passwords match"
-                    : "✗ Passwords do not match"}
+                    {newPassword === confirmPassword
+                      ? "✓ Passwords match"
+                      : "✗ Passwords do not match"}
                   </p>
                 )}
               </div>
@@ -260,9 +262,9 @@ export default function Profile() {
               </span>
               <div>
                 <p className="text-sm font-medium text-gray-700">
-                  {signatureFile ?
-                    signatureFile.name
-                  : "Click to upload signature"}
+                  {signatureFile
+                    ? signatureFile.name
+                    : "Click to upload signature"}
                 </p>
                 <p className="text-xs text-gray-400">PNG, JPG up to 5MB</p>
               </div>
@@ -279,11 +281,11 @@ export default function Profile() {
               disabled={saving || !signatureFile}
               className="mt-4 w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-medium py-2.5 rounded-xl transition-colors text-sm"
             >
-              {saving ?
-                "Saving..."
-              : isSetup ?
-                "Activate Account"
-              : "Save E-Signature"}
+              {saving
+                ? "Saving..."
+                : isSetup
+                  ? "Activate Account"
+                  : "Save E-Signature"}
             </button>
           </div>
         </div>

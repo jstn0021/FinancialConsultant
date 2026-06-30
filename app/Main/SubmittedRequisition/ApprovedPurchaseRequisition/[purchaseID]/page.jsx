@@ -156,6 +156,11 @@ export default function ApprovePurchaseDetails() {
         </div>
         <hr className="border-t border-gray-300" />
       </div>
+      <div className="w-auto">
+        <span className="bg-black text-white p-2 w-auto">
+          {purchaseDetails?.purchase?.mode}
+        </span>
+      </div>
       <div className="flex justify-start my-3">
         {/* <div className="flex flex-row gap-1">
           <h5 className="p-1 px-2 bg-black text-white font-semibold">

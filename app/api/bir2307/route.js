@@ -37,7 +37,8 @@ export async function POST(request) {
       month2,
       month3,
     } = body;
-
+    console.log("quarter from : ", quarter.from);
+    console.log("quarter to : ", quarter.to);
     const m1 = Number(month1) || 0;
     const m2 = Number(month2) || 0;
     const m3 = Number(month3) || 0;
@@ -61,13 +62,32 @@ export async function POST(request) {
     // ══════════════════════════════════════════════════════════════════════════
     const parseDate = (mmddyyyy) => {
       const [mm, dd, yyyy] = (mmddyyyy || "").split("/");
-      return yyyy && mm && dd ? `${yyyy}${mm}${dd}` : "";
+      return yyyy && mm && dd ? `${mm}${dd}${yyyy}` : "";
     };
 
-    ws.getCell("AQ13").value = parseDate(quarter.from);
-    // AR13 had a VLOOKUP to Page2 (to-date) — replace with plain value
-    ws.getCell("AR13").value = parseDate(quarter.to);
+    console.log("formatted_from", parseDate(quarter.from));
+    const fromDate = parseDate(quarter.from);
+    const toDate = parseDate(quarter.to);
+    // ws.getCell("AQ13").value = parseDate(quarter.from);
+    // // AR13 had a VLOOKUP to Page2 (to-date) — replace with plain value
+    // ws.getCell("AR13").value = parseDate(quarter.to);
 
+    const fromCell = ["J", "K", "L", "M", "N", "O", "P", "Q"];
+    const toCell = ["AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH"];
+    const extractedFrom = fromDate.split("");
+    const extractedTo = toDate.split("");
+    const cell = [];
+    // from dATe
+    fromCell.map((l, index) => {
+      //   cell.push(`${l}13 =${extracted[index]}`);
+      ws.getCell(`${l}13`).value = extractedFrom[index];
+    });
+    // to date
+    toCell.map((l, index) => {
+      ws.getCell(`${l}13`).value = extractedTo[index];
+    });
+
+    //   console.log(cell);
     // Fix the MID formulas that pull from AR13 (to-date digits)
     // AC13=MID(AR13,7,1) AD13=MID(AR13,8... etc — leave them, they still work
     // But AR13's VLOOKUP referenced [1]Page2 (external) — override with string

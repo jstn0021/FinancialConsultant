@@ -207,11 +207,17 @@ export async function GetSpecificRequest(
       where: whereClause,
       include: [{ model: User }, { model: PurchaseItems }],
     });
+    const totalCount = await Purchase.count({
+      where: whereClause,
+      distinct: true,
+      col: "PurchaseID",
+    });
 
     return NextResponse.json(
       {
         data: rows,
         total: count,
+        totalCount,
         page,
         limit,
         rangeStart,

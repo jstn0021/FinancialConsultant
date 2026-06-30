@@ -281,10 +281,9 @@ export default function UsersPage() {
     const res = await fetch("/api/users", { method: "POST", body: formData });
     if (!res.ok) {
       const data = await res.json();
-      const msg =
-        data.error_message ?
-          typeof data.error_message === "object" ?
-            JSON.stringify(data.error_message, null, 2)
+      const msg = data.error_message
+        ? typeof data.error_message === "object"
+          ? JSON.stringify(data.error_message, null, 2)
           : data.error_message
         : "Failed to add user.";
       showToast("error", "Failed to add user", msg);
@@ -339,7 +338,7 @@ export default function UsersPage() {
       "juan.delacruz@company.com",
       "Accounting",
       "Accountant",
-      "Staff",
+      "Regular Employee",
       "Active",
       "Default@123",
     ];
@@ -411,10 +410,9 @@ export default function UsersPage() {
             );
             await fetchUsers();
           } else {
-            const msg =
-              data.error_message ?
-                typeof data.error_message === "object" ?
-                  JSON.stringify(data.error_message, null, 2)
+            const msg = data.error_message
+              ? typeof data.error_message === "object"
+                ? JSON.stringify(data.error_message, null, 2)
                 : data.error_message
               : "Import failed.";
             showToast("error", "Import failed", msg);
@@ -635,11 +633,11 @@ export default function UsersPage() {
                       disabled={togglingId === u.userID}
                       className={`px-3 py-1 rounded text-xs text-white ${u.status === "Active" ? "bg-orange-400 hover:bg-orange-500" : "bg-green-500 hover:bg-green-600"} disabled:opacity-50`}
                     >
-                      {togglingId === u.userID ?
-                        "..."
-                      : u.status === "Active" ?
-                        "Disable"
-                      : "Enable"}
+                      {togglingId === u.userID
+                        ? "..."
+                        : u.status === "Active"
+                          ? "Disable"
+                          : "Enable"}
                     </button>
                     {/* <button
                       onClick={() => handleDelete(u.userID)}
@@ -692,11 +690,12 @@ export default function UsersPage() {
                   + Add
                 </button>
               </div>
-              {departments.length === 0 ?
+              {departments.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-6">
                   No departments yet. Add one above.
                 </p>
-              : <ul className="space-y-2">
+              ) : (
+                <ul className="space-y-2">
                   {departments.map((d) => (
                     <li
                       key={d}
@@ -715,7 +714,7 @@ export default function UsersPage() {
                     </li>
                   ))}
                 </ul>
-              }
+              )}
             </div>
 
             <div className="px-5 py-3 border-t bg-gray-50">
@@ -787,9 +786,9 @@ export default function UsersPage() {
                     type="button"
                     onClick={() => setForm({ ...form, _activeTab: "role" })}
                     className={`flex-1 pb-1 font-medium text-center transition-colors ${
-                      (form._activeTab || "role") === "role" ?
-                        "border-b-2 border-purple-500 text-purple-600"
-                      : "text-gray-400 hover:text-gray-600"
+                      (form._activeTab || "role") === "role"
+                        ? "border-b-2 border-purple-500 text-purple-600"
+                        : "text-gray-400 hover:text-gray-600"
                     }`}
                   >
                     Assign Role{" "}
@@ -801,9 +800,9 @@ export default function UsersPage() {
                       setForm({ ...form, _activeTab: "department" })
                     }
                     className={`flex-1 pb-1 font-medium text-center transition-colors ${
-                      form._activeTab === "department" ?
-                        "border-b-2 border-purple-500 text-purple-600"
-                      : "text-gray-400 hover:text-gray-600"
+                      form._activeTab === "department"
+                        ? "border-b-2 border-purple-500 text-purple-600"
+                        : "text-gray-400 hover:text-gray-600"
                     }`}
                   >
                     Assign Dept{" "}
@@ -822,9 +821,9 @@ export default function UsersPage() {
                         key={r}
                         onClick={() => setForm({ ...form, role: r })}
                         className={`text-xs px-2 py-1.5 rounded border text-left transition-colors ${
-                          form.role === r ?
-                            "bg-purple-500 text-white border-purple-500"
-                          : "bg-white text-gray-600 border-gray-200 hover:bg-purple-50"
+                          form.role === r
+                            ? "bg-purple-500 text-white border-purple-500"
+                            : "bg-white text-gray-600 border-gray-200 hover:bg-purple-50"
                         }`}
                       >
                         {r}

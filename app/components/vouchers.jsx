@@ -4,6 +4,7 @@ import React from "react";
 
 const VourcherComponent = (props) => {
   const { voucher, index, checkAmount } = props;
+  const isCash = voucher.voucherType.toLowerCase().includes("cash"); // true
   if (!voucher) {
     return (
       <>
@@ -22,12 +23,14 @@ const VourcherComponent = (props) => {
           <h4 className="text-lg font-bold">Date</h4>
           <h4>
             {voucher.payment_voucher_formatted_date ||
-              formatVoucherDate(voucher.createdAt)}
+              formatVoucherDate(voucher.payment_voucher_date)}
           </h4>
         </div>
         <div className="self-end-safe border-2 h-auto border-black">
           <div className="flex flex-col ">
-            <h4 className="border-b-2 p-3 px-5 border-black font-bold">Cash</h4>
+            <h4 className="border-b-2 p-3 px-5 border-black font-bold">
+              {isCash ? "Cash" : "Bank"}
+            </h4>
             <h4 className="p-3">{voucher.voucherTypeNumber || 0}</h4>
           </div>
         </div>
@@ -41,9 +44,9 @@ const VourcherComponent = (props) => {
       {/* table start  */}
       <div className="flex justify-center items-center h-5">
         <h4 className="font-bold text-lg">
-          {index === 0 ?
-            `Amount - ${formatMoney(parseFloat(checkAmount) || 0)}`
-          : ``}
+          {index === 0
+            ? `Amount - ${formatMoney(parseFloat(checkAmount) || 0)}`
+            : ``}
         </h4>
       </div>
       {/* flex rows FIrst Part */}
@@ -148,9 +151,9 @@ const VourcherComponent = (props) => {
               </div>
               <div className="flex-2 p-2 flex justify-end items-center">
                 <h4 className="text-lg">
-                  {voucher.voucherType.includes("PHP") ?
-                    formatMoney(Number(amt.amount), "PHP")
-                  : formatMoney(Number(amt.amount), "USD", "en-US")}
+                  {voucher.voucherType.includes("PHP")
+                    ? formatMoney(Number(amt.amount), "PHP")
+                    : formatMoney(Number(amt.amount), "USD", "en-US")}
                 </h4>
                 {/* <input
                   type="number"
@@ -249,20 +252,19 @@ const VourcherComponent = (props) => {
             </div>
             <div className="flex-2 p-3 flex justify-end items-center">
               <h4 className="text-lg">
-                {voucher.voucherType.includes("PHP") ?
-                  formatMoney(
-                    (voucher?.children ?? []).reduce(
-                      (total, child) => total + Number(child.amount || 0),
-                      0,
-                    ),
-                  )
-                : formatMoney(
-                    (voucher?.children ?? []).reduce(
-                      (total, child) => total + Number(child.amount || 0),
-                      0,
-                    ),
-                  )
-                }
+                {voucher.voucherType.includes("PHP")
+                  ? formatMoney(
+                      (voucher?.children ?? []).reduce(
+                        (total, child) => total + Number(child.amount || 0),
+                        0,
+                      ),
+                    )
+                  : formatMoney(
+                      (voucher?.children ?? []).reduce(
+                        (total, child) => total + Number(child.amount || 0),
+                        0,
+                      ),
+                    )}
               </h4>
               {/* <input
                 type="number"

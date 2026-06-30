@@ -53,8 +53,8 @@ const VouchersList = () => {
 
       setVourchers(response.data?.data || []);
       setTotalPages(response.data.totalPages);
-      setDateStartDefault(response.data.rangeStart.split("T")[0]);
-      setDateEndDefault(response.data.rangeEnd.split("T")[0]);
+      setDateStartDefault(response.data.rangeStart?.split("T")[0]);
+      setDateEndDefault(response.data.rangeEnd?.split("T")[0]);
     } catch (err) {
       console.error("Error Fetch Vouchers", err);
     }
@@ -111,12 +111,6 @@ const VouchersList = () => {
     try {
       const validation = validateRequiredFields(newVoucher, [
         {
-          name: "VoucherID",
-          label: "Voucher ID",
-          required: true,
-          type: "text",
-        },
-        {
           name: "NoPayments",
           label: "Number of Payments",
           required: true,
@@ -147,9 +141,9 @@ const VouchersList = () => {
 
   //signature Fields
   const signatureField =
-    userRole === "Chief Accountant" ?
-      "ChiefAccountSignature"
-    : "ChiefAdminSignature";
+    userRole === "Chief Accountant"
+      ? "ChiefAccountSignature"
+      : "ChiefAdminSignature";
 
   const pendingVouchers = vouchers?.filter((v) => !v[signatureField]);
 
@@ -166,7 +160,7 @@ const VouchersList = () => {
               type="text"
               className="bg-gray-100 ml-4 text-black outline-2 outline-gray-300 text-lg"
               onChange={(e) => handleChangeId(e)}
-              placeholder="Enter Purchase ID"
+              placeholder="Enter Voucher ID"
             />
             <button onClick={(e) => setSearch(true)}>
               <FiSearch
@@ -217,9 +211,9 @@ const VouchersList = () => {
           <button
             onClick={() => setActiveTab("pending")}
             className={`border border-darkRed  ${
-              activeTab === "pending" ?
-                "bg-white text-black"
-              : "bg-darkRed text-white"
+              activeTab === "pending"
+                ? "bg-white text-black"
+                : "bg-darkRed text-white"
             }`}
           >
             Pending
@@ -228,9 +222,9 @@ const VouchersList = () => {
           <button
             onClick={() => setActiveTab("approved")}
             className={`border border-darkRed  ${
-              activeTab === "approved" ?
-                "bg-white text-black"
-              : "bg-darkRed text-white"
+              activeTab === "approved"
+                ? "bg-white text-black"
+                : "bg-darkRed text-white"
             }`}
           >
             Approved
@@ -240,16 +234,18 @@ const VouchersList = () => {
       <div>
         <VoucherTable
           data={
-            search ?
-              (activeTab === "pending" ? pendingVouchers : approvedVouchers
-              )?.filter((e) => e.checkId === voucherId)
-            : activeTab === "pending" ?
-              pendingVouchers
-            : approvedVouchers
+            search
+              ? (activeTab === "pending"
+                  ? pendingVouchers
+                  : approvedVouchers
+                )?.filter((e) => e.id === voucherId)
+              : activeTab === "pending"
+                ? pendingVouchers
+                : approvedVouchers
           }
           header={[
-            "Vouchers ID",
-            "Count",
+            "No ID",
+            "No of Vouchers",
             "Amount",
             "Claimable",
             "Date Created",
@@ -294,21 +290,6 @@ const VouchersList = () => {
             </h2>
 
             <div className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Voucher ID
-                </label>
-                <input
-                  type="text"
-                  name="VoucherID"
-                  value={newVoucher.VoucherID}
-                  required={true}
-                  onChange={handleVoucherChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-darkRed"
-                  placeholder="Enter Voucher ID"
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Number Payment Vouchers

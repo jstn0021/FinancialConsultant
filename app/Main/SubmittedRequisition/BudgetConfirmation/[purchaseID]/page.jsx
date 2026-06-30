@@ -25,6 +25,7 @@ export default function PurchaseDetails() {
   const [items, setItems] = useState([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
+  // const [mode , setMode] =
   const [EndingInventoryDate, setEndingInventoryDate] = useState();
   const [formattedEnding, setFormattedEnding] = useState();
   const { showError, showSuccess } = useBanner();
@@ -211,6 +212,11 @@ export default function PurchaseDetails() {
           </h5>
         </div>
         <hr className="border-t border-gray-300" />
+      </div>
+      <div className="w-auto">
+        <span className="bg-black text-white p-2 w-auto">
+          {purchaseDetails?.purchase?.mode}
+        </span>
       </div>
       <div className="flex justify-start my-3">
         <div className="flex flex-row gap-1"></div>

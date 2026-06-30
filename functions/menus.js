@@ -117,6 +117,7 @@ export default function Menus(role) {
   //
   const roleMenuMap = {
     "Regular Employee": [
+      "Dashboard",
       "Purchase Requisition Form",
       "My Requisition",
 

@@ -175,9 +175,9 @@ export async function GetCashbookHeaders(voucherType) {
 export async function GetCashNo(voucherType) {
   const data = {
     "US Bank": "033N2",
-    "US Cash": "001|2",
+    "US Cash": "001I2",
     "PH Bank": "003N1",
-    "PH Cash": "001|1",
+    "PH Cash": "001I1",
   };
   return {
     code: data[voucherType],
@@ -185,10 +185,10 @@ export async function GetCashNo(voucherType) {
 }
 export async function GetCashAndBankNo(voucherType) {
   const data = {
-    "BANK USD": "033N2",
-    "CASH USD": "001|2",
-    "CASH PHP": "003N1",
-    "BANK PHP": "001|1",
+    "BANK USD": "003N2",
+    "CASH USD": "001I2",
+    "CASH PHP": "001I1",
+    "BANK PHP": "003N1",
   };
   return {
     code: data[voucherType],
@@ -203,4 +203,8 @@ export async function GetBDONo(voucherType) {
   return {
     code: data[voucherType],
   };
+}
+
+export async function TotalAmount(data) {
+  console.log("datas", JSON.stringify(data));
 }

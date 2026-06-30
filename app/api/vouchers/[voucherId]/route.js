@@ -1,8 +1,25 @@
 import sequelize from "@/db/connection";
 import { Check, CheckItem } from "@/db/models";
 import { formatVoucherDate } from "@/functions/formattDate";
+import { TotalAmount } from "@/functions/vouchers";
 import { NextResponse } from "next/server";
 
+function computeCheckAmount(items) {
+  return items.reduce((sum, item) => {
+    const amount = Number(item.amount || 0);
+
+    switch (item.receiptOrPayment?.toLowerCase()) {
+      case "payment":
+        return sum + amount;
+
+      case "receipt":
+        return sum - amount;
+
+      default:
+        return sum;
+    }
+  }, 0);
+}
 export async function GET(request, { params }) {
   const { voucherId } = await params;
   ``;
@@ -39,6 +56,7 @@ export async function POST(request, { params }) {
   const { voucherId } = await params;
   const {
     title,
+    receiptOrPayment,
     voucherTypeNumber,
     accountCode,
     glCode,
@@ -58,6 +76,7 @@ export async function POST(request, { params }) {
         check_id: voucherId,
         parent_id: null,
         title,
+        receiptOrPayment,
         voucherTypeNumber,
         payment_voucher_date,
         payment_voucher_formatted_date: formatVoucherDate(payment_voucher_date),
@@ -68,11 +87,12 @@ export async function POST(request, { params }) {
         voucherType,
         pm,
         amount: children
-          ? children.reduce((sum, child) => sum + child.amount, 0)
-          : 0, // total amount of the children
+          ? children.reduce((sum, child) => sum + Number(child.amount || 0), 0)
+          : 0,
       },
       { transaction },
     );
+    console.log(JSON.stringify(children));
     //create children
     if (children && children.length > 0) {
       const childrenData = children.map((child) => ({
@@ -105,13 +125,12 @@ export async function POST(request, { params }) {
           ],
         },
       ],
+      transaction,
     });
 
     // updated js
-    specificCheck.checkAmount = specificCheck.items.reduce(
-      (sum, item) => sum + item.amount,
-      0,
-    );
+    specificCheck.checkAmount = computeCheckAmount(specificCheck.items);
+
     await specificCheck.save({ transaction });
     await transaction.commit();
     return NextResponse.json(
@@ -120,6 +139,7 @@ export async function POST(request, { params }) {
     );
   } catch (err) {
     transaction.rollback();
+    console.log(err.message);
     return NextResponse.json({ error_message: err.message }, { status: 500 });
   }
 }
@@ -128,14 +148,32 @@ export async function POST(request, { params }) {
 export async function DELETE(request, { params }) {
   const { voucherId } = await params;
   const transaction = await sequelize.transaction();
+
   try {
-    // delete children first
+    // get parent voucher first
+    const voucher = await CheckItem.findByPk(voucherId, {
+      transaction,
+    });
+
+    if (!voucher) {
+      await transaction.rollback();
+
+      return NextResponse.json(
+        { error_message: "Voucher not found" },
+        { status: 404 },
+      );
+    }
+
+    const checkId = voucher.check_id;
+
+    // delete children
     await CheckItem.destroy({
       where: {
         parent_id: voucherId,
       },
       transaction,
     });
+
     // delete parent
     await CheckItem.destroy({
       where: {
@@ -143,17 +181,54 @@ export async function DELETE(request, { params }) {
       },
       transaction,
     });
+
+    // get updated check
+    const specificCheck = await Check.findOne({
+      where: {
+        id: checkId,
+      },
+      include: [
+        {
+          model: CheckItem,
+          as: "items",
+          where: {
+            parent_id: null,
+          },
+          required: false,
+        },
+      ],
+      transaction,
+    });
+
+    // recompute
+    specificCheck.checkAmount = specificCheck.items.reduce((sum, item) => {
+      const amount = Number(item.amount || 0);
+
+      if (item.receiptOrPayment?.toLowerCase() === "payment") {
+        return sum + amount;
+      }
+
+      if (item.receiptOrPayment?.toLowerCase() === "receipt") {
+        return sum - amount;
+      }
+
+      return sum;
+    }, 0);
+
+    await specificCheck.save({ transaction });
+
     await transaction.commit();
+
     return NextResponse.json(
       { message: "Check item and its children deleted successfully" },
       { status: 200 },
     );
   } catch (err) {
     await transaction.rollback();
+
     return NextResponse.json({ error_message: err.message }, { status: 500 });
   }
 }
-
 export async function PATCH(request, { params }) {
   const { voucherId } = await params;
   try {
@@ -216,7 +291,7 @@ export async function PUT(request, { params }) {
         { status: 404 },
       );
     }
-
+    console.log("data", parentVoucher);
     // update parent
     await parentVoucher.update(
       {
@@ -278,10 +353,7 @@ export async function PUT(request, { params }) {
       transaction,
     });
 
-    specificCheck.checkAmount = specificCheck.items.reduce(
-      (sum, item) => sum + Number(item.amount || 0),
-      0,
-    );
+    specificCheck.checkAmount = computeCheckAmount(specificCheck.items);
 
     await specificCheck.save({ transaction });
 

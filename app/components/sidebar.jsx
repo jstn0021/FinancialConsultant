@@ -45,7 +45,7 @@ export default function Sidebar() {
   if (!user) {
     return <aside className="p-4 text-white">Loading...</aside>;
   } else {
-    console.log(user);
+    //  console.log(user);
   }
   return (
     <aside className="min-w-54 min-h-270 relative  bg-darkRed text-white flex flex-col p-4 print:hidden">
