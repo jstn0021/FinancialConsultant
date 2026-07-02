@@ -13,7 +13,6 @@ export async function POST(request) {
     "position",
     "role",
     "status",
-    "password",
     "email",
   ];
 
@@ -53,7 +52,10 @@ export async function POST(request) {
         position: row.position,
         role: row.role,
         status: row.status || "Active",
-        password: await bcrypt.hash(String(row.password), salt),
+        password: await bcrypt.hash(
+          String(row.password || "Default@123"),
+          salt,
+        ),
       })),
     );
     const saveAccounts = await User.bulkCreate(user, {

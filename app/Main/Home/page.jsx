@@ -111,9 +111,14 @@ export default function DashboardPage() {
                 newStats.approvedPurchase = d.total || (d.data || []).length;
               },
             ),
+            fetch("/api/purchase/Approvals/ApprovedPurchase").then(
+              async (r) => {
+                const d = await r.json();
+                newStats.approvedPR = d.total || (d.data || []).length;
+              },
+            ),
           );
         }
-
         // Chief Accountant
         if (role === "Chief Accountant") {
           fetches.push(
@@ -152,6 +157,12 @@ export default function DashboardPage() {
               const d = await r.json();
               newStats.voucherApprovals = d.total || (d.data || []).length;
             }),
+            fetch("/api/purchase/Approvals/ApprovedPurchase").then(
+              async (r) => {
+                const d = await r.json();
+                newStats.approvedPR = d.total || (d.data || []).length;
+              },
+            ),
           );
         }
 
@@ -296,6 +307,13 @@ export default function DashboardPage() {
             icon: "✅",
             href: "/Main/SubmittedRequisition/BudgetConfirmation",
           },
+          {
+            label: "Number of Approve PR",
+            value: stats.approvedPR ?? 0,
+            theme: "blue",
+            icon: "✔️",
+            href: "/Main/Vourchers",
+          },
         ];
       case "Chief Accountant":
         return [
@@ -319,6 +337,13 @@ export default function DashboardPage() {
             theme: "blue",
             icon: "✍️",
             href: "/Main/Vouchers",
+          },
+          {
+            label: "Number of Approve PR",
+            value: stats.approvedPR ?? 0,
+            theme: "blue",
+            icon: "✔️",
+            href: "/Main/Vourchers",
           },
         ];
       case "Chief Administrator Manager":

@@ -42,7 +42,8 @@ const VourcherComponent = (props) => {
         </div>
       </div>
       {/* table start  */}
-      <div className="flex justify-center items-center h-5">
+      {/* table start  */}
+      <div className="flex justify-center items-center h-auto py-2 mb-1">
         <h4 className="font-bold text-lg">
           {index === 0
             ? `Amount - ${formatMoney(parseFloat(checkAmount) || 0)}`
@@ -71,25 +72,25 @@ const VourcherComponent = (props) => {
           <h4 className="italic">{voucher.title}</h4>
         </div>
         <div className="w-87.5 border-2 flex justify-center items-end">
-          <h4>SIGNATURE</h4>
+          <h4 className="p">SIGNATURE</h4>
         </div>
       </div>
       {/*2ND Rows  */}
       <div className="flex flex-row ">
         <div className="w-87.5 flex flex-col border-2 border-t-0">
           <div className="flex justify-center items-center border-b-2">
-            <h4>Job#</h4>
+            <h4 className="p-1">Job#</h4>
           </div>
           <div className="grid grid-cols-10  ">
-            <h4 className=" flex justify-center items-center border-r">4</h4>
-            <h4 className=" flex justify-center items-center border-r">5</h4>
-            <h4 className=" flex justify-center items-center border-r">6</h4>
-            <h4 className=" flex justify-center items-center border-r">7</h4>
-            <h4 className=" flex justify-center items-center border-r">8</h4>
-            <h4 className=" flex justify-center items-center border-r">9</h4>
-            <h4 className=" flex justify-center items-center border-r">#</h4>
-            <h4 className=" flex justify-center items-center border-r">#</h4>
-            <h4 className=" flex justify-center items-center border-r">#</h4>
+            <h4 className=" flex justify-center items-center border-r ">4</h4>
+            <h4 className=" flex justify-center items-center border-r ">5</h4>
+            <h4 className=" flex justify-center items-center border-r ">6</h4>
+            <h4 className=" flex justify-center items-center border-r ">7</h4>
+            <h4 className=" flex justify-center items-center border-r ">8</h4>
+            <h4 className=" flex justify-center items-center border-r ">9</h4>
+            <h4 className=" flex justify-center items-center border-r ">#</h4>
+            <h4 className=" flex justify-center items-center border-r ">#</h4>
+            <h4 className=" flex justify-center items-center border-r ">#</h4>
             <h4 className=" flex justify-center items-center ">#</h4>
           </div>
         </div>
@@ -98,9 +99,9 @@ const VourcherComponent = (props) => {
         </div>
         <div className="w-87.5 flex-col border-2 border-t-0">
           <div className="flex justify-center items-center border-b-2">
-            <h4 className="font-bold">AMOUNT</h4>
+            <h4 className="font-bold pb-2">AMOUNT</h4>
           </div>
-          <div className="grid grid-cols-9">
+          <div className="grid grid-cols-9 pb-2">
             <h4 className=" flex justify-center items-center border-r ">16</h4>
             <h4 className=" flex justify-center items-center border-r">17</h4>
             <h4 className=" flex justify-center items-center border-r">18</h4>

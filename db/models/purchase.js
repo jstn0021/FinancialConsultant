@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../connection");
+const { isCancel } = require("axios");
 
 const Purchase = sequelize.define(
   "purchase",
@@ -65,6 +66,14 @@ const Purchase = sequelize.define(
       values: ["Small Amount", "Service Invoice"],
     },
     isAdminForChiefSign: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    isCancel: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    isRejected: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },

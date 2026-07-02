@@ -469,6 +469,67 @@ export default function CreditorsPage() {
       setFormLoading(false);
     }
   };
+  const handleExport = async () => {
+    try {
+      showToast("Preparing export...", "success");
+
+      let allRows = [];
+      let currentPage = 1;
+      let totalPages = 1;
+      const EXPORT_PAGE_SIZE = 100; // safe chunk size, adjust if needed
+
+      do {
+        const res = await fetch(
+          `${API_BASE}?page=${currentPage}&limit=${EXPORT_PAGE_SIZE}`,
+        );
+        const data = await res.json();
+        allRows = allRows.concat(data.rows ?? []);
+        totalPages = data.totalPages ?? 1;
+        currentPage++;
+      } while (currentPage <= totalPages);
+
+      if (allRows.length === 0) {
+        showToast("No creditors to export.", "error");
+        return;
+      }
+
+      const headers = [
+        "code",
+        "creditorsName",
+        "address1",
+        "address2",
+        "city",
+        "country",
+        "tin1",
+        "tin2",
+        "tin3",
+      ];
+
+      const aoa = [
+        headers,
+        ...allRows.map((c) =>
+          headers.map((h) => {
+            const val = c[h];
+            return val === null || val === undefined ? "" : val;
+          }),
+        ),
+      ];
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      ws["!cols"] = headers.map(() => ({ wch: 20 }));
+      XLSX.utils.book_append_sheet(wb, ws, "Creditors");
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `NSTREN_Creditors_Export_${dateStr}.xlsx`);
+
+      showToast(
+        `Exported ${allRows.length} creditor${allRows.length !== 1 ? "s" : ""}.`,
+      );
+    } catch {
+      showToast("Failed to export creditors.", "error");
+    }
+  };
   const handleDownloadTemplate = () => {
     const headers = [
       "code",
@@ -503,6 +564,7 @@ export default function CreditorsPage() {
   return (
     <>
       <style>{`
+       
 
         .page { padding: 32px 24px; max-width: 1200px; margin: 0 auto; }
         .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
@@ -631,6 +693,9 @@ export default function CreditorsPage() {
               onClick={handleDownloadTemplate}
             >
               ⬇ Template
+            </button>
+            <button className="btn btn-secondary" onClick={handleExport}>
+              ⬇ Export
             </button>
             <button
               className="btn btn-success"

@@ -12,11 +12,17 @@ import { useRouter } from "next/navigation";
 import { useBanner } from "@/hooks/Context/banner";
 import ConfirmBox from "@/app/components/modals/confirmbox";
 import { data } from "autoprefixer";
+import { sendPurchaseCancelEmail } from "@/lib/sendWelcomeEmail";
+import { findDepartment, findSpecificRole } from "@/functions/notification";
 export default function PurchaseDetails() {
   const pathname = usePathname();
   const params = useParams();
+
+  const [canceling, setCancel] = useState(false);
+  const [cancelingModal, setCancelModal] = useState(false);
   const { user } = useUserContext();
   const [total, setTotal] = useState(0);
+  const [isCLick, setIsClick] = useState(false);
   const [purchaseDetails, setPurchaseDetails] = useState();
   const [is404, setIs404] = useState(false);
   const [isfetching, setIsFetching] = useState(true);
@@ -63,6 +69,181 @@ export default function PurchaseDetails() {
   useEffect(() => {
     fetchPurchaseDetails();
   }, []);
+  const handleDownload = async () => {
+    setIsClick(true);
+    const res = await axios.get(`/api/purchase/${params.purchaseID}/export`, {
+      responseType: "blob",
+    });
+
+    const url = URL.createObjectURL(new Blob([res.data]));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `purchase-${params.purchaseID}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setTimeout(function () {
+      setIsClick(false);
+    }, 2000);
+  };
+  const handleCancelClick = () => {
+    setCancelModal(true);
+  };
+
+  // Actually calls the API, runs only after user confirms
+  const handleCancelConfirmed = async () => {
+    try {
+      setCancel(true);
+      const response = await axios.patch(
+        `/api/purchase/${params.purchaseID}/cancel-reject-request`,
+      );
+      // reject system
+      purchaseDetails;
+      if (purchaseDetails?.purchase?.isOnBudget === true) {
+        // accounting notif
+        const accounting = await findDepartment("Accounting");
+        await Promise.all(
+          (accounting?.data || []).map((forward) =>
+            Promise.all([
+              axios.post("/api/notification", {
+                userId: forward.userID,
+                title: "Cancel Purchase Requisition",
+                message: `${user.name} is Cancel a Purchase Requisition`,
+                type: "info",
+                link: "",
+              }),
+              sendPurchaseCancelEmail({
+                toEmail: forward.email,
+                forwardedBy: user.name,
+                forwardedByRole: user.role,
+                forwardedTo: `${forward.firstname} ${forward.lastname}`,
+                appUrl: "",
+              }),
+            ]),
+          ),
+        );
+      }
+
+      // Admin
+      if (
+        purchaseDetails?.purchase?.AdminSign !== null &&
+        purchaseDetails?.purchase?.AdminSign !== ""
+      ) {
+        const Admin = await findSpecificRole("Admin");
+        await Promise.all(
+          (Admin?.data || []).map((forward) =>
+            Promise.all([
+              axios.post("/api/notification", {
+                userId: forward.userID,
+                title: "Cancel Purchase Requisition",
+                message: `${user.name} is Cancel a Purchase Requisition`,
+                type: "info",
+                link: "",
+              }),
+              sendPurchaseCancelEmail({
+                toEmail: forward.email,
+                forwardedBy: user.name,
+                forwardedByRole: user.role,
+                forwardedTo: `${forward.firstname} ${forward.lastname}`,
+                appUrl: "",
+              }),
+            ]),
+          ),
+        );
+      }
+      //chief Admin
+
+      if (
+        purchaseDetails?.purchase?.ChiefAdminManageSign !== null &&
+        purchaseDetails?.purchase?.ChiefAdminManageSign !== ""
+      ) {
+        const chiefAdmin = await findSpecificRole(
+          "Chief Administrator Manager",
+        );
+        await Promise.all(
+          (chiefAdmin?.data || []).map((forward) =>
+            Promise.all([
+              axios.post("/api/notification", {
+                userId: forward.userID,
+                title: "Cancel Purchase Requisition",
+                message: `${user.name} is Cancel a Purchase Requisition`,
+                type: "info",
+                link: "",
+              }),
+              sendPurchaseCancelEmail({
+                toEmail: forward.email,
+                forwardedBy: user.name,
+                forwardedByRole: user.role,
+                forwardedTo: `${forward.firstname} ${forward.lastname}`,
+                appUrl: "",
+              }),
+            ]),
+          ),
+        );
+      }
+      // Project Director
+      if (
+        purchaseDetails?.purchase?.ProjectDirectorSign !== null &&
+        purchaseDetails?.purchase?.ProjectDirectorSign !== ""
+      ) {
+        const projectDirector = await findSpecificRole("Project Director");
+        await Promise.all(
+          (projectDirector?.data || []).map((forward) =>
+            Promise.all([
+              axios.post("/api/notification", {
+                userId: forward.userID,
+                title: "Cancel Purchase Requisition",
+                message: `${user.name} is Cancel a Purchase Requisition`,
+                type: "info",
+                link: "",
+              }),
+              sendPurchaseCancelEmail({
+                toEmail: forward.email,
+                forwardedBy: user.name,
+                forwardedByRole: user.role,
+                forwardedTo: `${forward.firstname} ${forward.lastname}`,
+                appUrl: "",
+              }),
+            ]),
+          ),
+        );
+      }
+
+      const notifySytstem = await axios.post("/api/notification", {
+        userId: purchaseDetails?.purchase?.user?.userID,
+        title: "Purchase Budget Confirmation",
+        message: " Cancel Purchase Requisition id: " + params.purchaseID,
+        type: "Info",
+        link: "",
+      });
+      await sendPurchaseCancelEmail({
+        toEmail: purchaseDetails?.purchase?.user?.email,
+        requestNo: params.purchaseID,
+        rejectedBy: user?.name,
+        rejectedByRole: user?.role,
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        showSuccess(response.data?.message || "Purchase Requisition Cancel");
+        setTimeout(() => {
+          router.push("/Main/Purchase/PurchaseRecommendingApproval");
+        }, 1800);
+      } else {
+        showError(
+          `Rejection for Purchase Requisition ${params.purchaseID} Failed`,
+        );
+      }
+    } catch (error) {
+      console.error("Error rejecting purchase:", error);
+      showError(
+        error?.response?.data?.message ||
+          `Rejection for Purchase Requisition ${params.purchaseID} Failed`,
+      );
+    } finally {
+      setCancel(false);
+      setCancelModal(false);
+    }
+  };
+
   return (
     <>
       <div className="flex relative mb-5 w-auto">
@@ -305,6 +486,33 @@ export default function PurchaseDetails() {
           </tbody>
         </table>
       }
+      <div className="flex justify-end items-end mt-3">
+        <button
+          onClick={handleCancelClick}
+          disabled={canceling}
+          className="px-6 py-2 mr-2 bg-gray-500 border border-gray-600 text-white font-bold rounded-md hover:bg-gray-600 transition disabled:opacity-50"
+        >
+          {canceling ? "Cancel..." : "Cancel"}
+        </button>
+        <button
+          className={`py-2 px-6  ${isCLick === true ? "bg-gray-500" : "bg-green-800"}  text-white ${isCLick === false && "hover:bg-green-950"}  font-bold rounded-md`}
+          onClick={handleDownload}
+          disabled={isCLick}
+        >
+          {"Export Data"}
+        </button>
+      </div>
+      {cancelingModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 ">
+          <ConfirmBox
+            title="CanceL Request"
+            content={`Are you sure you want to cancel Purchase Code:`}
+            id={params.purchaseID}
+            handleConfirm={handleCancelConfirmed}
+            handleclose={() => setCancelModal(false)}
+          />
+        </div>
+      )}
       {/* accounting part claimable or non claimable  */}
       {/* <table className="border border-gray-300 w-full">
              <thead className = "bg-black text-white border-3 border-darkRed sticky top-0 z-10 font-thin" >

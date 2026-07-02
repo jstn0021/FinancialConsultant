@@ -1,11 +1,13 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import axios from "axios";
 import VoucherComponent from "@/app/components/vouchers";
 import { useParams, useRouter } from "next/navigation";
 import { FiEdit } from "react-icons/fi";
 import ConfirmBox from "@/app/components/modals/confirmbox";
 import { useBanner } from "@/hooks/Context/banner";
+import html2canvas from "html2canvas";
+import { PDFDocument } from "pdf-lib";
 import { getSuppliers } from "@/functions/supplier";
 import useUserContext from "@/hooks/Context/UserContext";
 import {
@@ -21,8 +23,11 @@ import {
 import { findDepartment, findSpecificRole } from "@/functions/notification";
 const PaymentVouchers = () => {
   const [showCalculationModal, setShowCalculationModal] = useState(false);
+  const voucherRefs = useRef([]);
+  const [generatingPDF, setGeneratingPDF] = useState(false);
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
-
+  const [rejecting, setRejecting] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [selectedCalculationId, setSelectedCalculationId] = useState("");
   const [selectedOperator, setSelectedOperator] = useState("+");
   const [calculationValue, setCalculationValue] = useState("");
@@ -78,6 +83,12 @@ const PaymentVouchers = () => {
     const file = e.target.files?.[0];
 
     if (!file) return;
+
+    if (file.type !== "application/pdf") {
+      showError("Only PDF files are allowed");
+      e.target.value = ""; // reset input
+      return;
+    }
 
     const localPreview = URL.createObjectURL(file);
 
@@ -604,6 +615,166 @@ const PaymentVouchers = () => {
       showError("Failed to export cheque");
     }
   };
+  // Opens the confirmation modal
+  const handleRejectClick = () => {
+    setShowRejectConfirm(true);
+  };
+
+  // Actually calls the API, runs only after user confirms
+  const handleRejectConfirmed = async () => {
+    try {
+      setRejecting(true);
+      const response = await axios.post(
+        `/api/vouchers/${params.voucherId}/reject`,
+      );
+      // reject system
+      // const notifySytstem = await axios.post("/api/notification", {
+      //   userId: purchaseDetails?.purchase?.user?.userID,
+      //   title: "Purchase Budget Confirmation",
+      //   message:
+      //     "Accounting Reject Purchase Requisition id: " + params.purchaseID,
+      //   type: "Info",
+      //   link: "",
+      // });
+      // await sendPurchaseRejectedEmail({
+      //   toEmail: purchaseDetails?.purchase?.user?.email,
+      //   requestNo: params.purchaseID,
+      //   rejectedBy: user?.name,
+      //   rejectedByRole: userRole,
+      // });
+
+      if (response.status === 200 || response.status === 201) {
+        showSuccess(response.data?.message || "Purchase Requisition Rejected");
+        setTimeout(() => {
+          router.push("/Main/Purchase/PurchaseRecommendingApproval");
+        }, 1800);
+      } else {
+        showError(
+          `Rejection for Purchase Requisition ${params.purchaseID} Failed`,
+        );
+      }
+    } catch (error) {
+      console.error("Error rejecting purchase:", error);
+      showError(
+        error?.response?.data?.message ||
+          `Rejection for Purchase Requisition ${params.purchaseID} Failed`,
+      );
+    } finally {
+      setRejecting(false);
+      setShowRejectConfirm(false);
+    }
+  };
+
+  const handleGeneratePDF = async () => {
+    if (!checks?.items?.length) {
+      showError("No vouchers to print");
+      return;
+    }
+
+    setGeneratingPDF(true);
+
+    try {
+      const pdfDoc = await PDFDocument.create();
+      const pageW = 792; // landscape Letter, points
+      const pageH = 612;
+      const margin = 20;
+      const gap = 10;
+
+      const actionButtons = document.querySelectorAll(".print\\:hidden");
+      actionButtons.forEach((btn) => (btn.style.visibility = "hidden"));
+
+      // 1. Capture every voucher card into a PNG first
+      const capturedImages = [];
+      for (let i = 0; i < voucherRefs.current.length; i++) {
+        const node = voucherRefs.current[i];
+        if (!node) continue;
+
+        node.scrollIntoView({ block: "start", inline: "nearest" });
+        await new Promise((r) => setTimeout(r, 100));
+
+        const canvas = await html2canvas(node, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          scrollX: -window.scrollX,
+          scrollY: -window.scrollY,
+        });
+
+        capturedImages.push(canvas.toDataURL("image/png"));
+      }
+
+      actionButtons.forEach((btn) => (btn.style.visibility = "visible"));
+
+      // 2. Lay out two per page — same width, top half / bottom half
+      const slotW = pageW - margin * 2;
+      const slotH = (pageH - margin * 2 - gap) / 2;
+
+      for (let i = 0; i < capturedImages.length; i += 2) {
+        const page = pdfDoc.addPage([pageW, pageH]);
+        const pairSrcs = [capturedImages[i], capturedImages[i + 1]].filter(
+          Boolean,
+        );
+
+        // embed both images first so we can compute one shared scale
+        const pairImages = await Promise.all(
+          pairSrcs.map((src) => pdfDoc.embedPng(src)),
+        );
+
+        // shared scale: each image must fit slotW width AND slotH height,
+        // then take the smallest of those across the whole pair so both
+        // end up at the exact same width
+        const scale = Math.min(
+          ...pairImages.map((img) =>
+            Math.min(slotW / img.width, slotH / img.height),
+          ),
+        );
+
+        for (let slot = 0; slot < pairImages.length; slot++) {
+          const pngImage = pairImages[slot];
+          const drawW = pngImage.width * scale;
+          const drawH = pngImage.height * scale;
+
+          const x = margin + (slotW - drawW) / 2;
+          // slot 0 = top half, slot 1 = bottom half
+          const slotTopY = pageH - margin - slot * (slotH + gap);
+          const y = slotTopY - slotH + (slotH - drawH) / 2;
+
+          page.drawImage(pngImage, { x, y, width: drawW, height: drawH });
+        }
+      }
+
+      // 3. Append the real uploaded attachment PDF's pages
+      const attachmentUrl = preview || checks?.cheque_attachment;
+      if (attachmentUrl) {
+        const existingPdfBytes = await fetch(attachmentUrl).then((res) =>
+          res.arrayBuffer(),
+        );
+        const existingPdfDoc = await PDFDocument.load(existingPdfBytes);
+        const copiedPages = await pdfDoc.copyPages(
+          existingPdfDoc,
+          existingPdfDoc.getPageIndices(),
+        );
+        copiedPages.forEach((p) => pdfDoc.addPage(p));
+      }
+
+      // 4. Save & download
+      const mergedBytes = await pdfDoc.save();
+      const blob = new Blob([mergedBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Voucher-${params.voucherId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showSuccess("PDF generated successfully");
+    } catch (error) {
+      console.error(error);
+      showError("Failed to generate PDF");
+    } finally {
+      setGeneratingPDF(false);
+    }
+  };
   return (
     <div className="p-5">
       {/* {JSON.stringify(checks)} */}
@@ -626,11 +797,16 @@ const PaymentVouchers = () => {
       </div>
 
       {/* EXISTING VOUCHERS */}
+      {/* EXISTING VOUCHERS */}
       <div className="space-y-5">
         {checks?.items?.map((voucher, index) => (
-          <div key={index} className="relative border rounded-lg p-3">
+          <div
+            key={index}
+            ref={(el) => (voucherRefs.current[index] = el)}
+            className="relative border rounded-lg p-3 bg-white"
+          >
             {/* ACTION BUTTONS */}
-            <div className="absolute top-3 right-3 flex gap-2">
+            <div className="absolute top-3 right-3 flex gap-2 print:hidden">
               {/* EDIT */}
               <button
                 onClick={() => handleEdit(voucher)}
@@ -656,7 +832,6 @@ const PaymentVouchers = () => {
           </div>
         ))}
       </div>
-
       {/* MODAL */}
       {openModal && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
@@ -920,6 +1095,40 @@ const PaymentVouchers = () => {
               ))}
           </>
         )}
+
+      <div className="flex flex-col items-center gap-4 m-5">
+        <button
+          onClick={handleGeneratePDF}
+          disabled={generatingPDF}
+          className="bg-blue-700 text-white font-bold my-2 hover:bg-blue-900 px-4 py-2 rounded disabled:opacity-50"
+        >
+          {generatingPDF ? "Generating..." : "Print to PDF"}
+        </button>
+        {/* UPLOAD INPUT */}
+        <label className="flex flex-col items-center gap-2 border-2 border-dashed rounded p-4 cursor-pointer hover:bg-gray-50">
+          <span className="text-sm text-gray-600">
+            Click to upload PDF attachment
+          </span>
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={handleChange}
+            className="hidden"
+          />
+        </label>
+      </div>
+      {(preview || checks?.cheque_attachment) && (
+        <div className="w-full overflow-auto border rounded flex justify-center bg-gray-100 p-4">
+          <embed
+            src={preview || checks?.cheque_attachment}
+            type="application/pdf"
+            width="612"
+            height="792"
+            title="Attachment Preview"
+            className="shadow"
+          />
+        </div>
+      )}
       <div className="flex justify-end mt-4">
         <div className="flex justify-end">
           <button
@@ -1048,12 +1257,21 @@ const PaymentVouchers = () => {
               !checks?.ChiefAccountSignature) ||
               (userRole === "Chief Administrator Manager" &&
                 !checks?.ChiefAdminSignature)) && (
-              <button
-                onClick={handleApprove}
-                className="px-6 py-2 bg-lightRed border border-darkRed text-white font-bold rounded hover:bg-red-200 hover:text-black transition"
-              >
-                Accept
-              </button>
+              <>
+                <button
+                  onClick={handleRejectClick}
+                  disabled={rejecting}
+                  className="px-6 py-2 bg-gray-500 border border-gray-600 text-white font-bold rounded hover:bg-gray-600 transition disabled:opacity-50"
+                >
+                  {rejecting ? "Rejecting..." : "Reject"}
+                </button>
+                <button
+                  onClick={handleApprove}
+                  className="px-6 py-2 bg-lightRed border border-darkRed text-white font-bold rounded hover:bg-red-200 hover:text-black transition"
+                >
+                  Accept
+                </button>
+              </>
             )}
           </div>
         ))}
@@ -1135,6 +1353,17 @@ const PaymentVouchers = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {showRejectConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 ">
+          <ConfirmBox
+            title="Rejected Voucher"
+            content={`Are you sure you want to reject Voucher:`}
+            id={params.voucherId}
+            handleConfirm={handleRejectConfirmed}
+            handleclose={() => setShowRejectConfirm(false)}
+          />
         </div>
       )}
     </div>

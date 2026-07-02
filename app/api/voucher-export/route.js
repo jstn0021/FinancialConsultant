@@ -51,6 +51,8 @@ export async function GET(request) {
       return NextResponse.json({ error: "Check not found" }, { status: 404 });
     }
 
+    //     return NextResponse.json({ check }, { status: 200 });
+
     const buffer = await buildVoucherWorkbook(check.toJSON());
 
     return new NextResponse(buffer, {

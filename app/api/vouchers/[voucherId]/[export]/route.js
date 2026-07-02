@@ -60,6 +60,7 @@ export async function GET(req, { params }) {
       ],
     });
 
+    // return NextResponse.json({ checkData }, { status: 200 });
     const checkData = specificCheck.toJSON();
 
     const amount = parseFloat(checkData.checkAmount);

@@ -153,9 +153,9 @@ const MyRequisitionList = () => {
         <button
           onClick={() => setActiveTab("All")}
           className={`px-4 py-2 border ${
-            activeTab === "All" ?
-              "bg-white text-black"
-            : "bg-darkRed text-white"
+            activeTab === "All"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
           }`}
         >
           All
@@ -164,9 +164,9 @@ const MyRequisitionList = () => {
         <button
           onClick={() => setActiveTab("Pending")}
           className={`px-4 py-2 border ${
-            activeTab === "Pending" ?
-              "bg-white text-black"
-            : "bg-darkRed text-white"
+            activeTab === "Pending"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
           }`}
         >
           Pending
@@ -175,12 +175,33 @@ const MyRequisitionList = () => {
         <button
           onClick={() => setActiveTab("Approved")}
           className={`px-4 py-2 border ${
-            activeTab === "Approved" ?
-              "bg-white text-black"
-            : "bg-darkRed text-white"
+            activeTab === "Approved"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
           }`}
         >
           Approved
+        </button>
+        <button
+          onClick={() => setActiveTab("Cancel")}
+          className={`px-4 py-2 border ${
+            activeTab === "Cancel"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
+          }`}
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => setActiveTab("Rejected")}
+          className={`px-4 py-2 border ${
+            activeTab === "Rejected"
+              ? "bg-white text-black"
+              : "bg-darkRed text-white"
+          }`}
+        >
+          Rejected
         </button>
       </div>
 
@@ -212,9 +233,9 @@ const MyRequisitionList = () => {
             key={index}
             onClick={() => setPage(index + 1)}
             className={`px-4 py-1 border-r-2 border-gray-500 ${
-              page === index + 1 ?
-                "bg-darkRed text-white"
-              : "bg-gray-200 hover:bg-darkRed hover:text-white"
+              page === index + 1
+                ? "bg-darkRed text-white"
+                : "bg-gray-200 hover:bg-darkRed hover:text-white"
             }`}
           >
             {index + 1}

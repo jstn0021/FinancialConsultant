@@ -9,6 +9,7 @@ import {
 import { Sequelize } from "sequelize";
 import { NextResponse } from "next/server";
 import { Op } from "sequelize";
+
 export async function getItemInfo(item_id, items) {
   const requiredBalance =
     items.find((item) => item.ItemsID === item_id)?.RequiredBalance || 0;
@@ -141,6 +142,8 @@ export async function GetSpecificRequest(
       },
 
       isOnTheBudget: true,
+      isRejected: false,
+      isCancel: false,
     };
 
     // -----------------------------
@@ -294,6 +297,10 @@ export async function GetPurchaseWithUserId(
       };
     } else if (activeTab === "Approved") {
       tabWhere = { Status: "Accounting Submission" };
+    } else if (activeTab === "Cancel") {
+      tabWhere = { isCancel: true };
+    } else if (activeTab === "Rejected") {
+      tabWhere = { isRejected: true };
     }
     // "All" -> walang Status filter
 
@@ -337,7 +344,6 @@ export async function GetPurchaseWithUserId(
     };
   }
 }
-
 export async function GetTypeOfExpenses() {
   const data = await ExpensesDescription.findAll();
 

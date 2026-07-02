@@ -12,10 +12,15 @@ import { useRouter } from "next/navigation";
 import { useBanner } from "@/hooks/Context/banner";
 import ConfirmBox from "@/app/components/modals/confirmbox";
 import { findDepartment, findSpecificRole } from "@/functions/notification";
-import { sendPurchaseApprovedEmail } from "@/lib/sendWelcomeEmail";
+import {
+  sendPurchaseApprovedEmail,
+  sendPurchaseRejectedEmail,
+} from "@/lib/sendWelcomeEmail";
 
 export default function PurchaseDetails() {
   const pathname = usePathname();
+  const [rejecting, setRejecting] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const params = useParams();
   const { user } = useUserContext();
   const [total, setTotal] = useState(0);
@@ -331,6 +336,82 @@ export default function PurchaseDetails() {
   };
   // ─────────────────────────────────────────────────────────────────────────
 
+  const handleReject = async () => {
+    try {
+      setRejecting(true);
+      const response = await axios.post(
+        `/api/purchase/${params.purchaseID}/cancel-reject-request`,
+      );
+
+      if (response.status === 200 || response.status === 201) {
+        showSuccess(response.data?.message || "Purchase Requisition Rejected");
+        setTimeout(() => {
+          router.push("/Main/Purchase/PurchaseRecommendingApproval");
+        }, 1800);
+      } else {
+        showError(
+          `Rejection for Purchase Requisition ${params.purchaseID} Failed`,
+        );
+      }
+    } catch (error) {
+      console.error("Error rejecting purchase:", error);
+      showError(
+        error?.response?.data?.message ||
+          `Rejection for Purchase Requisition ${params.purchaseID} Failed`,
+      );
+    } finally {
+      setRejecting(false);
+    }
+  };
+  // Opens the confirmation modal
+  const handleRejectClick = () => {
+    setShowRejectConfirm(true);
+  };
+
+  // Actually calls the API, runs only after user confirms
+  const handleRejectConfirmed = async () => {
+    try {
+      setRejecting(true);
+      const response = await axios.post(
+        `/api/purchase/${params.purchaseID}/cancel-reject-request`,
+      );
+      // reject system
+      const notifySytstem = await axios.post("/api/notification", {
+        userId: purchaseDetails?.purchase?.user?.userID,
+        title: "Purchase Budget Confirmation",
+        message:
+          "Accounting Reject Purchase Requisition id: " + params.purchaseID,
+        type: "Info",
+        link: "",
+      });
+      await sendPurchaseRejectedEmail({
+        toEmail: purchaseDetails?.purchase?.user?.email,
+        requestNo: params.purchaseID,
+        rejectedBy: user?.name,
+        rejectedByRole: userRole,
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        showSuccess(response.data?.message || "Purchase Requisition Rejected");
+        setTimeout(() => {
+          router.push("/Main/Purchase/PurchaseRecommendingApproval");
+        }, 1800);
+      } else {
+        showError(
+          `Rejection for Purchase Requisition ${params.purchaseID} Failed`,
+        );
+      }
+    } catch (error) {
+      console.error("Error rejecting purchase:", error);
+      showError(
+        error?.response?.data?.message ||
+          `Rejection for Purchase Requisition ${params.purchaseID} Failed`,
+      );
+    } finally {
+      setRejecting(false);
+      setShowRejectConfirm(false);
+    }
+  };
   return (
     <>
       <div className="flex relative mb-5 w-auto">
@@ -512,15 +593,35 @@ export default function PurchaseDetails() {
             </button>
           </div>
         ) : (
-          <div className="flex justify-end gap-4 mt-10 mb-10">
-            <button
-              onClick={handleApprove}
-              className="px-6 py-2 bg-lightRed border border-darkRed text-white font-bold rounded hover:bg-red-200 hover:text-black transition"
-            >
-              Accept
-            </button>
-          </div>
+          purchaseDetails?.purchase?.isCancel === false && (
+            <div className="flex justify-end gap-4 mt-10 mb-10">
+              <button
+                onClick={handleRejectClick}
+                disabled={rejecting}
+                className="px-6 py-2 bg-gray-500 border border-gray-600 text-white font-bold rounded hover:bg-gray-600 transition disabled:opacity-50"
+              >
+                {rejecting ? "Rejecting..." : "Reject"}
+              </button>
+              <button
+                onClick={handleApprove}
+                className="px-6 py-2 bg-lightRed border border-darkRed text-white font-bold rounded hover:bg-red-200 hover:text-black transition"
+              >
+                Accept
+              </button>
+            </div>
+          )
         ))}
+      {showRejectConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 ">
+          <ConfirmBox
+            title="Rejected Purchase Request"
+            content={`Are you sure you want to reject Purchase Code:`}
+            id={params.purchaseID}
+            handleConfirm={handleRejectConfirmed}
+            handleclose={() => setShowRejectConfirm(false)}
+          />
+        </div>
+      )}
     </>
   );
 }

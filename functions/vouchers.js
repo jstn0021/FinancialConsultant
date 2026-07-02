@@ -1,7 +1,7 @@
 "use server";
 import { AccountCode, Check, CheckItem, GLcode } from "@/db/models";
 import { NextResponse } from "next/server";
-import { Sequelize } from "sequelize";
+import { json, Sequelize } from "sequelize";
 
 import fs from "fs/promises";
 import path from "path";
@@ -94,6 +94,7 @@ export async function GetFilterizeVoucher(
       },
 
       forApproval: true,
+      isRejected: false,
     };
 
     // role flow rules
@@ -206,5 +207,5 @@ export async function GetBDONo(voucherType) {
 }
 
 export async function TotalAmount(data) {
-  console.log("datas", JSON.stringify(data));
+  return { data };
 }

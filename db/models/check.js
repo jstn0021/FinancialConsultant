@@ -35,5 +35,9 @@ const Check = sequelize.define("check", {
   cheque_attachment: {
     type: DataTypes.STRING,
   },
+  isRejected: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 });
 module.exports = Check;
