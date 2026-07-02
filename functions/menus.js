@@ -163,6 +163,7 @@ export default function Menus(role) {
       "My Requisition",
       "Requisition List",
       "BIR 2307",
+      "Creditors",
       //  "My Requisition",
       //  "Profile",
     ],
