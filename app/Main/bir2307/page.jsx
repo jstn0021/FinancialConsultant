@@ -32,15 +32,20 @@ const ATC_OPTIONS = [
   },
 ];
 
-function getQuarter() {
+function getQuarter(month, year) {
   const now = new Date();
   const m = now.getMonth() + 1;
   const y = now.getFullYear();
 
-  if (m <= 3) return { label: "1st", from: `01/01/${y}`, to: `03/31/${y}` };
-  if (m <= 6) return { label: "2nd", from: `04/01/${y}`, to: `06/30/${y}` };
-  if (m <= 9) return { label: "3rd", from: `07/01/${y}`, to: `09/30/${y}` };
-  return { label: "4th", from: `10/01/${y}`, to: `12/31/${y}` };
+  const month_index = month || m;
+  const years = year || y;
+  if (month_index <= 3)
+    return { label: "1st", from: `01/01/${years}`, to: `03/31/${years}` };
+  if (month_index <= 6)
+    return { label: "2nd", from: `04/01/${years}`, to: `06/30/${years}` };
+  if (month_index <= 9)
+    return { label: "3rd", from: `07/01/${years}`, to: `09/30/${years}` };
+  return { label: "4th", from: `10/01/${years}`, to: `12/31/${years}` };
 }
 
 function fmt(n) {
@@ -61,7 +66,7 @@ const selectBase =
   "w-full border border-neutral-400 bg-white px-1 py-1 text-[12px] outline-none";
 
 export default function BIR2307Page() {
-  const [quarter] = useState(() => getQuarter());
+  const [quarter, setQuarter] = useState(() => getQuarter());
   const [payeeTin, setPayeeTin] = useState("");
   const [payeeName, setPayeeName] = useState("");
   const [payeeAddress, setPayeeAddress] = useState("");
@@ -73,7 +78,8 @@ export default function BIR2307Page() {
   const [m3, setM3] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const [months, setMonths] = useState();
+  const [years, setYears] = useState();
   const [suppliers, setSuppliers] = useState([]);
   const [vouchers, setVouchers] = useState([]);
 
@@ -270,8 +276,8 @@ export default function BIR2307Page() {
                       .flatMap((v) => v.items || [])
                       .find((item) => item.id === parseInt(e.target.value));
 
-                    console.log("selectedVoucher:", selectedVoucher);
-                    console.log("suppliers:", suppliers);
+                    // console.log("selectedVoucher:", selectedVoucher);
+                    // console.log("suppliers:", suppliers);
                     if (selectedVoucher) {
                       const supplier = suppliers.find(
                         // (s) =>
@@ -303,6 +309,9 @@ export default function BIR2307Page() {
                       const quarterStartMonth = [1, 4, 7, 10].find(
                         (m) => month >= m && month < m + 3,
                       );
+                      const year = voucherDate.getFullYear();
+                      setQuarter(getQuarter(month, year));
+
                       const monthInQuarter = month - quarterStartMonth + 1;
                       const amount = selectedVoucher.amount || 0;
 

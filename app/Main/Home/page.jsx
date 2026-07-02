@@ -376,7 +376,7 @@ export default function DashboardPage() {
             value: stats.totalPurchase ?? 0,
             theme: "amber",
             icon: "🛒",
-            href: "/Main/Purchase",
+            href: "/Main/Purchase/MyRequisition",
           },
         ];
       case "Regular Employee":
