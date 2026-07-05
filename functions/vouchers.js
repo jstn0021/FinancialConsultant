@@ -5,6 +5,7 @@ import { Sequelize } from "sequelize";
 
 import fs from "fs/promises";
 import path from "path";
+import { sign } from "crypto";
 
 export async function UpdateAttachment({ id, file }) {
   try {
@@ -161,6 +162,16 @@ export async function GetGLCode() {
   };
 }
 
+export async function GetChiefAccountantSign({ id }) {
+  const chiefAccountant = await Check.findOne({
+    where: { id: id },
+  });
+  // console.log(chiefAccountant);
+
+  return {
+    signature: chiefAccountant?.ChiefAccountSignature,
+  };
+}
 export async function GetCashbookHeaders(voucherType) {
   const data = {
     "US Bank": "ZPA-USD1",

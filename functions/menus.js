@@ -168,13 +168,18 @@ export default function Menus(role) {
       //  "Profile",
     ],
     SuperAdmin: [
+      "Profile",
       "Dashboard",
       "Purchase Requisition Form",
       "My Requisition",
-      //  "My Requisition",
-      "User Management",
+      "Submitted Requisition",
+      "Vouchers",
+      "Summaries",
+      "Cashbooks",
       "BIR 2307",
-      //  "Profile"
+      "Creditors",
+      "BIR 2307",
+      "User Management",
     ],
   };
   //find specific Role

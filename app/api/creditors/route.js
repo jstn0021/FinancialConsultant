@@ -11,9 +11,8 @@ export async function GET(request) {
     const offset = (page - 1) * limit;
     const search = searchParams.get("search")?.trim();
 
-    const where =
-      search ?
-        {
+    const where = search
+      ? {
           [Op.or]: [
             { code: { [Op.like]: `%${search}%` } },
             { creditorsName: { [Op.like]: `%${search}%` } },
