@@ -26,8 +26,21 @@ export async function PUT(request, { params }) {
   }
 
   const body = await request.json();
+  const newCode = body.code?.trim();
+
+  // Kung binabago ang code, siguraduhing hindi na ginagamit ng ibang record
+  if (newCode && newCode !== code) {
+    const conflict = await Creditor.findByPk(newCode);
+    if (conflict) {
+      return NextResponse.json(
+        { error: `Code "${newCode}" is already in use by another creditor.` },
+        { status: 409 },
+      );
+    }
+  }
 
   await creditor.update({
+    code: newCode || code,
     creditorsName: body.creditorsName,
     address1: body.address1,
     address2: body.address2,
@@ -44,10 +57,7 @@ export async function PUT(request, { params }) {
 // DELETE
 export async function DELETE(request, { params }) {
   const { code } = await params;
-  console.log("DELETE hit, code:", JSON.stringify(code));
-
   const creditor = await Creditor.findByPk(code);
-  console.log("findByPk result:", creditor ? "FOUND" : "NULL");
 
   if (!creditor) {
     return NextResponse.json({ error: "Creditor not found." }, { status: 404 });

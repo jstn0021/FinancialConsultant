@@ -377,6 +377,7 @@ export default function CreditorsPage() {
   const [modal, setModal] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [selected, setSelected] = useState(new Set());
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -406,6 +407,31 @@ export default function CreditorsPage() {
   useEffect(() => {
     setPage(1);
   }, [search]);
+
+  // Clear selection whenever the visible page/search results change, so
+  // stale checkmarks don't linger for rows that are no longer shown.
+  useEffect(() => {
+    setSelected(new Set());
+  }, [page, search]);
+
+  const toggleSelect = (code) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  };
+
+  const allSelectedOnPage =
+    creditors.length > 0 && creditors.every((c) => selected.has(c.code));
+
+  const toggleSelectAll = () => {
+    setSelected((prev) => {
+      if (allSelectedOnPage) return new Set();
+      return new Set(creditors.map((c) => c.code));
+    });
+  };
 
   const handleAdd = async (form) => {
     setFormLoading(true);
@@ -469,6 +495,44 @@ export default function CreditorsPage() {
       setFormLoading(false);
     }
   };
+
+  // Bulk-deletes every currently-selected creditor. There's no dedicated
+  // bulk endpoint, so this fires one DELETE per code (same endpoint as the
+  // single-row delete) and reports how many succeeded/failed.
+  const handleBulkDelete = async () => {
+    const codes = Array.from(selected);
+    if (codes.length === 0) return;
+    setFormLoading(true);
+    try {
+      const results = await Promise.allSettled(
+        codes.map((code) =>
+          fetch(`${API_BASE}/${code}`, { method: "DELETE" }).then((res) => {
+            if (!res.ok) throw new Error(code);
+            return code;
+          }),
+        ),
+      );
+      const succeeded = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.length - succeeded;
+
+      if (failed === 0) {
+        showToast(
+          `Deleted ${succeeded} creditor${succeeded !== 1 ? "s" : ""}.`,
+        );
+      } else {
+        showToast(`Deleted ${succeeded}, failed to delete ${failed}.`, "error");
+      }
+
+      setSelected(new Set());
+      setModal(null);
+      fetchCreditors();
+    } catch {
+      showToast("Failed to delete selected creditors.", "error");
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   const handleExport = async () => {
     try {
       showToast("Preparing export...", "success");
@@ -589,6 +653,8 @@ export default function CreditorsPage() {
         .btn-icon { background: none; border: none; cursor: pointer; font-size: 1rem; color: #6b7280; padding: 4px 8px; border-radius: 4px; }
         .btn-icon:hover { background: #f3f4f6; }
 
+        .selection-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #eff6ff; border-bottom: 1px solid #dbeafe; font-size: 0.8125rem; color: #1e40af; font-weight: 500; }
+
         .table-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
         thead { background: #f9fafb; }
@@ -596,6 +662,7 @@ export default function CreditorsPage() {
         td { padding: 12px 16px; color: #111827; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: #f9fafb; }
+        .checkbox-col { width: 40px; text-align: center; }
 
         .code-badge { display: inline-block; background: #eff6ff; color: #2563eb; font-weight: 600; padding: 2px 8px; border-radius: 6px; font-size: 0.8125rem; font-family: monospace; }
         .tin-text { color: #6b7280; font-size: 0.8125rem; font-family: monospace; }
@@ -669,8 +736,8 @@ export default function CreditorsPage() {
           .form-row { grid-template-columns: 1fr; }
           .tin-row { grid-template-columns: 1fr; }
           .search-input { width: 100%; }
-          th:nth-child(3), td:nth-child(3),
-          th:nth-child(5), td:nth-child(5) { display: none; }
+          th:nth-child(4), td:nth-child(4),
+          th:nth-child(6), td:nth-child(6) { display: none; }
         }
       `}</style>
 
@@ -711,9 +778,36 @@ export default function CreditorsPage() {
         </div>
 
         <div className="table-card">
+          {selected.size > 0 && (
+            <div className="selection-bar">
+              <span>{selected.size} selected</span>
+              <button
+                className="btn btn-danger"
+                onClick={() => setModal({ type: "bulk-delete" })}
+                style={{ padding: "4px 12px", fontSize: "0.8125rem" }}
+              >
+                🗑 Clean Selected ({selected.size})
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setSelected(new Set())}
+                style={{ padding: "4px 12px", fontSize: "0.8125rem" }}
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
           <table>
             <thead>
               <tr>
+                <th className="checkbox-col">
+                  <input
+                    type="checkbox"
+                    checked={allSelectedOnPage}
+                    onChange={toggleSelectAll}
+                    aria-label="Select all creditors on this page"
+                  />
+                </th>
                 <th>Code</th>
                 <th>Name</th>
                 <th>Address</th>
@@ -727,7 +821,7 @@ export default function CreditorsPage() {
               {loading ? (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     style={{
                       textAlign: "center",
                       padding: 48,
@@ -739,7 +833,7 @@ export default function CreditorsPage() {
                 </tr>
               ) : creditors.length === 0 ? (
                 <tr>
-                  <td colSpan={7}>
+                  <td colSpan={8}>
                     <div className="empty-state">
                       <p>No creditors found</p>
                       <span>Try a different search or add a new creditor.</span>
@@ -749,6 +843,14 @@ export default function CreditorsPage() {
               ) : (
                 creditors.map((c) => (
                   <tr key={c.code}>
+                    <td className="checkbox-col">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(c.code)}
+                        onChange={() => toggleSelect(c.code)}
+                        aria-label={`Select ${c.creditorsName || c.code}`}
+                      />
+                    </td>
                     <td>
                       <span className="code-badge">{c.code}</span>
                     </td>
@@ -903,6 +1005,32 @@ export default function CreditorsPage() {
               disabled={formLoading}
             >
               {formLoading ? "Deleting..." : "Yes, Delete"}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {modal?.type === "bulk-delete" && (
+        <Modal title="Delete Selected Creditors" onClose={() => setModal(null)}>
+          <div className="delete-body">
+            Are you sure you want to delete <strong>{selected.size}</strong>{" "}
+            selected creditor
+            {selected.size !== 1 ? "s" : ""}? This cannot be undone.
+          </div>
+          <div className="form-actions">
+            <button
+              className="btn btn-secondary"
+              onClick={() => setModal(null)}
+              disabled={formLoading}
+            >
+              Cancel
+            </button>
+            <button
+              className="btn btn-danger"
+              onClick={handleBulkDelete}
+              disabled={formLoading}
+            >
+              {formLoading ? "Deleting..." : `Yes, Delete ${selected.size}`}
             </button>
           </div>
         </Modal>

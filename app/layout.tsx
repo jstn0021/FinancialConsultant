@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+// @ts-expect-error Next.js handles global CSS imports.
 import "./globals.css";
 import { UserContextProvider } from "@/hooks/Context/UserContext";
 import { ModalContextProvider } from "@/hooks/Context/modal";

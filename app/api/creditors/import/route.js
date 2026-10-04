@@ -55,6 +55,7 @@ export async function POST(request) {
     }
 
     let created = 0;
+    let updated = 0;
     let skipped = 0;
     const errors = [];
 
@@ -74,34 +75,35 @@ export async function POST(request) {
         continue;
       }
 
-      // Skip duplicate codes
-      const exists = await Creditor.findByPk(code);
-      if (exists) {
-        skipped++;
-        errors.push(`Row ${rowNum}: Code "${code}" already exists — skipped.`);
-        continue;
-      }
+      const payload = {
+        creditorsName,
+        address1: toNullable(row["address1"]),
+        address2: toNullable(row["address2"]),
+        city: toNullable(row["city"]),
+        country: toNullable(row["country"]) ?? "PH",
+        tin1: toNullable(row["tin1"]),
+        tin2: toNullable(row["tin2"]),
+        tin3: toNullable(row["tin3"]),
+      };
 
       try {
-        await Creditor.create({
-          code,
-          creditorsName,
-          address1: toNullable(row["address1"]),
-          address2: toNullable(row["address2"]),
-          city: toNullable(row["city"]),
-          country: toNullable(row["country"]) ?? "PH",
-          tin1: toNullable(row["tin1"]),
-          tin2: toNullable(row["tin2"]),
-          tin3: toNullable(row["tin3"]),
-        });
-        created++;
+        const existing = await Creditor.findByPk(code);
+
+        if (existing) {
+          // Upsert: update existing record instead of skipping
+          await existing.update(payload);
+          updated++;
+        } else {
+          await Creditor.create({ code, ...payload });
+          created++;
+        }
       } catch (err) {
         skipped++;
         errors.push(`Row ${rowNum}: Failed to save — ${err.message}`);
       }
     }
 
-    return NextResponse.json({ created, skipped, errors });
+    return NextResponse.json({ created, updated, skipped, errors });
   } catch (err) {
     console.error("POST /api/creditors/import error:", err);
     return NextResponse.json(
